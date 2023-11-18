@@ -21,4 +21,11 @@ std::vector<std::complex<real>> DiscreteFourierTransform(const std::vector<std::
 
 // Perform the Fourier Transform of a sequence, using the O(n log n) algorithm
 // Note that this particular implementation uses recursion, which was discouraged in the assignment
-std::vector<std::complex<real>> FastFourierTransform(const std::vector<std::complex<real>> &sequence);
+std::vector<std::complex<real>> FastFourierTransformRecursive(const std::vector<std::complex<real>> &sequence);
+
+// Perform the Fourier Transform of a sequence, using the O(n log n) algorithm
+// This is the iterative implementation, taken from Quinn Chapter 15
+std::vector<std::complex<real>> FastFourierTransformIterative(const std::vector<std::complex<real>> &sequence);
+
+// Compare the values of "sequence" with those of "sequence_golden" and return if they have the same elements; if "print_errors" is true, print the errors in "sequence"
+bool CompareResult(const std::vector<std::complex<real>> &sequence_golden, const std::vector<std::complex<real>> &sequence, double precision, bool print_errors);
