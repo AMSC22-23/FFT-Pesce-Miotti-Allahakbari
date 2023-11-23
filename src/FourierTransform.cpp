@@ -63,23 +63,17 @@ std::vector<std::complex<real>> FastFourierTransformRecursive(const std::vector<
 	std::vector<std::complex<real>> result;
 	result.reserve(n);
 
-	// Fill vector with the even results
-	for (size_t k = 0; k < n / 2; k++)
+	// Dummy fill the result vector 
+	for (size_t k = 0; k < n; k++)
 	{
-		result.emplace_back(even_result[k]);
-	}
-
-	// Fill vector with the odd results
-	for (size_t k = 0; k < n / 2; k++)
-	{
-		result.emplace_back(odd_result[k]);
+		result.emplace_back(0);
 	}
 
 	// Implementing the Cooley-Tukey algorithm
 	for (size_t k = 0; k < n / 2; k++)
 	{
-		std::complex<real> p = result[k];
-		std::complex<real> q = std::exp(std::complex<real>{0, -2 * pi * k / n}) * result[k + n / 2];
+		std::complex<real> p = even_result[k];
+		std::complex<real> q = std::exp(std::complex<real>{0, -2 * pi * k / n}) * odd_result[k];
 
 		result[k] = p + q;
 		result[k + n / 2] = p - q;

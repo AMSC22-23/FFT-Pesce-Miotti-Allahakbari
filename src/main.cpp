@@ -29,9 +29,9 @@ int main(int argc, char* argv[])
 	std::vector<std::complex<real>> fft_iterative_result = FastFourierTransformIterative(sequence);
 
 	// Check the results
-	if (!CompareResult(dft_result, fft_recursive_result, 1e-4, false)) std::cerr << "Errors in the recursive FFT" << std::endl;
-	
-	if (!CompareResult(dft_result, fft_iterative_result, 1e-4, false)) std::cerr << "Errors in the iterative FFT" << std::endl;
-	
+	if (!CompareResult(dft_result, fft_recursive_result, 1e-4, false)) std::cerr << "Errors detected in recursive FFT." << std::endl;
+	else if (!CompareResult(dft_result, fft_iterative_result, 1e-4, false)) std::cerr << "Errors detected in iterative FFT." << std::endl;
+	else std::cout << "No errors detected." << std::endl;
+
 	return 0;
 }
