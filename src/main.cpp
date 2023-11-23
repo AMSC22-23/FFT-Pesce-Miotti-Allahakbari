@@ -1,5 +1,6 @@
 #include <iostream>
 #include "FourierTransform.hpp"
+#include "VectorExporter.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -32,6 +33,9 @@ int main(int argc, char* argv[])
 	if (!CompareResult(dft_result, fft_recursive_result, 1e-4, false)) std::cerr << "Errors detected in recursive FFT." << std::endl;
 	else if (!CompareResult(dft_result, fft_iterative_result, 1e-4, false)) std::cerr << "Errors detected in iterative FFT." << std::endl;
 	else std::cerr << "No errors detected." << std::endl;
+
+	// Write needed results to files
+	WriteToFile(fft_iterative_result, "fft_iterative_result.csv");
 
 	return 0;
 }
