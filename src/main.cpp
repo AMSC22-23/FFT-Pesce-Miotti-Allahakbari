@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 
 
 	// Bit permutation and OpenMP test
-	size_t num_elements = 1L << 27;
+	size_t num_elements = 1L << 20;
 	
 	unsigned int max_num_threads = 8;
 	for(unsigned int num_threads=1; num_threads<=max_num_threads; num_threads *= 2)
