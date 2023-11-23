@@ -1,6 +1,7 @@
 #include <iostream>
 #include "FourierTransform.hpp"
 #include "BitReversePermutation.hpp"
+#include "VectorExporter.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -30,9 +31,15 @@ int main(int argc, char* argv[])
 	std::vector<std::complex<real>> fft_iterative_result = FastFourierTransformIterative(sequence);
 
 	// Check the results
-	if (!CompareResult(dft_result, fft_recursive_result, 1e-4, false)) std::cerr << "Errors in the recursive FFT" << std::endl;
-	if (!CompareResult(dft_result, fft_iterative_result, 1e-4, false)) std::cerr << "Errors in the iterative FFT" << std::endl;
+	if (!CompareResult(dft_result, fft_recursive_result, 1e-4, false)) std::cerr << "Errors detected in recursive FFT." << std::endl;
+	else if (!CompareResult(dft_result, fft_iterative_result, 1e-4, false)) std::cerr << "Errors detected in iterative FFT." << std::endl;
+	else std::cerr << "No errors detected." << std::endl;
+
+	// Write needed results to files
+	WriteToFile(fft_iterative_result, "fft_iterative_result.csv");
 	
+
+
 	// Bit permutation and OpenMP test
 	size_t num_elements = 1L << 27;
 	
