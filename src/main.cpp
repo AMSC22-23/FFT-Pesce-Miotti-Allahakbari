@@ -1,5 +1,6 @@
 #include <iostream>
 #include "FourierTransform.hpp"
+#include "BitReversePermutation.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -30,8 +31,16 @@ int main(int argc, char* argv[])
 
 	// Check the results
 	if (!CompareResult(dft_result, fft_recursive_result, 1e-4, false)) std::cerr << "Errors in the recursive FFT" << std::endl;
-	
 	if (!CompareResult(dft_result, fft_iterative_result, 1e-4, false)) std::cerr << "Errors in the iterative FFT" << std::endl;
+	
+	// Bit permutation and OpenMP test
+	size_t num_elements = 1L << 27;
+	
+	unsigned int max_num_threads = 8;
+	for(unsigned int num_threads=1; num_threads<=max_num_threads; num_threads *= 2)
+	{
+		std::cout << "Time for bit permutation with " << num_elements << " elements and " << num_threads << " threads: " << CalculateTimeBitReversePermutation(num_elements, num_threads) << "us" << std::endl;
+	}
 	
 	return 0;
 }

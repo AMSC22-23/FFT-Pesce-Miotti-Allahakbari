@@ -1,5 +1,5 @@
 #include "FourierTransform.hpp"
-#include "BitReversePermuation.hpp"
+#include "BitReversePermutation.hpp"
 #include <tgmath.h>
 #include <cassert>
 #include <iostream>
@@ -146,7 +146,7 @@ bool CompareResult(const std::vector<std::complex<real>> &sequence_golden, const
 	std::vector<std::complex<real>> errors;
 	for (size_t i = 0; i < sequence_golden.size(); i++)
 	{
-		if (abs(sequence[i] - sequence_golden[i]) > precision){
+		if (abs(sequence[i] - sequence_golden[i]) > precision) {
 			if (!print_errors) return false;
 			errors.emplace_back(i);
 		}
