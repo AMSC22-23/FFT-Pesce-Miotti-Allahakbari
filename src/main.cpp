@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
 	// Check the results
 	if (!CompareResult(dft_result, fft_recursive_result, 1e-4, false)) std::cerr << "Errors detected in recursive FFT." << std::endl;
 	else if (!CompareResult(dft_result, fft_iterative_result, 1e-4, false)) std::cerr << "Errors detected in iterative FFT." << std::endl;
-	else std::cout << "No errors detected." << std::endl;
+	else std::cerr << "No errors detected." << std::endl;
 
 	return 0;
 }
