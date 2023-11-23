@@ -7,7 +7,7 @@ int main(int argc, char* argv[])
 	if (argc != 1) { std::cerr << "Too many arguments." << std::endl; }
 
 	// Set a size for the sequence
-	size_t size = 2;
+	size_t size = 8;
 
 	// Generating a sequence of complex numbers
 	std::vector<std::complex<real>> sequence;
@@ -18,7 +18,6 @@ int main(int argc, char* argv[])
 		// Add a random complex number to the sequence
 		sequence.emplace_back(rand() % 100, rand() % 100);
 	} 	
-	std::cout << std::endl;
 
 	// Compute the O(n^2) Fourier Transform of the sequence
 	std::vector<std::complex<real>> dft_result = DiscreteFourierTransform(sequence);
