@@ -1,20 +1,10 @@
+#ifndef FOURIER_TRANSFORM_HPP
+#define FOURIER_TRANSFORM_HPP
+
 #include <complex>
 #include <vector>
 #include <numbers>
-
-#ifdef FLOAT
-using real = float;
-#else
-#ifdef DOUBLE
-using real = double;
-#else
-#ifdef LONG_DOUBLE
-using real = long double;
-#else
-using real = double;
-#endif
-#endif
-#endif
+#include "Real.hpp"
 
 // Perform the Fourier Transform of a sequence, using the O(n^2) algorithm
 std::vector<std::complex<real>> DiscreteFourierTransform(const std::vector<std::complex<real>> &sequence);
@@ -29,3 +19,5 @@ std::vector<std::complex<real>> FastFourierTransformIterative(const std::vector<
 
 // Compare the values of "sequence" with those of "sequence_golden" and return if they have the same elements; if "print_errors" is true, print the errors in "sequence"
 bool CompareResult(const std::vector<std::complex<real>> &sequence_golden, const std::vector<std::complex<real>> &sequence, double precision, bool print_errors);
+
+#endif //FOURIER_TRANSFORM_HPP

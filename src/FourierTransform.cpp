@@ -2,6 +2,7 @@
 #include <tgmath.h>
 #include <cassert>
 #include <iostream>
+#include "BitReversePermutation.hpp"
 
 // Perform the Fourier Transform of a sequence, using the O(n^2) algorithm
 std::vector<std::complex<real>> DiscreteFourierTransform(const std::vector<std::complex<real>> &sequence)
@@ -62,38 +63,22 @@ std::vector<std::complex<real>> FastFourierTransformRecursive(const std::vector<
 	std::vector<std::complex<real>> result;
 	result.reserve(n);
 
-	// Fill vector with the even results
-	for (size_t k = 0; k < n / 2; k++)
+	// Dummy fill the result vector 
+	for (size_t k = 0; k < n; k++)
 	{
-		result.emplace_back(even_result[k]);
-	}
-
-	// Fill vector with the odd results
-	for (size_t k = 0; k < n / 2; k++)
-	{
-		result.emplace_back(odd_result[k]);
+		result.emplace_back(0);
 	}
 
 	// Implementing the Cooley-Tukey algorithm
 	for (size_t k = 0; k < n / 2; k++)
 	{
-		std::complex<real> p = result[k];
-		std::complex<real> q = std::exp(std::complex<real>{0, -2 * pi * k / n}) * result[k + n / 2];
+		std::complex<real> p = even_result[k];
+		std::complex<real> q = std::exp(std::complex<real>{0, -2 * pi * k / n}) * odd_result[k];
 
 		result[k] = p + q;
 		result[k + n / 2] = p - q;
 	}
 
-	return result;
-}
-
-// Compute the reverse bit order of "index", assuming it has "number_bits" bits
-// Note that this is an extremely naive implementation
-size_t BitReversePermutation(const size_t index, const size_t number_bits) {
-	size_t result = 0;
-	for(size_t i=0; i<number_bits; i++) {
-		result = result | (((1 << i) & index) >> i << (number_bits - i - 1));
-	}
 	return result;
 }
 
@@ -155,7 +140,7 @@ bool CompareResult(const std::vector<std::complex<real>> &sequence_golden, const
 	std::vector<std::complex<real>> errors;
 	for (size_t i = 0; i < sequence_golden.size(); i++)
 	{
-		if (abs(sequence[i] - sequence_golden[i]) > precision){
+		if (abs(sequence[i] - sequence_golden[i]) > precision) {
 			if (!print_errors) return false;
 			errors.emplace_back(i);
 		}

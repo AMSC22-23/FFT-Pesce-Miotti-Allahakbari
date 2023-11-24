@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(fft VERSION 0.1.0)
 
-#Use c++20 standard
+#Use c++20
 set(CMAKE_CXX_STANDARD 20)
 
 #Set compiler flags for Release
@@ -19,12 +19,15 @@ file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp
 #Add all header files located include to headers list
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-#Setting target name
+#Set target name
 add_executable(${CMAKE_PROJECT_NAME} ${SRC_FILES})
 
-target_link_libraries(${CMAKE_PROJECT_NAME}
-                      
-                      )
+#Add compile options
+target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -fopenmp)
 
+#debug options: g++ -std=c++20 -g -Wall -Wextra -fopenmp main.cpp FourierTransform.cpp -DDOUBLE -o main 
+#release options: g++ -std=c++20 -Wall -Wextra -O3 -Ofast -march=native -funroll-all-loops -fopenmp main.cpp FourierTransform.cpp -DDOUBLE -o main	
 
-
+#Add link options
+find_package(OpenMP)
+target_link_libraries(${CMAKE_PROJECT_NAME} OpenMP::OpenMP_CXX)
