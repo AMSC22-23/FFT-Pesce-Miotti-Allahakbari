@@ -5,11 +5,16 @@
 
 int main(int argc, char* argv[])
 {
-	// Testing the argument parsing
-	if (argc != 1) { std::cerr << "Too many arguments." << std::endl; }
+	// Check the number of arguments
+	if (argc > 2) {
+		std::cerr << "Too many arguments." << std::endl;
+		std::cerr << "Argument 1: size of the sequence (default: 8)" << std::endl;
+		return 1;
+	}
 
-	// Set a size for the sequence
+	// Get the size of the sequence
 	size_t size = 8;
+	if (argc == 2) size = atoi(argv[1]);
 
 	// Generating a sequence of complex numbers
 	std::vector<std::complex<real>> sequence;
