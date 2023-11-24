@@ -18,6 +18,9 @@ add_executable(${CMAKE_PROJECT_NAME} ${SRC_FILES})
 #Add compile options
 target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -fopenmp)
 
+#debug options: g++ -std=c++20 -g -Wall -Wextra -fopenmp main.cpp FourierTransform.cpp -DDOUBLE -o main 
+#release options: g++ -std=c++20 -Wall -Wextra -O3 -Ofast -march=native -funroll-all-loops -fopenmp main.cpp FourierTransform.cpp -DDOUBLE -o main	
+
 #Add link options
 find_package(OpenMP)
 target_link_libraries(${CMAKE_PROJECT_NAME} OpenMP::OpenMP_CXX)
