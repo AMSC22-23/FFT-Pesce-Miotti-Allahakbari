@@ -23,7 +23,7 @@ size_t BitReversePermutation(const size_t index, const size_t bitsize) {
 unsigned long CalculateTimeBitReversePermutation(size_t num_elements, unsigned int num_threads, size_t &O3_workaround) {
 	// Calculate the necessary number of bits to store the sequence.
 	size_t num_bits = static_cast<size_t>(log2(num_elements));
-	if (1 << num_bits != num_elements) num_bits++;
+	if (1UL << num_bits != num_elements) num_bits++;
 	
 	// Set the number of threads.
 	omp_set_num_threads(num_threads);

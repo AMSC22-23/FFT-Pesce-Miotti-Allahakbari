@@ -93,7 +93,7 @@ std::vector<std::complex<real>> FastFourierTransformIterative(const std::vector<
 	
 	// Performing a sanity check: "sequence" should have a power of 2 elements
 	const size_t log_n = static_cast<size_t>(log2(n));
-	assert(1 << log_n == n);
+	assert(1UL << log_n == n);
 	
 	// Initialization of output sequence
 	std::vector<std::complex<real>> result;
@@ -108,7 +108,7 @@ std::vector<std::complex<real>> FastFourierTransformIterative(const std::vector<
 	// Main loop: looping over the binary tree layers
 	for (size_t s = 1; s <= log_n; s++)
 	{
-		const size_t m = 1 << s;
+		const size_t m = 1UL << s;
 		const std::complex<real> omega_d = std::exp(std::complex<real>{0, -2 * pi / m});
 		
 		for (size_t k = 0; k < n; k += m) 
