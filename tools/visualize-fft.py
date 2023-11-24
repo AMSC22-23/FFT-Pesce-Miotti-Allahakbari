@@ -11,23 +11,23 @@ if len(sys.argv) != 3:
 sequence = np.genfromtxt(sys.argv[1], delimiter=',')
 result = np.genfromtxt(sys.argv[2], delimiter=',')
 
-# Turn complex numbers into magnitudes
-sequence = [np.sqrt(x[0]**2 + x[1]**2) for x in sequence]
-result = [np.sqrt(x[0]**2 + x[1]**2) for x in result]
-
 # Set up plot for initial sequence
 plt.subplot(2, 1, 1)
-plt.plot(sequence)
+plt.plot([x[0] for x in sequence])
+plt.plot([x[1] for x in sequence])
 plt.title("Initial Sequence")
 plt.xlabel("Index")
 plt.ylabel("Magnitude")
+plt.legend(["Real", "Imaginary"])
 
 # Set up plot for result
 plt.subplot(2, 1, 2)
-plt.plot(result)
+plt.plot([x[0] for x in result])
+plt.plot([x[1] for x in result])
 plt.title("Result")
 plt.xlabel("Index")
 plt.ylabel("Magnitude")
+plt.legend(["Real", "Imaginary"])
 
 # Display plot
 plt.tight_layout()
