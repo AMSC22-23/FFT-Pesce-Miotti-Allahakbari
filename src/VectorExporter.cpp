@@ -1,4 +1,6 @@
 #include "VectorExporter.hpp"
+#include <fstream>
+#include <iostream>
 
 // Utility function to write a sequence of complex numbers to a file
 void WriteToFile(const std::vector<std::complex<real>> &sequence, const std::string &filename)
