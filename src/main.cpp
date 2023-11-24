@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 	
 
 
-	// Bit permutation and OpenMP test
+	// Bit permutation and OpenMP test: 1L << 27 is good value for testing on my pc
 	size_t num_elements = 1L << 20;
 	
 	unsigned int max_num_threads = 8;

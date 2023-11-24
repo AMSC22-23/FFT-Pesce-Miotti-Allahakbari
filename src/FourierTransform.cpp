@@ -1,8 +1,8 @@
 #include "FourierTransform.hpp"
-#include "BitReversePermutation.hpp"
 #include <tgmath.h>
 #include <cassert>
 #include <iostream>
+#include "BitReversePermutation.hpp"
 
 // Perform the Fourier Transform of a sequence, using the O(n^2) algorithm
 std::vector<std::complex<real>> DiscreteFourierTransform(const std::vector<std::complex<real>> &sequence)

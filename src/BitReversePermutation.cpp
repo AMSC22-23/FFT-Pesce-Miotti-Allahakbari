@@ -14,11 +14,8 @@ size_t BitReversePermutation(const size_t index, const size_t num_bits) {
 	return result;
 }
 
-
-
 // Calculate the time needed to reverse the bits of the indexes of a sequence "number_elements" long
-// Note that the compiler might remove the for loop if 03 is used
-unsigned long CalculateTimeBitReversePermutation(size_t num_elements, unsigned int num_threads) {
+unsigned long CalculateTimeBitReversePermutation(size_t num_elements, unsigned int num_threads, size_t &result) {
 	// Calculate the necessary number of bits to store the sequence
 	size_t num_bits = static_cast<size_t>(log2(num_elements));
 	if (1 << num_bits != num_elements) num_bits++;
@@ -31,8 +28,15 @@ unsigned long CalculateTimeBitReversePermutation(size_t num_elements, unsigned i
 	#pragma omp parallel for
 	for (size_t i=0; i<num_elements; i++)
 	{
-		BitReversePermutation(i, num_bits);
+		result = BitReversePermutation(i, num_bits);
 	}
 	const auto t1 = std::chrono::high_resolution_clock::now();
 	return std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
+}
+
+// A wrapper around the previous function to avoid O3 optimazation removing the for loop
+unsigned long CalculateTimeBitReversePermutation(size_t num_elements, unsigned int num_threads) {
+	size_t result;
+
+	return CalculateTimeBitReversePermutation(num_elements, num_threads, result);
 }
