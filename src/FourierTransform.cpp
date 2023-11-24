@@ -4,23 +4,25 @@
 #include <iostream>
 #include "BitReversePermutation.hpp"
 
-// Perform the Fourier Transform of a sequence, using the O(n^2) algorithm
-std::vector<std::complex<real>> DiscreteFourierTransform(const std::vector<std::complex<real>> &sequence)
+using vec = std::vector<std::complex<real>>;
+
+// Perform the Fourier Transform of a sequence, using the O(n^2) algorithm.
+vec DiscreteFourierTransform(const vec &sequence)
 {
-	// Defining some useful aliases
+	// Defining some useful aliases.
 	constexpr real pi = std::numbers::pi_v<real>;
 	const size_t n = sequence.size();
 
-	// Initializing the result vector
-	std::vector<std::complex<real>> result;
+	// Initializing the result vector.
+	vec result;
 	result.reserve(n);
 
-	// Main loop: looping over result coefficients
+	// Main loop: looping over result coefficients.
 	for (size_t k = 0; k < n; k++)
 	{
 		std::complex<real> curr_coefficient = 0.0;
 
-		// Internal loop: looping over input coefficients for a set result position
+		// Internal loop: looping over input coefficients for a set result position.
 		for (size_t m = 0; m < n; m++)
 		{
 			const std::complex<real> exponent = std::complex<real>{0, -2 * pi * k * m / n};
@@ -33,21 +35,20 @@ std::vector<std::complex<real>> DiscreteFourierTransform(const std::vector<std::
 	return result;
 }
 
-// Perform the Fourier Transform of a sequence, using the O(n log n) algorithm
-// Note that this particular implementation uses recursion, which was discouraged in the assignment
+// Perform the Fourier Transform of a sequence, using the O(n log n) algorithm.
 // Source: https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
-std::vector<std::complex<real>> FastFourierTransformRecursive(const std::vector<std::complex<real>> &sequence)
+vec FastFourierTransformRecursive(const vec &sequence)
 {
-	// Defining some useful aliases
+	// Defining some useful aliases.
 	constexpr real pi = std::numbers::pi_v<real>;
 	const size_t n = sequence.size();
 
-	// Trivial case: if the sequence is of length 1, return it
+	// Trivial case: if the sequence is of length 1, return it.
 	if (n == 1) return sequence; 
 
-	// Splitting the sequence into two halves
-	std::vector<std::complex<real>> even_sequence;
-	std::vector<std::complex<real>> odd_sequence;
+	// Splitting the sequence into two halves.
+	vec even_sequence;
+	vec odd_sequence;
 
 	for (size_t i = 0; i < n; i++)
 	{
@@ -55,21 +56,21 @@ std::vector<std::complex<real>> FastFourierTransformRecursive(const std::vector<
 		else odd_sequence.emplace_back(sequence[i]); 
 	}
 
-	// Recursively computing the Fourier Transform of the two halves
-	std::vector<std::complex<real>> even_result = FastFourierTransformRecursive(even_sequence);
-	std::vector<std::complex<real>> odd_result = FastFourierTransformRecursive(odd_sequence);
+	// Recursively computing the Fourier Transform of the two halves.
+	vec even_result = FastFourierTransformRecursive(even_sequence);
+	vec odd_result = FastFourierTransformRecursive(odd_sequence);
 
-	// Combining the two results
-	std::vector<std::complex<real>> result;
+	// Combining the two results.
+	vec result;
 	result.reserve(n);
 
-	// Dummy fill the result vector 
+	// Dummy fill the result vector. 
 	for (size_t k = 0; k < n; k++)
 	{
 		result.emplace_back(0);
 	}
 
-	// Implementing the Cooley-Tukey algorithm
+	// Implementing the Cooley-Tukey algorithm.
 	for (size_t k = 0; k < n / 2; k++)
 	{
 		std::complex<real> p = even_result[k];
@@ -82,30 +83,29 @@ std::vector<std::complex<real>> FastFourierTransformRecursive(const std::vector<
 	return result;
 }
 
-// Perform the Fourier Transform of a sequence, using the O(n log n) algorithm
-// This is the iterative implementation
-// Source: https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
-std::vector<std::complex<real>> FastFourierTransformIterative(const std::vector<std::complex<real>> &sequence)
+// Perform the Fourier Transform of a sequence, using the iterative O(n log n) algorithm.
+// Source: Quinn, Chapter 15.
+vec FastFourierTransformIterative(const vec &sequence)
 {
-	// Defining some useful aliases
+	// Defining some useful aliases.
 	constexpr real pi = std::numbers::pi_v<real>;
 	const size_t n = sequence.size();
 	
-	// Performing a sanity check: "sequence" should have a power of 2 elements
+	// Check that the size of the sequence is a power of 2.
 	const size_t log_n = static_cast<size_t>(log2(n));
 	assert(1UL << log_n == n);
 	
-	// Initialization of output sequence
-	std::vector<std::complex<real>> result;
+	// Initialization of output sequence.
+	vec result;
 	result.reserve(n);
 	
-	// Bit reverse permutation of "sequence"
+	// Bit reverse permutation of "sequence".
 	for (size_t i = 0; i < n; i++) 
 	{
 		result.emplace_back(sequence[BitReversePermutation(i, log_n)]);
 	}
 	
-	// Main loop: looping over the binary tree layers
+	// Main loop: looping over the binary tree layers.
 	for (size_t s = 1; s <= log_n; s++)
 	{
 		const size_t m = 1UL << s;
@@ -129,15 +129,19 @@ std::vector<std::complex<real>> FastFourierTransformIterative(const std::vector<
 	return result;
 }
 
-// Compare the values of "sequence" with those of "sequence_golden" and return if they have the same elements; if "print_errors" is true, print the errors in "sequence"
-bool CompareResult(const std::vector<std::complex<real>> &sequence_golden, const std::vector<std::complex<real>> &sequence, double precision, bool print_errors) 
+// Compare the values of "sequence" with those of "sequence_golden" and return true if
+// the difference between the two is less than "precision" for all elements.
+bool CompareResult(const vec &sequence_golden, const vec &sequence, double precision, bool print_errors) 
 {
+	// Assert that the two sequences have the same length.
 	if (sequence_golden.size() != sequence.size()) {
 		if (print_errors) std::cout << "The sequences have different lengths!" << std::endl;
 		return false;
 	}
 	
-	std::vector<std::complex<real>> errors;
+	vec errors;
+
+	// Check that the difference between the two sequences is small enough.
 	for (size_t i = 0; i < sequence_golden.size(); i++)
 	{
 		if (abs(sequence[i] - sequence_golden[i]) > precision) {
@@ -146,13 +150,16 @@ bool CompareResult(const std::vector<std::complex<real>> &sequence_golden, const
 		}
 	}
 	
+	// If no errors were found, return true.
 	if (errors.size() == 0) return true;
 	
+	// Otherwise, print the errors and return false.
 	std::cout << "Errors at indexes: ";
 	for (size_t i = 0; i < errors.size(); i++)
 	{
 		std::cout << errors[i] << " ";
 	}
 	std::cout << std::endl;
+	
 	return false;
 }
