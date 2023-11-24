@@ -36,9 +36,8 @@ int main(int argc, char* argv[])
 	else std::cerr << "No errors detected." << std::endl;
 
 	// Write needed results to files
-	WriteToFile(fft_iterative_result, "fft_iterative_result.csv");
-	
-
+	WriteToFile(sequence, "sequence.csv");
+	WriteToFile(fft_iterative_result, "result.csv");	
 
 	// Bit permutation and OpenMP test: 1L << 27 is good value for testing on my pc
 	size_t num_elements = 1L << 20;
