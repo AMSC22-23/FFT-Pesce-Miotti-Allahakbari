@@ -84,7 +84,7 @@ vec FastFourierTransformRecursive(const vec &sequence)
 }
 
 // Perform the Fourier Transform of a sequence, using the iterative O(n log n) algorithm.
-// Source: Quinn, Chapter 15.
+// Source: https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
 vec FastFourierTransformIterative(const vec &sequence)
 {
 	// Defining some useful aliases.

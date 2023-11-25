@@ -14,7 +14,7 @@ std::vector<std::complex<real>> DiscreteFourierTransform(const std::vector<std::
 std::vector<std::complex<real>> FastFourierTransformRecursive(const std::vector<std::complex<real>> &sequence);
 
 // Perform the Fourier Transform of a sequence, using the iterative O(n log n) algorithm.
-// Source: Quinn, Chapter 15.
+// Source: https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
 std::vector<std::complex<real>> FastFourierTransformIterative(const std::vector<std::complex<real>> &sequence);
 
 // Compare the values of "sequence" with those of "sequence_golden" and return true if
