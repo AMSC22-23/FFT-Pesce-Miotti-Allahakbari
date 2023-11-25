@@ -1,7 +1,8 @@
 #include <iostream>
 #include "FourierTransform.hpp"
-#include "BitReversePermutation.hpp"
+#include "BitReversalPermutation.hpp"
 #include "VectorExporter.hpp"
+#include "Utility.hpp"
 
 using vec = std::vector<std::complex<real>>;
 
@@ -15,7 +16,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Get the size of the sequence.
-	size_t size = 8;
+	size_t size = 1UL << 10;
 	if (argc == 2) size = atoi(argv[1]);
 
 	// Generating a sequence of complex numbers.
@@ -46,16 +47,8 @@ int main(int argc, char* argv[])
 	WriteToFile(sequence, "sequence.csv");
 	WriteToFile(fft_iterative_result, "result.csv");	
 
-	// Bit permutation and OpenMP test.
-	// Suggested value: 1L << 27
-	size_t num_elements = 1UL << 20;
-	
-	unsigned int max_num_threads = 8;
-	for(unsigned int num_threads=1; num_threads<=max_num_threads; num_threads *= 2)
-	{
-		std::cout << "Time for bit permutation with " << num_elements << " elements and " << num_threads << " threads: ";
-		std::cout << CalculateTimeBitReversePermutation(num_elements, num_threads) << "μs" << std::endl;
-	}
+	// Bit permutation and OpenMP test, recommended sequence size: 1UL << 27.
+	TimeEstimateBitReversalPermutation(sequence, 8);
 	
 	return 0;
 }
