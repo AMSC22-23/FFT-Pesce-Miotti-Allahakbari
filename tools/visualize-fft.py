@@ -2,33 +2,25 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Check for correct number of arguments
-if len(sys.argv) != 3:
-    print("Usage: python3 visualize-fft.py <initial-sequence> <result>")
+# Check that at least one argument is provided
+if len(sys.argv) < 2:
+    print(f"Usage: python3 {sys.argv[0]} <sequence 1> <sequence 2> ...")
     exit(1)
 
-# Read data from file
-sequence = np.genfromtxt(sys.argv[1], delimiter=',')
-result = np.genfromtxt(sys.argv[2], delimiter=',')
+# Load all csv files, (real, imaginary) pairs  
+sequences = []
+for i in range(1, len(sys.argv)):
+    sequences.append(np.genfromtxt(sys.argv[i], delimiter=','))
 
-# Set up plot for initial sequence
-plt.subplot(2, 1, 1)
-plt.plot([x[0] for x in sequence])
-plt.plot([x[1] for x in sequence])
-plt.title("Initial Sequence")
-plt.xlabel("Index")
-plt.ylabel("Magnitude")
-plt.legend(["Real", "Imaginary"])
+# Plot each sequence
+for i in range(len(sequences)):
+    plt.subplot(len(sequences), 1, i + 1)
+    plt.plot([x[0] for x in sequences[i]])
+    plt.plot([x[1] for x in sequences[i]])
+    plt.title("Sequence " + str(i + 1) + ": " + sys.argv[i + 1])
+    plt.xlabel("Index")
+    plt.ylabel("Magnitude")
+    plt.legend(["Real", "Imaginary"])
 
-# Set up plot for result
-plt.subplot(2, 1, 2)
-plt.plot([x[0] for x in result])
-plt.plot([x[1] for x in result])
-plt.title("Result")
-plt.xlabel("Index")
-plt.ylabel("Magnitude")
-plt.legend(["Real", "Imaginary"])
-
-# Display plot
 plt.tight_layout()
 plt.show()
