@@ -4,6 +4,7 @@
 #include <complex>
 #include <vector>
 #include <numbers>
+
 #include "Real.hpp"
 
 // Perform the Fourier Transform of a sequence, using the O(n^2) algorithm.
@@ -17,4 +18,4 @@ std::vector<std::complex<real>> FastFourierTransformRecursive(const std::vector<
 // Source: https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
 std::vector<std::complex<real>> FastFourierTransformIterative(const std::vector<std::complex<real>> &sequence);
 
-#endif //FOURIER_TRANSFORM_HPP
+#endif // FOURIER_TRANSFORM_HPP

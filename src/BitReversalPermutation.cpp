@@ -1,9 +1,11 @@
-#include "BitReversalPermutation.hpp"
 #include <chrono>
-#include <tgmath.h>
-#include <omp.h>
 #include <iostream>
 #include <cassert>
+
+#include <tgmath.h>
+#include <omp.h>
+
+#include "BitReversalPermutation.hpp"
 #include "Utility.hpp"
 
 using vec = std::vector<std::complex<real>>;
@@ -22,9 +24,9 @@ size_t BitReverse(const size_t index, const size_t bitsize)
 	return result;
 }
 
-// Compute the permutation of "sequence" in which elements at index i and rev(i) are swapped
+// Compute the permutation of a sequence in which elements at index i and rev(i) are swapped,
 // where rev(i) is obtained from i by considering it as a log2(sequence.size())-bit word and reversing the bit order.
-// "sequence" must have a power of 2 elements.
+// Note that sequence.size() must be a power of 2.
 // O(n*log(n)) algorithm.
 vec BitReversalPermutation(const vec &sequence) 
 {
@@ -45,9 +47,9 @@ vec BitReversalPermutation(const vec &sequence)
 	return result;
 }
 
-// Compute the permutation of "sequence" in which elements at index i and rev(i) are swapped
+// Compute the permutation of a sequence in which elements at index i and rev(i) are swapped,
 // where rev(i) is obtained from i by considering it as a log2(sequence.size())-bit word and reversing the bit order.
-// "sequence" must have a power of 2 elements.
+// Note that sequence.size() must be a power of 2.
 // O(n) algorithm, adapted from: https://folk.idi.ntnu.no/elster/pubs/elster-bit-rev-1989.pdf
 vec FastBitReversalPermutation(const vec &sequence) 
 {
@@ -97,7 +99,7 @@ vec FastBitReversalPermutation(const vec &sequence)
 }
 
 // Calculate the time needed to compute "BitReversalPermutation(sequence)" and "FastBitReversalPermutation(sequence)" 
-// with 1 to "num_threads" threads in microseconds, compare the output sequences print the results.
+// with 1 to "max_num_threads" threads, expressed in microseconds, compare the output sequences, and print the results.
 void TimeEstimateBitReversalPermutation(const vec &sequence, unsigned int max_num_threads) 
 {
 	// Calculate sequence size.

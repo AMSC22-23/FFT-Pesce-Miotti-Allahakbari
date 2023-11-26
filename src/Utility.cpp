@@ -1,5 +1,6 @@
-#include "Utility.hpp"
 #include <iostream>
+
+#include "Utility.hpp"
 
 using vec = std::vector<std::complex<real>>;
 
