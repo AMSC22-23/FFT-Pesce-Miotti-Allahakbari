@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "FourierTransform.hpp"
+#include "InverseFourierTransform.hpp"
 #include "BitReversalPermutation.hpp"
 #include "VectorExporter.hpp"
 #include "Utility.hpp"
@@ -50,8 +51,11 @@ int main(int argc, char* argv[])
 	// Check the results for errors.
 	std::cout << std::endl;
 	if (!CompareResult(dft_result, fft_recursive_result, 1e-4, false)) std::cerr << "Errors detected in recursive FFT." << std::endl;
-	else if (!CompareResult(dft_result, fft_iterative_result, 1e-4, false)) std::cerr << "Errors detected in iterative FFT." << std::endl;
-	else std::cout << "No errors detected." << std::endl << std::endl;
+	if (!CompareResult(dft_result, fft_iterative_result, 1e-4, false)) std::cerr << "Errors detected in iterative FFT." << std::endl;
+
+	// Compute the O(n^2) Inverse Fourier Transform of the result.
+	vec idft_result = InverseDiscreteFourierTransform(fft_iterative_result);
+	WriteToFile(idft_result, "idft_result.csv");
 
 	// Bit permutation and OpenMP test, recommended sequence size: 1UL << 27.
 	TimeEstimateBitReversalPermutation(sequence, 8);

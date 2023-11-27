@@ -63,14 +63,7 @@ vec FastFourierTransformRecursive(const vec &sequence)
 	vec odd_result = FastFourierTransformRecursive(odd_sequence);
 
 	// Combining the two results.
-	vec result;
-	result.reserve(n);
-
-	// Dummy fill the result vector. 
-	for (size_t k = 0; k < n; k++)
-	{
-		result.emplace_back(0);
-	}
+	vec result(n, 0.0);
 
 	// Implementing the Cooley-Tukey algorithm.
 	for (size_t k = 0; k < n / 2; k++)
