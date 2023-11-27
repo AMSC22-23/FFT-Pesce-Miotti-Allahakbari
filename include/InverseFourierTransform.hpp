@@ -1,5 +1,5 @@
 #ifndef INVERSE_FOURIER_TRANSFORM_HPP
-#define INVERSE_TRANSFORM_HPP
+#define INVERSE_FOURIER_TRANSFORM_HPP
 
 #include <complex>
 #include <vector>
