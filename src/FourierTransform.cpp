@@ -1,9 +1,10 @@
+#include "FourierTransform.hpp"
+
 #include <cassert>
 #include <iostream>
 
 #include <tgmath.h>
 
-#include "FourierTransform.hpp"
 #include "BitReversalPermutation.hpp"
 
 using vec = std::vector<std::complex<real>>;

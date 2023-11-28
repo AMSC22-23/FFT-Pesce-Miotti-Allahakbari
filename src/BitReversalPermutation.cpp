@@ -1,3 +1,5 @@
+#include "BitReversalPermutation.hpp"
+
 #include <chrono>
 #include <iostream>
 #include <cassert>
@@ -5,7 +7,6 @@
 #include <tgmath.h>
 #include <omp.h>
 
-#include "BitReversalPermutation.hpp"
 #include "Utility.hpp"
 
 using vec = std::vector<std::complex<real>>;

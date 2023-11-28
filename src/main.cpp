@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	if (!CompareResult(dft_result, fft_iterative_result, 1e-4, false)) std::cerr << "Errors detected in iterative FFT." << std::endl;
 
 	// Compute the O(n^2) Inverse Fourier Transform of the result.
-	vec idft_result = InverseDiscreteFourierTransform(fft_iterative_result);
+	vec idft_result = InverseFastFourierTransformIterative(fft_iterative_result);
 	WriteToFile(idft_result, "idft_result.csv");
 
 	// Bit permutation and OpenMP test, recommended sequence size: 1UL << 27.
