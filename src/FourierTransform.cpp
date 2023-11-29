@@ -1,14 +1,50 @@
 #include "FourierTransform.hpp"
 
+#include <omp.h>
 #include <tgmath.h>
 
 #include <cassert>
+#include <chrono>
 #include <iostream>
 
 #include "BitReversalPermutation.hpp"
+#include "Utility.hpp"
 
 using vec = std::vector<std::complex<real>>;
 
+void TimeEstimateFFT(const vec &sequence, unsigned int max_num_threads) {
+  // Calculate sequence size.
+  const size_t size = sequence.size();
+  unsigned long serial_standard_time = 0;
+  unsigned long serial_fast_time = 0;
+
+  // For each thread number.
+  for (unsigned int num_threads = 1; num_threads <= max_num_threads;
+       num_threads *= 2) {
+    // Set the number of threads.
+    omp_set_num_threads(num_threads);
+
+    // Execute the fft.
+    auto t0 = std::chrono::high_resolution_clock::now();
+    const vec fast_result = FastFourierTransformIterative(sequence);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    const auto fast_time =
+        std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
+    if (num_threads == 1) serial_fast_time = fast_time;
+    std::cout << "Time for parallel FFT with " << size << " elements and "
+              << num_threads << " threads: " << fast_time << "μs" << std::endl;
+
+    // Calculate and print speedups.
+    std::cout << "Speedup over serial standard: "
+              << static_cast<double>(serial_standard_time) / fast_time << "x"
+              << std::endl;
+    std::cout << "Speedup over fast standard: "
+              << static_cast<double>(serial_fast_time) / fast_time << "x"
+              << std::endl;
+
+    std::cout << std::endl;
+  }
+}
 // Perform the Fourier Transform of a sequence, using the O(n^2) algorithm.
 vec DiscreteFourierTransform(const vec &sequence) {
   // Defining some useful aliases.
