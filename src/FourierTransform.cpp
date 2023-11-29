@@ -98,7 +98,7 @@ vec FastFourierTransformIterative(const vec &sequence) {
     const std::complex<real> omega_d =
         std::exp(std::complex<real>{0, -2 * pi / m});
 
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic)
     for (size_t k = 0; k < n; k += m) {
       std::complex<real> omega{1, 0};
 
