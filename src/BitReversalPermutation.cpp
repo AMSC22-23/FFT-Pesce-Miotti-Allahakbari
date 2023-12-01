@@ -24,6 +24,27 @@ size_t BitReverse(const size_t index, const size_t bitsize) {
   return result;
 }
 
+// Compute the reverse bit order of "index", given a bitsize.
+// More efficient implementation
+// Source: https://rosettacode.org/wiki/Fast_Fourier_transform#C.2B.2B
+size_t MaskBitReverse(const size_t index, const size_t bitsize) {
+  // Initialize the result.
+  size_t result = index;
+
+  result = (((result & 0xaaaaaaaaaaaaaaaa) >> 1) |
+            ((result & 0x5555555555555555) << 1));
+  result = (((result & 0xcccccccccccccccc) >> 2) |
+            ((result & 0x3333333333333333) << 2));
+  result = (((result & 0xf0f0f0f0f0f0f0f0) >> 4) |
+            ((result & 0x0f0f0f0f0f0f0f0f) << 4));
+  result = (((result & 0xff00ff00ff00ff00) >> 8) |
+            ((result & 0x00ff00ff00ff00ff) << 8));
+  result = (((result & 0xffff0000ffff0000) >> 16) |
+            ((result & 0x0000ffff0000ffff) << 16));
+  result = ((result >> 32) | (result << 32)) >> (64 - bitsize);
+  return result;
+}
+
 // Compute the permutation of a sequence in which elements at index i and rev(i)
 // are swapped, where rev(i) is obtained from i by considering it as a
 // log2(sequence.size())-bit word and reversing the bit order. Note that
@@ -40,7 +61,7 @@ vec BitReversalPermutation(const vec &sequence) {
 // Call BitReverse on all elements on the sequence.
 #pragma omp parallel for
   for (size_t i = 0; i < n; i++) {
-    result[i] = sequence[BitReverse(i, bitsize)];
+    result[i] = sequence[MaskBitReverse(i, bitsize)];
   }
   return result;
 }

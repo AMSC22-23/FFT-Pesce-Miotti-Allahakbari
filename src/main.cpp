@@ -10,7 +10,7 @@ using vec = std::vector<std::complex<real>>;
 
 int main(int argc, char* argv[]) {
   // Set a default size for the sequence.
-  size_t size = 1UL << 27;
+  size_t size = 1UL << 25;
 
   // Check the number of arguments.
   if (argc > 2) {
