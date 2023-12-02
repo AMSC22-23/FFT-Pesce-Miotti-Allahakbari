@@ -56,15 +56,15 @@ vec InverseFastFourierTransformIterative(const vec &sequence) {
     const std::complex<real> omega_d =
         std::exp(std::complex<real>{0, 2 * pi / m});
 
+#pragma omp parallel for default(none) firstprivate(omega_d, m, n) \
+    shared(result) schedule(static) collapse(2)
     for (size_t k = 0; k < n; k += m) {
-      std::complex<real> omega{1, 0};
-
       for (size_t j = 0; j < m / 2; j++) {
-        const std::complex<real> t = omega * result[k + j + m / 2];
+        const std::complex<real> t =
+            std::pow(omega_d, j) * result[k + j + m / 2];
         const std::complex<real> u = result[k + j];
         result[k + j] = u + t;
         result[k + j + m / 2] = u - t;
-        omega *= omega_d;
       }
     }
   }
