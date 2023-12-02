@@ -15,7 +15,6 @@ using vec = std::vector<std::complex<real>>;
 void TimeEstimateFFT(const vec &sequence, unsigned int max_num_threads) {
   // Calculate sequence size.
   const size_t size = sequence.size();
-  unsigned long serial_standard_time = 0;
   unsigned long serial_fast_time = 0;
 
   // For each thread number.
@@ -35,9 +34,6 @@ void TimeEstimateFFT(const vec &sequence, unsigned int max_num_threads) {
               << num_threads << " threads: " << fast_time << "μs" << std::endl;
 
     // Calculate and print speedups.
-    std::cout << "Speedup over serial standard: "
-              << static_cast<double>(serial_standard_time) / fast_time << "x"
-              << std::endl;
     std::cout << "Speedup over fast standard: "
               << static_cast<double>(serial_fast_time) / fast_time << "x"
               << std::endl;
