@@ -15,4 +15,4 @@ using real = double;
 #endif
 #endif
 
-#endif // REAL_HPP
+#endif  // REAL_HPP

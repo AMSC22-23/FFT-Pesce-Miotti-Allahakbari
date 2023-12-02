@@ -126,7 +126,7 @@ vec FastFourierTransformIterative(const vec &sequence) {
   assert(1UL << log_n == n);
 
   // Initialization of output sequence.
-  vec result = FastBitReversalPermutation(sequence);
+  vec result = BitReversalPermutation(sequence);
 
   // Main loop: looping over the binary tree layers.
   for (size_t s = 1; s <= log_n; s++) {
@@ -134,7 +134,8 @@ vec FastFourierTransformIterative(const vec &sequence) {
     const std::complex<real> omega_d =
         std::exp(std::complex<real>{0, -2 * pi / m});
 
-#pragma omp parallel for schedule(static) collapse(2)
+#pragma omp parallel for default(none) firstprivate(omega_d, m, n) \
+    shared(result) schedule(static) collapse(2)
     for (size_t k = 0; k < n; k += m) {
       for (size_t j = 0; j < m / 2; j++) {
         const std::complex<real> t =
