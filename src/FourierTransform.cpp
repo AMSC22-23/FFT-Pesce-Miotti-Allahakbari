@@ -127,15 +127,14 @@ vec FastFourierTransformIterative(const vec &sequence) {
   // Main loop: looping over the binary tree layers.
   for (size_t s = 1; s <= log_n; s++) {
     const size_t m = 1UL << s;
-    const std::complex<real> omega_d =
-        std::exp(std::complex<real>{0, -2 * pi / m});
 
-#pragma omp parallel for default(none) firstprivate(omega_d, m, n) \
-    shared(result) schedule(static) collapse(2)
+#pragma omp parallel for default(none) firstprivate(m, n) shared(result) \
+    schedule(static) collapse(2)
     for (size_t k = 0; k < n; k += m) {
       for (size_t j = 0; j < m / 2; j++) {
-        const std::complex<real> t =
-            std::pow(omega_d, j) * result[k + j + m / 2];
+        const std::complex<real> omega =
+            std::exp(std::complex<real>{0, (-2 * pi / m) * j});
+        const std::complex<real> t = omega * result[k + j + m / 2];
         const std::complex<real> u = result[k + j];
         result[k + j] = u + t;
         result[k + j + m / 2] = u - t;
