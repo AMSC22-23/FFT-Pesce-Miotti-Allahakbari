@@ -126,6 +126,9 @@ vec FastFourierTransformIterative(const vec &sequence) {
   // Initialization of output sequence.
   vec result = BitReversalPermutation(sequence);
 
+  vec omega;
+  omega.reserve(n);
+
   // Main loop: looping over the binary tree layers.
   for (size_t s = 1; s <= log_n; s++) {
     const size_t m = 1UL << s;
