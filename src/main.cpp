@@ -1,3 +1,5 @@
+#include <omp.h>
+
 #include <iostream>
 
 #include "BitReversalPermutation.hpp"
@@ -10,7 +12,7 @@ using vec = std::vector<std::complex<real>>;
 
 int main(int argc, char* argv[]) {
   // Set a default size for the sequence.
-  size_t size = 1UL << 25;
+  size_t size = 1UL << 27;
 
   // Check the number of arguments.
   if (argc > 2) {
@@ -32,12 +34,14 @@ int main(int argc, char* argv[]) {
     sequence.emplace_back(rand() % 100, rand() % 100);
   }
 
+  omp_set_num_threads(1);
+
   // Save the sequence to a file.
   // WriteToFile(sequence, "sequence.csv");
 
   // Compute the O(n^2) Fourier Transform of the sequence.
   // vec dft_result = DiscreteFourierTransform(sequence);
-  // WriteToFile(dft_result, "dft_result.csv");
+  //  WriteToFile(dft_result, "dft_result.csv");
 
   // Compute the O(n log n) Fourier Transform of the sequence with the recursive
   // algorithm. vec fft_recursive_result =
@@ -54,7 +58,7 @@ int main(int argc, char* argv[]) {
   // if (!CompareResult(dft_result, fft_recursive_result, 1e-4, false))
   // std::cerr << "Errors detected in recursive FFT." << std::endl;
   // if (!CompareResult(dft_result, fft_iterative_result, 1e-4, false))
-  //   std::cerr << "Errors detected in iterative FFT." << std::endl;
+  // std::cerr << "Errors detected in iterative FFT." << std::endl;
 
   // Compute the O(n^2) Inverse Fourier Transform of the result.
   // vec idft_result =

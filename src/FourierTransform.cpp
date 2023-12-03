@@ -12,6 +12,8 @@
 
 using vec = std::vector<std::complex<real>>;
 
+vec FastFourierTransformIterativeOmegas(const vec &sequence);
+
 void TimeEstimateFFT(const vec &sequence, unsigned int max_num_threads) {
   // Calculate sequence size.
   const size_t size = sequence.size();
@@ -127,18 +129,135 @@ vec FastFourierTransformIterative(const vec &sequence) {
   // Main loop: looping over the binary tree layers.
   for (size_t s = 1; s <= log_n; s++) {
     const size_t m = 1UL << s;
+    const size_t half_m = m >> 1UL;
 
-#pragma omp parallel for default(none) firstprivate(m, n) shared(result) \
-    schedule(static) collapse(2)
+    const std::complex<real> omega_d =
+        std::exp(std::complex<real>{0, -pi / half_m});
+
+#pragma omp parallel for default(none) firstprivate(m, half_m, n, omega_d) \
+    shared(result) schedule(static)
     for (size_t k = 0; k < n; k += m) {
-      for (size_t j = 0; j < m / 2; j++) {
-        const std::complex<real> omega =
-            std::exp(std::complex<real>{0, (-2 * pi / m) * j});
-        const std::complex<real> t = omega * result[k + j + m / 2];
-        const std::complex<real> u = result[k + j];
-        result[k + j] = u + t;
-        result[k + j + m / 2] = u - t;
+      std::complex<real> omega(1, 0);
+      for (size_t j = 0; j < half_m; j++) {
+        const size_t k_plus_j = k + j;
+        const std::complex<real> t = omega * result[k_plus_j + half_m];
+        const std::complex<real> u = result[k_plus_j];
+        result[k_plus_j] = u + t;
+        result[k_plus_j + half_m] = u - t;
       }
+      omega *= omega_d;
+    }
+  }
+
+  return result;
+}
+
+// A version of FastFourierTransformIterative that allows for fusion of the two
+// inner looops. Experimental.
+vec FastFourierTransformIterativeOmegas(const vec &sequence) {
+  // Defining some useful aliases.
+  constexpr real pi = std::numbers::pi_v<real>;
+  const size_t n = sequence.size();
+  const size_t half_n = n >> 1;
+  const unsigned int num_threads = omp_get_num_threads();
+
+  // Check that the size of the sequence is a power of 2.
+  const size_t log_n = static_cast<size_t>(log2(n));
+  assert(1UL << log_n == n);
+
+  // Initialization of output sequence.
+  vec result = BitReversalPermutation(sequence);
+
+  // Creation of a support vector to store values of omega.
+  vec omegas(half_n, 0);
+
+  // Main loop: looping over the binary tree layers.
+  for (size_t s = 1; s <= log_n; s++) {
+    const size_t m = 1UL << s;
+    const size_t half_m = m >> 1UL;
+
+    const std::complex<real> omega_d =
+        std::exp(std::complex<real>{0, -pi / half_m});
+
+#pragma omp parallel for default(none) shared(omegas) \
+    firstprivate(num_threads, half_m, pi, omega_d)
+    for (unsigned int thread = 0; thread < num_threads; thread++) {
+      const size_t iterations = half_m / num_threads;
+      const size_t base_index = iterations * thread;
+      omegas[base_index] =
+          std::exp(std::complex<real>{0, -base_index * pi / half_m});
+      for (size_t i = base_index + 1; i < base_index + iterations; i++) {
+        omegas[i] = omegas[i - 1] * omega_d;
+      }
+    }
+
+#pragma omp parallel for default(none) firstprivate(m, half_m, n) \
+    shared(result, omegas) schedule(static) collapse(2)
+    for (size_t k = 0; k < n; k += m) {
+      for (size_t j = 0; j < half_m; j++) {
+        const size_t k_plus_j = k + j;
+        const std::complex<real> t = omegas[j] * result[k_plus_j + half_m];
+        const std::complex<real> u = result[k_plus_j];
+        result[k_plus_j] = u + t;
+        result[k_plus_j + half_m] = u - t;
+      }
+    }
+  }
+
+  return result;
+}
+
+// A version of FastFourierTransformIterativeOmegas that manually fuses the two
+// inner looops. Experimental.
+vec FastFourierTransformIterativeCollapsed(const vec &sequence) {
+  // Defining some useful aliases.
+  constexpr real pi = std::numbers::pi_v<real>;
+  const size_t n = sequence.size();
+  const size_t half_n = n >> 1;
+  const unsigned int num_threads = omp_get_num_threads();
+
+  // Check that the size of the sequence is a power of 2.
+  const size_t log_n = static_cast<size_t>(log2(n));
+  assert(1UL << log_n == n);
+
+  // Initialization of output sequence.
+  vec result = BitReversalPermutation(sequence);
+
+  // Creation of a support vector to store values of omega.
+  vec omegas(half_n, 0);
+
+  // Main loop: looping over the binary tree layers.
+  for (size_t s = 1; s <= log_n; s++) {
+    const size_t m = 1UL << s;
+    const size_t half_m = m >> 1UL;
+    const size_t s_minus_1 = s - 1UL;
+
+    const std::complex<real> omega_d =
+        std::exp(std::complex<real>{0, -pi / half_m});
+
+#pragma omp parallel for default(none) shared(omegas) \
+    firstprivate(num_threads, half_m, pi, omega_d)
+    for (unsigned int thread = 0; thread < num_threads; thread++) {
+      const size_t iterations = half_m / num_threads;
+      const size_t base_index = iterations * thread;
+      omegas[base_index] =
+          std::exp(std::complex<real>{0, -base_index * pi / half_m});
+      for (size_t i = base_index + 1; i < base_index + iterations; i++) {
+        omegas[i] = omegas[i - 1] * omega_d;
+      }
+    }
+
+#pragma omp parallel for default(none)                                   \
+    firstprivate(half_m, half_n, s_minus_1, s, m) shared(result, omegas) \
+    schedule(static)
+    for (size_t index = 0; index < half_n; index++) {
+      const size_t k = (index >> s_minus_1) << s;
+      const size_t j = index % half_m;
+      const size_t k_plus_j = k + j;
+      const std::complex<real> t = omegas[j] * result[k_plus_j + half_m];
+      const std::complex<real> u = result[k_plus_j];
+      result[k_plus_j] = u + t;
+      result[k_plus_j + half_m] = u - t;
     }
   }
 

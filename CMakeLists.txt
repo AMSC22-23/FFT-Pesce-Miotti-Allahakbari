@@ -5,7 +5,7 @@ project(fft VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 20)
 
 #Set compiler flags for Release
-set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wextra -Ofast -march=native -mtune=native -funroll-all-loops")
+set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wextra -Ofast -march=native -mtune=native -funroll-all-loops -flto -fno-signed-zeros -fno-trapping-math")
 
 #Set flags for Debug
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra")
