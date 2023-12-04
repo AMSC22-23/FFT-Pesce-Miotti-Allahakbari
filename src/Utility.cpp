@@ -2,13 +2,12 @@
 
 #include <iostream>
 
-using vec = std::vector<std::complex<real>>;
+using namespace FourierTransform;
 
-// Compare the values of "sequence" with those of "sequence_golden" and return
-// true if the difference between the two is less than "precision" for all
-// elements.
-bool CompareResult(const vec &sequence_golden, const vec &sequence,
-                   double precision, bool print_errors) {
+// Compare "sequence_golden" and "sequence", assuming the first one is correct,
+// with floating point precision "precision".
+bool CompareVectors(const vec &sequence_golden, const vec &sequence,
+                    double precision, bool print_errors) {
   // Assert that the two sequences have the same length.
   if (sequence_golden.size() != sequence.size()) {
     if (print_errors)
@@ -37,4 +36,14 @@ bool CompareResult(const vec &sequence_golden, const vec &sequence,
   std::cout << std::endl;
 
   return false;
+}
+
+void ScaleVector(vec &vector, const real scalar) {
+  // Get the size of the vector
+  const size_t n = vector.size();
+
+#pragma omp parallel for default(none) shared(vector) firstprivate(n, scalar)
+  for (size_t i = 0; i < n; i++) {
+    vector[i] *= scalar;
+  }
 }

@@ -9,10 +9,10 @@
 
 #include "Utility.hpp"
 
-using vec = std::vector<std::complex<real>>;
+namespace FourierTransform {
 
 // Compute the reverse bit order of "index", given a bitsize.
-size_t BitReverse(const size_t index, const size_t bitsize) {
+size_t NaiveBitReverse(const size_t index, const size_t bitsize) {
   // Initialize the result.
   size_t result = 0;
 
@@ -25,7 +25,7 @@ size_t BitReverse(const size_t index, const size_t bitsize) {
 }
 
 // Compute the reverse bit order of "index", given a bitsize.
-// More efficient implementation
+// More efficient implementation.
 // Source: https://rosettacode.org/wiki/Fast_Fourier_transform#C.2B.2B
 size_t MaskBitReverse(const size_t index, const size_t bitsize) {
   // Initialize the result.
@@ -45,51 +45,58 @@ size_t MaskBitReverse(const size_t index, const size_t bitsize) {
   return result;
 }
 
-// Compute the permutation of a sequence in which elements at index i and rev(i)
-// are swapped, where rev(i) is obtained from i by considering it as a
-// log2(sequence.size())-bit word and reversing the bit order. Note that
-// sequence.size() must be a power of 2. O(n*log(n)) algorithm.
-vec BitReversalPermutation(const vec &sequence) {
+// Call BitReverse on all elements of "input_sequence".
+void NaiveBitReversalPermutationAlgorithm::operator()(
+    const vec &input_sequence, vec &output_sequence) const {
   // Get the size and bitsize of the sequence, then perform a sanity check.
-  const size_t n = sequence.size();
+  const size_t n = input_sequence.size();
   const size_t bitsize = static_cast<size_t>(log2(n));
   assert(1UL << bitsize == n);
 
-  // Initialize the result vector.
-  vec result(n, 0);
-
-// Call BitReverse on all elements on the sequence.
+  // Call BitReverse on all elements of input_sequence, then copy the values
+  // into output_sequence.
 #pragma omp parallel for
   for (size_t i = 0; i < n; i++) {
-    result[i] = sequence[MaskBitReverse(i, bitsize)];
+    output_sequence[i] = input_sequence[NaiveBitReverse(i, bitsize)];
   }
-  return result;
 }
 
-// Compute the permutation of a sequence in which elements at index i and rev(i)
-// are swapped, where rev(i) is obtained from i by considering it as a
-// log2(sequence.size())-bit word and reversing the bit order. Note that
-// sequence.size() must be a power of 2. O(n) algorithm, adapted from:
-// https://folk.idi.ntnu.no/elster/pubs/elster-bit-rev-1989.pdf
-vec FastBitReversalPermutation(const vec &sequence) {
+// Call MaskBitReverse on all elements of "input_sequence".
+void MaskBitReversalPermutationAlgorithm::operator()(
+    const vec &input_sequence, vec &output_sequence) const {
   // Get the size and bitsize of the sequence, then perform a sanity check.
-  const size_t num_elements = sequence.size();
+  const size_t n = input_sequence.size();
+  const size_t bitsize = static_cast<size_t>(log2(n));
+  assert(1UL << bitsize == n);
+
+  // Call BitReverse on all elements on the sequence.
+#pragma omp parallel for
+  for (size_t i = 0; i < n; i++) {
+    output_sequence[i] = input_sequence[MaskBitReverse(i, bitsize)];
+  }
+}
+
+// Perform BitReversalPermutation of the entire sequence in O(n) by reusing
+// computed values.
+void FastBitReversalPermutationAlgorithm::operator()(
+    const vec &input_sequence, vec &output_sequence) const {
+  // Get the size and bitsize of the sequence, then perform a sanity check.
+  const size_t num_elements = input_sequence.size();
   const size_t bitsize = static_cast<size_t>(log2(num_elements));
   assert(1UL << bitsize == num_elements);
 
   // Base case: the sequence is 0 or 1 elements long.
   if (num_elements < 2) {
-    return vec(sequence);
+    output_sequence = vec(input_sequence);
   }
 
-  // Initialize the output and a temporary vector.
+  // Initialize a temporary vector.
   std::vector<size_t> coefficients(num_elements, 0);
-  vec result(num_elements, 0);
 
   // Set the values for the first 2 indices.
   coefficients[1] = 1;
-  result[0] = sequence[0];
-  result[1] = sequence[num_elements >> 1];
+  output_sequence[0] = input_sequence[0];
+  output_sequence[1] = input_sequence[num_elements >> 1];
 
   // For each group separated by stiffled lines, after the first one.
   for (size_t q = 1; q < bitsize; q++) {
@@ -97,8 +104,9 @@ vec FastBitReversalPermutation(const vec &sequence) {
     const size_t right_zeros = bitsize - q - 1;
     const size_t group_size = L >> 1;
 
-// For each element of the group, calculate indices and copy values.
-#pragma omp parallel for default(none) shared(result, coefficients, sequence) \
+    // For each element of the group, calculate indices and copy values.
+#pragma omp parallel for default(none)                    \
+    shared(output_sequence, coefficients, input_sequence) \
     firstprivate(L, right_zeros, group_size)
     for (size_t j = 0; j < group_size; j++) {
       const size_t coeff1 = coefficients[group_size + j];
@@ -108,68 +116,76 @@ vec FastBitReversalPermutation(const vec &sequence) {
 
       coefficients[index1] = coeff1;
       coefficients[index2] = coeff2;
-      result[index1] = sequence[coeff1 << right_zeros];
-      result[index2] = sequence[coeff2 << right_zeros];
+      output_sequence[index1] = input_sequence[coeff1 << right_zeros];
+      output_sequence[index2] = input_sequence[coeff2 << right_zeros];
     }
   }
-
-  return result;
 }
 
-// Calculate the time needed to compute "BitReversalPermutation(sequence)" and
-// "FastBitReversalPermutation(sequence)" with 1 to "max_num_threads" threads,
-// expressed in microseconds, compare the output sequences, and print the
-// results.
-void TimeEstimateBitReversalPermutation(const vec &sequence,
+// Calculate time for execution using chrono.
+unsigned long BitReversalPermutationAlgorithm::calculateTime(
+    const vec &input_sequence, vec &output_sequence) const {
+  auto t0 = std::chrono::high_resolution_clock::now();
+  this->operator()(input_sequence, output_sequence);
+  auto t1 = std::chrono::high_resolution_clock::now();
+  const auto time =
+      std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
+  return time;
+}
+
+void CompareTimesBitReversalPermutation(const vec &sequence,
                                         unsigned int max_num_threads) {
   // Calculate sequence size.
   const size_t size = sequence.size();
-  unsigned long serial_standard_time = 0;
+  unsigned long serial_mask_time = 0;
   unsigned long serial_fast_time = 0;
 
-  // For each thread number.
+  // Create the output sequences.
+  vec mask_result(size, 0);
+  vec fast_result(size, 0);
+
+  // Create an instance of the needed algorithms.
+  MaskBitReversalPermutationAlgorithm mask_algorithm;
+  FastBitReversalPermutationAlgorithm fast_algorithm;
+
+  // For each number of threads.
   for (unsigned int num_threads = 1; num_threads <= max_num_threads;
        num_threads *= 2) {
     // Set the number of threads.
     omp_set_num_threads(num_threads);
 
-    // Execute the standard bit reversal.
-    auto t0 = std::chrono::high_resolution_clock::now();
-    const vec standard_result = BitReversalPermutation(sequence);
-    auto t1 = std::chrono::high_resolution_clock::now();
-    const auto standard_time =
-        std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
-    if (num_threads == 1) serial_standard_time = standard_time;
-    std::cout << "Time for standard bit reversal permutation with " << size
-              << " elements and " << num_threads
-              << " threads: " << standard_time << "μs" << std::endl;
+    // Execute the mask bit reversal.
+    const unsigned long mask_time =
+        mask_algorithm.calculateTime(sequence, mask_result);
+    if (num_threads == 1) serial_mask_time = mask_time;
+    std::cout << "Time for mask bit reversal permutation with " << size
+              << " elements and " << num_threads << " threads: " << mask_time
+              << "μs" << std::endl;
 
     // Execute the fast bit reversal.
-    t0 = std::chrono::high_resolution_clock::now();
-    const vec fast_result = FastBitReversalPermutation(sequence);
-    t1 = std::chrono::high_resolution_clock::now();
-    const auto fast_time =
-        std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
+    const unsigned long fast_time =
+        fast_algorithm.calculateTime(sequence, fast_result);
     if (num_threads == 1) serial_fast_time = fast_time;
     std::cout << "Time for fast bit reversal permutation with " << size
               << " elements and " << num_threads << " threads: " << fast_time
               << "μs" << std::endl;
 
     // Calculate and print speedups.
-    std::cout << "Speedup over parallel standard: "
-              << static_cast<double>(standard_time) / fast_time << "x"
+    std::cout << "Mask speedup: "
+              << static_cast<double>(serial_mask_time) / mask_time << "x"
               << std::endl;
-    std::cout << "Speedup over serial standard: "
-              << static_cast<double>(serial_standard_time) / fast_time << "x"
-              << std::endl;
-    std::cout << "Speedup over parallel fast: "
+    std::cout << "Fast speedup: "
               << static_cast<double>(serial_fast_time) / fast_time << "x"
               << std::endl;
+    std::cout << "Winner: " << (fast_time < mask_time ? "Fast" : "Mask")
+              << std::endl;
 
-    // Check the results.
-    if (!CompareResult(standard_result, fast_result, 0, false))
+    // Compare the results.
+    if (!CompareVectors(mask_result, fast_result, 0, false))
       std::cout << "The methods provide different results!" << std::endl;
 
     std::cout << std::endl;
   }
 }
+
+}  // namespace FourierTransform

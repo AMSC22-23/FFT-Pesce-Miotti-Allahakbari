@@ -4,9 +4,9 @@
 #include <iomanip>
 #include <iostream>
 
-// Utility function to write a sequence of complex numbers to a file.
-void WriteToFile(const std::vector<std::complex<real>> &sequence,
-                 const std::string &filename) {
+using namespace FourierTransform;
+
+void WriteToFile(const vec &sequence, const std::string &filename) {
   // Open the file.
   std::ofstream file(filename);
 
