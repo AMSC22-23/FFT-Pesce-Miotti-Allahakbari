@@ -111,4 +111,10 @@ reason is that on the source website above, we assume that we know our full sign
 begin with, which is not the case in our application. Therefore, we cannot simply pad 
 the signal periodically, because we don't know what the signal looks like after the 
 last sample.
+
+Additionally, this answer:
+https://math.stackexchange.com/questions/256791/zero-padding-data-for-fft
+seems to suggest that true fast padding is never accurate. The answer even
+goes as far as to suggest that we should do the IFFT, then DFT, which is definitely
+not what we want to do.
 '''
