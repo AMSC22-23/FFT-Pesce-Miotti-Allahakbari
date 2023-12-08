@@ -64,19 +64,24 @@ periodic_padded = periodic_pad(signal, new_width)
 
 # We can now apply numpy's fft to the signals.
 regular_fft = np.fft.fft(signal)
-zero_padded_fft = np.fft.fft(zero_padded)
 periodic_padded_fft = np.fft.fft(periodic_padded)
 
-# Let's restrict the periodic padded signal to the same size as the input.
+# Let's restrict the zero padded signal to the same size as the input.
 ratio = original_width / new_width
-restricted = restrict(periodic_padded_fft, original_width, ratio)
+zero_padded_fft = np.fft.fft(zero_padded)
+
+# No need to change the height of the signal, since we're not repeating it.
+zero_padded_fft = restrict(zero_padded_fft, original_width)
+
+# Let's restrict the periodic padded signal to the same size as the input.
+periodic_padded_fft = restrict(periodic_padded_fft, original_width, ratio)
 
 # We'll now plot the input signal, the regular non-padded fft,
 # the zero padded result, and the periodic result.
 plot(signal, "Input signal")
 plot(regular_fft, "Regular FFT")
-plot(zero_padded_fft, "Zero padded FFT (should be incorrect)")
-plot(restricted, "Periodic padded & restricted FFT")
+plot(zero_padded_fft, "Zero padded & restricted FFT")
+plot(periodic_padded_fft, "Periodic padded & restricted FFT")
 
 plt.show()
 
