@@ -1,4 +1,16 @@
 
+'''
+This short script is used to better understand the effect of multiple types
+of padding, before we choose how to implement them in cpp, namely:
+
++ Regular zero-padding.
++ Padding with a periodic continuation of the signal.
+
+This script will also experiment with restricting the output signal to be
+the same size as the input signal, by trivially removing elements in an
+uniform pattern.
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 
