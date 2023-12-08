@@ -98,4 +98,12 @@ ratio between the original width and the new width is not an integer. This is be
 the restriction will then have to interpolate badly between the values, which will
 introduce errors. Try to experiment with the ratio parameter in the restrict function
 (try 100/250) and note the visible errors in the plot, even with the sinusoidal input.
+
+IMPORTANT ACKNOWLEDGEMENT:
+Although the periodic padding method had shown some promise, after experimenting with 
+ratio = 129/256, I realized that this whole method might be completely useless. The 
+reason is that on the source website above, we assume that we know our full signal to 
+begin with, which is not the case in our application. Therefore, we cannot simply pad 
+the signal periodically, because we don't know what the signal looks like after the 
+last sample.
 '''
