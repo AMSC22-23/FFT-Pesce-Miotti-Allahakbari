@@ -79,3 +79,23 @@ plot(zero_padded_fft, "Zero padded FFT (should be incorrect)")
 plot(restricted, "Periodic padded & restricted FFT")
 
 plt.show()
+
+'''
+Acknowledgements:
+
+The periodic padding idea does not work as well as I had hoped. The reason
+is that, if the input is completely random, then the periodic padding combined
+with the less-than-ideal restriction will not coincide with the regular fft.
+
+According to https://www.bitweenie.com/listings/fft-zero-padding/ we should consider
+that the non-restricted periodic padding is nevertheless a much more precise
+version of the standard fft, with a higher resolution. This is because the
+periodic padding effectively increases the amount of samples in the signal,
+while keeping the same frequency shape.
+
+My conclusion is that the restriction part is the most problematic, especially if the
+ratio between the original width and the new width is not an integer. This is because
+the restriction will then have to interpolate badly between the values, which will
+introduce errors. Try to experiment with the ratio parameter in the restrict function
+(try 100/250) and note the visible errors in the plot, even with the sinusoidal input.
+'''
