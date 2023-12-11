@@ -119,5 +119,6 @@ int main(int argc, char* argv[]) {
   std::unique_ptr<FourierTransformAlgorithm> iterative_dft2(
       iterative_dft_algorithm2);
   TimeEstimateFFT(iterative_dft2, input_sequence, 8);
+
   return 0;
 }

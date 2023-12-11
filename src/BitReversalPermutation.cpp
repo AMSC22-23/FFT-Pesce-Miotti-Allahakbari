@@ -27,6 +27,7 @@ size_t NaiveBitReverse(const size_t index, const size_t bitsize) {
 // Compute the reverse bit order of "index", given a bitsize.
 // More efficient implementation.
 // Source: https://rosettacode.org/wiki/Fast_Fourier_transform#C.2B.2B
+#pragma omp declare simd linear(index) uniform(bitsize) notinbranch
 size_t MaskBitReverse(const size_t index, const size_t bitsize) {
   // Initialize the result.
   size_t result = index;
