@@ -23,8 +23,9 @@ To use the program, follow these steps:
 
 2. **Run the Program:**
    - After successfully building the program, you can run it by specifying the size of the data sequence. For example, to compute the FFT of a sequence of size 256, use the following command:
-     ```./fft 256
-     ```
+        ```bash
+        ./fft 256
+        ```
    - Replace `256` with the desired size of your data sequence, which must be a power of 2.
 
 ## Implementations
