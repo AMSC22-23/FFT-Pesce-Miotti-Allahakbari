@@ -28,6 +28,23 @@ To use the program, follow these steps:
         ```
    - Replace `256` with the desired size of your data sequence, which must be a power of 2.
 
+### Build Options
+
+The following build options are available:
+
+
+This option builds the program in release mode, which enables compiler optimizations. Namely, this option enables the `-O3` flag, as well as other optimization flags.
+
+```bash
+cmake .. -D CMAKE_BUILD_TYPE=Release
+```
+
+This option builds the program in debug mode, which disables compiler optimizations.
+
+```bash
+cmake .. -D CMAKE_BUILD_TYPE=Debug
+```
+
 ## Implementations
 
 + **Classic DFT:** The classic implementation of the Discrete Fourier Transform (DFT) is provided as the `ClassicalFourierTransformAlgorithm` class. This algorithm is used as a reference for the other implementations.
