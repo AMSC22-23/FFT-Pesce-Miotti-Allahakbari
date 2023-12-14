@@ -33,6 +33,7 @@ int main(int argc, char* argv[]) {
   }
 
   omp_set_num_threads(1);
+  /*
 
   // Save the sequence to a file.
   WriteToFile(input_sequence, "input_sequence.csv");
@@ -109,6 +110,8 @@ int main(int argc, char* argv[]) {
   // Bit reversal permutation test, recommended sequence size: 1UL << 27.
   std::cout << std::endl;
   CompareTimesBitReversalPermutation(input_sequence, 8);
+
+  */
 
   // Calculate the times for up to 8 cores for the iterative fft.
   IterativeFourierTransformAlgorithm* iterative_dft_algorithm2 =
