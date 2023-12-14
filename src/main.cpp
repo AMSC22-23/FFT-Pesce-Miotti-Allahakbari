@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
   using namespace FourierTransform;
 
   // Set a default size for the sequence.
-  size_t size = 1UL << 10;
+  size_t size = 1UL << 27;
 
   // Check the number of arguments.
   if (argc > 2) {
@@ -107,6 +107,7 @@ int main(int argc, char* argv[]) {
     std::cerr << "Errors detected in iterative inverse FFT." << std::endl;
 
   // Bit reversal permutation test, recommended sequence size: 1UL << 27.
+  std::cout << std::endl;
   CompareTimesBitReversalPermutation(input_sequence, 8);
 
   // Calculate the times for up to 8 cores for the iterative fft.

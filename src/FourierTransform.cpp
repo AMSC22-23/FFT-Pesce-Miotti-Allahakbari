@@ -143,14 +143,15 @@ void IterativeFourierTransformAlgorithm::operator()(
     const std::complex<real> omega_d =
         std::exp(std::complex<real>{0, base_angle / half_m});
 
-#pragma omp parallel for default(none) shared(omegas) \
-    firstprivate(num_threads, half_m, base_angle, omega_d)
+    const size_t iterations = half_m / num_threads;
+#pragma omp parallel for default(none) shared(omegas) firstprivate( \
+        num_threads, iterations, half_m, base_angle, omega_d) schedule(static)
     for (unsigned int thread = 0; thread < num_threads; thread++) {
-      const size_t iterations = half_m / num_threads;
       const size_t base_index = iterations * thread;
       omegas[base_index] =
           std::exp(std::complex<real>{0, base_index * base_angle / half_m});
-      for (size_t i = base_index + 1; i < base_index + iterations; i++) {
+      size_t end_index = base_index + iterations;
+      for (size_t i = base_index + 1; i < end_index; i++) {
         omegas[i] = omegas[i - 1] * omega_d;
       }
     }
