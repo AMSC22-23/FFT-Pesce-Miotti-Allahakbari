@@ -91,9 +91,9 @@ void IterativeFourierTransformAlgorithm::operator()(
 
     const std::complex<real> omega_d =
         std::exp(std::complex<real>{0, base_angle / half_m});
-
-#pragma omp parallel for default(none) firstprivate(m, half_m, n, omega_d) \
-    shared(output_sequence) schedule(static)
+#pragma omp parallel default(none) firstprivate(m, half_m, n, omega_d) \
+    shared(output_sequence)
+#pragma omp for nowait schedule(static)
     for (size_t k = 0; k < n; k += m) {
       std::complex<real> omega(1, 0);
       for (size_t j = 0; j < half_m; j++) {
@@ -106,7 +106,7 @@ void IterativeFourierTransformAlgorithm::operator()(
       }
     }
   }
-}
+}  // namespace FourierTransform
 
 /*
 // A version of FastFourierTransformIterative that allows for fusion of the two
