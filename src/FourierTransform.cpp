@@ -84,8 +84,6 @@ void IterativeFourierTransformAlgorithm::operator()(
   // sequence.
   (*bit_reversal_algorithm)(input_sequence, output_sequence);
 
-  vec omega;
-  omega.reserve(n);
   // Main loop: looping over the binary tree layers.
   for (size_t s = 1; s <= log_n; s++) {
     const size_t m = 1UL << s;
@@ -94,21 +92,17 @@ void IterativeFourierTransformAlgorithm::operator()(
     const std::complex<real> omega_d =
         std::exp(std::complex<real>{0, base_angle / half_m});
 
-    omega[0] = std::complex<real>(1, 0);
-
-    for (size_t j = 1; j < half_m; j++) {
-      omega[j] = omega[j - 1] * omega_d;
-    }
 #pragma omp parallel for default(none) firstprivate(m, half_m, n, omega_d) \
-    shared(output_sequence, omega) schedule(static) collapse(2)
+    shared(output_sequence) schedule(static)
     for (size_t k = 0; k < n; k += m) {
+      std::complex<real> omega(1, 0);
       for (size_t j = 0; j < half_m; j++) {
         const size_t k_plus_j = k + j;
-        const std::complex<real> t =
-            omega[j] * output_sequence[k_plus_j + half_m];
+        const std::complex<real> t = omega * output_sequence[k_plus_j + half_m];
         const std::complex<real> u = output_sequence[k_plus_j];
         output_sequence[k_plus_j] = u + t;
         output_sequence[k_plus_j + half_m] = u - t;
+        omega *= omega_d;
       }
     }
   }
