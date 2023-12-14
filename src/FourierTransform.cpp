@@ -106,7 +106,7 @@ void IterativeFourierTransformAlgorithm::operator()(
       }
     }
   }
-}  // namespace FourierTransform
+}
 
 /*
 // A version of FastFourierTransformIterative that allows for fusion of the two
