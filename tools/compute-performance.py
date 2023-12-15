@@ -12,8 +12,8 @@ executing a DFT or recursive FFT is really slow and print other times might brea
 """
 
 #parameters
-output_file = "results.csv" 
-temp_execution_file = "times.txt"
+output_file = "times.csv" 
+temp_execution_file = "temp.txt"
 threads = [1, 2, 4, 8] #changing only this will break the script: main has to be changed as well
 
 #parse arguments
