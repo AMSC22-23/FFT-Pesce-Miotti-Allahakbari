@@ -71,9 +71,6 @@ void MaskBitReversalPermutationAlgorithm::operator()(
   assert(1UL << bitsize == n);
 
   // Call BitReverse on all elements on the sequence.
-  // While an alternative would be looping up to n/2 and swapping two values
-  // each iteration, requiring half the calls to MaskBitReverse, the alternative
-  // is actually slower in practice.
 #pragma omp parallel for firstprivate(n, bitsize) schedule(static)
   for (size_t i = 0; i < n; i++) {
     output_sequence[i] = input_sequence[MaskBitReverse(i, bitsize)];
