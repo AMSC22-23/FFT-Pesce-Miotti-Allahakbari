@@ -19,6 +19,10 @@ bool CompareVectors(const vec &sequence_golden, const vec &sequence,
 
   // Check that the difference between the two sequences is small enough.
   for (size_t i = 0; i < sequence_golden.size(); i++) {
+    //@note The abs function is defined in <cmath>. It is overloaded for
+    //     different types. Better use that version instead of the one in
+    //     <cstdlib>. The latter is for integers.
+    
     if (abs(sequence[i] - sequence_golden[i]) > precision) {
       if (!print_errors) return false;
       errors.emplace_back(i);

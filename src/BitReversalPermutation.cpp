@@ -31,7 +31,10 @@ size_t NaiveBitReverse(const size_t index, const size_t bitsize) {
 size_t MaskBitReverse(const size_t index, const size_t bitsize) {
   // Initialize the result.
   size_t result = index;
-
+//@note to avoid possible problems I would use a static_assert
+//      to verify that result is an unsigned long. Indeed this 
+//      function works only if size_t is an unsigned long
+//      (which is normally the case in a 64 bit architecture)
   result = (((result & 0xaaaaaaaaaaaaaaaa) >> 1) |
             ((result & 0x5555555555555555) << 1));
   result = (((result & 0xcccccccccccccccc) >> 2) |

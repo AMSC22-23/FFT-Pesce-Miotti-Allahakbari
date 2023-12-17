@@ -6,6 +6,9 @@
 
 // A simple way to make the code generic with respect to the real type.
 
+//@note This technique is called a trait. At this point you could have given 
+//     an alias also to other common types used in the code, 
+//     like std::complex<real> 
 namespace FourierTransform {
 
 #ifdef FLOAT

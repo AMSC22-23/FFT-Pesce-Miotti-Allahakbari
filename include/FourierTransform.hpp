@@ -39,7 +39,7 @@ class ClassicalFourierTransformAlgorithm : public FourierTransformAlgorithm {
 class RecursiveFourierTransformAlgorithm : public FourierTransformAlgorithm {
  public:
   void operator()(const vec &input_sequence,
-                  vec &output_sequence) const override;
+                  vec &output_sequence) const override; //@note good the use of override
   ~RecursiveFourierTransformAlgorithm() = default;
 };
 
