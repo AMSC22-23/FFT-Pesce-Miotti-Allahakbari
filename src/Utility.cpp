@@ -1,5 +1,6 @@
 #include "Utility.hpp"
 
+#include <cmath>
 #include <iostream>
 
 using namespace FourierTransform;
@@ -19,7 +20,7 @@ bool CompareVectors(const vec &sequence_golden, const vec &sequence,
 
   // Check that the difference between the two sequences is small enough.
   for (size_t i = 0; i < sequence_golden.size(); i++) {
-    if (abs(sequence[i] - sequence_golden[i]) > precision) {
+    if (std::abs(sequence[i] - sequence_golden[i]) > precision) {
       if (!print_errors) return false;
       errors.emplace_back(i);
     }

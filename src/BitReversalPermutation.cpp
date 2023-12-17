@@ -32,17 +32,30 @@ size_t MaskBitReverse(const size_t index, const size_t bitsize) {
   // Initialize the result.
   size_t result = index;
 
-  result = (((result & 0xaaaaaaaaaaaaaaaa) >> 1) |
-            ((result & 0x5555555555555555) << 1));
-  result = (((result & 0xcccccccccccccccc) >> 2) |
-            ((result & 0x3333333333333333) << 2));
-  result = (((result & 0xf0f0f0f0f0f0f0f0) >> 4) |
-            ((result & 0x0f0f0f0f0f0f0f0f) << 4));
-  result = (((result & 0xff00ff00ff00ff00) >> 8) |
-            ((result & 0x00ff00ff00ff00ff) << 8));
-  result = (((result & 0xffff0000ffff0000) >> 16) |
-            ((result & 0x0000ffff0000ffff) << 16));
-  result = ((result >> 32) | (result << 32)) >> (64 - bitsize);
+  // Make sure size_t is 32 or 64 bits long
+  assert(sizeof(size_t) == 4 || sizeof(size_t) == 8);
+
+  if constexpr (sizeof(size_t) == 8) {
+    // code for architectures with a 64 bit size_t
+    result = (((result & 0xaaaaaaaaaaaaaaaa) >> 1) |
+              ((result & 0x5555555555555555) << 1));
+    result = (((result & 0xcccccccccccccccc) >> 2) |
+              ((result & 0x3333333333333333) << 2));
+    result = (((result & 0xf0f0f0f0f0f0f0f0) >> 4) |
+              ((result & 0x0f0f0f0f0f0f0f0f) << 4));
+    result = (((result & 0xff00ff00ff00ff00) >> 8) |
+              ((result & 0x00ff00ff00ff00ff) << 8));
+    result = (((result & 0xffff0000ffff0000) >> 16) |
+              ((result & 0x0000ffff0000ffff) << 16));
+    result = ((result >> 32) | (result << 32)) >> (64 - bitsize);
+  } else {
+    // code for architectures with a 32 bit size_t
+    result = (((result & 0xaaaaaaaa) >> 1) | ((result & 0x55555555) << 1));
+    result = (((result & 0xcccccccc) >> 2) | ((result & 0x33333333) << 2));
+    result = (((result & 0xf0f0f0f0) >> 4) | ((result & 0x0f0f0f0f) << 4));
+    result = (((result & 0xff00ff00) >> 8) | ((result & 0x00ff00ff) << 8));
+    result = ((result >> 16) | (result << 16)) >> (32 - bitsize);
+  }
   return result;
 }
 
