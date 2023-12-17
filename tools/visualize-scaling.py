@@ -34,7 +34,7 @@ plt.legend(labels)
 
 # Add title and axis labels
 plt.xlabel('Power of 2')
-plt.ylabel('Time')
+plt.ylabel('Speedup')
 
 # Show the plot
 plt.show()
