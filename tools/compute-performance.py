@@ -53,7 +53,7 @@ avg_speedups = [0]*len(threads)
 #main loop
 for _ in range(num_tests):
     #run
-    os.system("../build/fft " + str(size) + " > " + temp_execution_file)
+    os.system("../build/fft " + str(size) + " scalingTest > " + temp_execution_file)
 
     #calculate times
     new_times = parse_execution_times()

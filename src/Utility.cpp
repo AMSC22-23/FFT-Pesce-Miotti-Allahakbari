@@ -30,7 +30,7 @@ bool CompareVectors(const vec &sequence_golden, const vec &sequence,
   if (errors.size() == 0) return true;
 
   // Otherwise, print the errors and return false.
-  std::cout << "Errors at indexes: ";
+  std::cout << "Errors at indices: ";
   for (size_t i = 0; i < errors.size(); i++) {
     std::cout << errors[i] << " ";
   }

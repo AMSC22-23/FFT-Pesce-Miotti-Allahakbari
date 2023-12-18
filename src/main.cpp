@@ -1,4 +1,5 @@
 #include <omp.h>
+#include <tgmath.h>
 
 #include <iostream>
 #include <string>
@@ -7,8 +8,7 @@
 #include "Utility.hpp"
 #include "VectorExporter.hpp"
 
-void print_usage(size_t size, const std::string& mode,
-                 unsigned int max_num_threads);
+void print_usage(size_t size, unsigned int max_num_threads);
 
 int main(int argc, char* argv[]) {
   using namespace FourierTransform;
@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
 
   // Check the number of arguments.
   if (argc > 4) {
-    print_usage(size, mode, max_num_threads);
+    print_usage(size, max_num_threads);
     return 1;
   }
 
@@ -29,8 +29,9 @@ int main(int argc, char* argv[]) {
 
     const unsigned long long_size = strtoul(argv[1], &error, 10);
     // Check for errors
-    if (*error) {
-      print_usage(size, mode, max_num_threads);
+    if (*error ||
+        1UL << static_cast<unsigned long>(log2(long_size)) != long_size) {
+      print_usage(size, max_num_threads);
       return 1;
     }
 
@@ -47,7 +48,7 @@ int main(int argc, char* argv[]) {
     const unsigned long long_max_num_threads = strtoul(argv[3], &error, 10);
     // Check for errors
     if (*error) {
-      print_usage(size, mode, max_num_threads);
+      print_usage(size, max_num_threads);
       return 1;
     }
 
@@ -167,18 +168,19 @@ int main(int argc, char* argv[]) {
 
   // Wrong mode specified.
   else {
-    print_usage(size, mode, max_num_threads);
+    print_usage(size, max_num_threads);
     return 1;
   }
 
   return 0;
 }
 
-void print_usage(size_t size, const std::string& mode,
-                 unsigned int max_num_threads) {
-  std::cerr << "Too many arguments." << std::endl;
-  std::cerr << "Argument 1: size of the sequence (default: " << size << ")\n"
-            << "Argument 2: execution mode (default: " << mode << ")\n"
+void print_usage(size_t size, unsigned int max_num_threads) {
+  std::cerr << "Incorrect arguments!\n"
+            << "Argument 1: size of the sequence (default: " << size
+            << "), must be a power of 2\n"
+            << "Argument 2: execution mode (demo (default) / bitReversalTest / "
+               "scalingTest)\n"
             << "Argument 3: maximum number of threads (default: "
             << max_num_threads << ")\n"
             << std::endl;
