@@ -16,7 +16,7 @@ bool CompareVectors(const vec &sequence_golden, const vec &sequence,
     return false;
   }
 
-  vec errors;
+  std::vector<size_t> errors;
 
   // Check that the difference between the two sequences is small enough.
   for (size_t i = 0; i < sequence_golden.size(); i++) {
