@@ -8,8 +8,6 @@ Instructions:
 - min_log_size: the maximum size will be 2^max_log_size
 - num_tests: number of tests that will be performed for each size
 Results will be available in output_file.
-Make sure that the main is only generating a sequence and executing TimeEstimateFFT:
-executing a DFT or recursive FFT is really slow and print other times might break the script.
 """
 
 #parameters

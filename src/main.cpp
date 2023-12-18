@@ -203,6 +203,9 @@ int main(int argc, char* argv[]) {
     // Create an output vector.
     vec result(size, 0);
 
+    // Set the number of threads.
+    omp_set_num_threads(max_num_threads);
+
     // Execute the algorithm and calculate the time.
     std::cout << algorithm->calculateTime(input_sequence, result) << "μs"
               << std::endl;
