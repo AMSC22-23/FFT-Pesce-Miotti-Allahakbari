@@ -2,6 +2,7 @@
 #include <tgmath.h>
 
 #include <iostream>
+#include <numbers>
 #include <string>
 
 #include "FourierTransformCalculator.hpp"
@@ -18,7 +19,7 @@ int main(int argc, char* argv[]) {
   unsigned int max_num_threads = 8;
 
   // Check the number of arguments.
-  if (argc > 4) {
+  if (argc > 5) {
     print_usage(size, max_num_threads);
     return 1;
   }
@@ -157,6 +158,7 @@ int main(int argc, char* argv[]) {
     // fft.
     IterativeFourierTransformAlgorithm* iterative_dft_algorithm =
         new IterativeFourierTransformAlgorithm();
+    iterative_dft_algorithm->setBaseAngle(-std::numbers::pi_v<real>);
     std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm(
         new MaskBitReversalPermutationAlgorithm());
     iterative_dft_algorithm->setBitReversalPermutationAlgorithm(
@@ -164,6 +166,46 @@ int main(int argc, char* argv[]) {
     std::unique_ptr<FourierTransformAlgorithm> iterative_dft(
         iterative_dft_algorithm);
     TimeEstimateFFT(iterative_dft, input_sequence, max_num_threads);
+  }
+
+  // Execute a single algorithm and calculate the elapsed time.
+  else if (mode == std::string("timingTest")) {
+    std::string algorithm_name = "iterative";
+
+    // Get which algorithm to choose.
+    if (argc >= 5) algorithm_name = std::string(argv[4]);
+
+    // Create the algorithm.
+    std::unique_ptr<FourierTransformAlgorithm> algorithm;
+    if (algorithm_name == std::string("classic")) {
+      algorithm = std::unique_ptr<FourierTransformAlgorithm>(
+          new ClassicalFourierTransformAlgorithm());
+    } else if (algorithm_name == std::string("recursive")) {
+      algorithm = std::unique_ptr<FourierTransformAlgorithm>(
+          new RecursiveFourierTransformAlgorithm());
+    } else if (algorithm_name == std::string("iterative")) {
+      IterativeFourierTransformAlgorithm* iterative_algorithm =
+          new IterativeFourierTransformAlgorithm();
+      std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm(
+          new MaskBitReversalPermutationAlgorithm());
+      iterative_algorithm->setBitReversalPermutationAlgorithm(
+          bit_reversal_algorithm);
+      algorithm =
+          std::unique_ptr<FourierTransformAlgorithm>(iterative_algorithm);
+    } else {
+      print_usage(size, max_num_threads);
+      return 1;
+    }
+
+    // Set the direct transform.
+    algorithm->setBaseAngle(-std::numbers::pi_v<real>);
+
+    // Create an output vector.
+    vec result(size, 0);
+
+    // Execute the algorithm and calculate the time.
+    std::cout << algorithm->calculateTime(input_sequence, result) << "μs"
+              << std::endl;
   }
 
   // Wrong mode specified.
@@ -180,8 +222,10 @@ void print_usage(size_t size, unsigned int max_num_threads) {
             << "Argument 1: size of the sequence (default: " << size
             << "), must be a power of 2\n"
             << "Argument 2: execution mode (demo (default) / bitReversalTest / "
-               "scalingTest)\n"
+               "scalingTest, timeTest)\n"
             << "Argument 3: maximum number of threads (default: "
             << max_num_threads << ")\n"
+            << "Argument 4: algorithm for timeTest mode (classic, recursive, "
+               "iterative (default))"
             << std::endl;
 }

@@ -22,15 +22,21 @@ To use the program, follow these steps:
      ```
 
 2. **Run the Program:**
-   - After successfully building the program, you can run it by specifying the size of the data sequence. For example, to compute the FFT of a sequence of size 256, use the following command:
+   - After successfully building the program, you can run it and decide to provide some arguments. For example, to execute a demo of the developed functionalities on a sequence of size 256 with up to 4 threads, use the following command:
         ```bash
-        ./fft 256
+        ./fft 256 demo 4
         ```
-   - Replace `256` with the desired size of your data sequence, which must be a power of 2.
+   - Replace `256` with the desired size of your data sequence, which must be a power of 2. The default size is 1024.
+   - Replace `demo` with the desired execution mode, refer to the next section for details. This is the default execution mode.
+   - Replace `4` with the desired maximum number of threads allowed. The default amount is 8.
+   - If you are using mode `timingTest`, choose a method among the ones available, refer to the next section for details. The default value is "iterative".
    
 ### Program behaviour
-
-The program is a demo of the implemented functionalities. A random sequence with the specified size is created, then all Fourier Transform algorithms are performed and results are compared. The transforms of the input are then used as inputs for all the implementations of the Inverse Fourier Transform algorithms, and results are again compared to the original sequences. Finally, a timing comparison between different bit reversal permutation algorithms is performed and a parallel scaling test on the iterative FFT is performed.
+The program can be executed in three different modes:
+- `demo`: This is a demo of the implemented functionalities. A random sequence with the specified size is created, then all Fourier Transform algorithms are performed and results are compared. The transforms of the input are then used as inputs for all the implementations of the Inverse Fourier Transform algorithms, and results are again compared to the original sequences.
+- `bitReversalTest`: A time and parallel speed-up comparison between the two best performing bit reversal permutation techniques will be performed on a random sequence.
+- `scalingTest`: A scaling test will be performed on a random sequence using the parallelized direct iterative FFT.
+- `timingTest`: The specified direct transform algorithm will be run once on a random sequence with the specified number of threads and time for execution in microseconds will be printed. The possible options are "classic", "recursive" and "iterative".
 
 ### Build Options
 
