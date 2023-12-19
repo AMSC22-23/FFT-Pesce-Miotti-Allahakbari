@@ -113,5 +113,5 @@ with open(output_file, "w") as f:
             for value in values:
                 string += ","+str(value)
         else:
-            string += "1," + str(values)
+            string += ","+str(values)
         f.write(string + "\n")
