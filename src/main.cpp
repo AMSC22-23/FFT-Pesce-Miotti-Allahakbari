@@ -9,21 +9,23 @@
 #include "Utility.hpp"
 #include "VectorExporter.hpp"
 
-void print_usage(size_t size, unsigned int max_num_threads);
+void print_usage(size_t size, const std::string& mode,
+                 unsigned int max_num_threads);
 
 int main(int argc, char* argv[]) {
   using namespace FourierTransform;
 
-  size_t size = 1UL << 10;
-  std::string mode = "demo";
-  unsigned int max_num_threads = 8;
+  constexpr size_t default_size = 1UL << 10;
+  constexpr unsigned int default_max_num_threads = 8;
+  const std::string default_mode = "demo";
 
   // Check the number of arguments.
   if (argc > 5) {
-    print_usage(size, max_num_threads);
+    print_usage(default_size, default_mode, default_max_num_threads);
     return 1;
   }
 
+  size_t size = default_size;
   // Get the size of the sequence.
   if (argc >= 2) {
     char* error;
@@ -32,7 +34,7 @@ int main(int argc, char* argv[]) {
     // Check for errors
     if (*error ||
         1UL << static_cast<unsigned long>(log2(long_size)) != long_size) {
-      print_usage(size, max_num_threads);
+      print_usage(default_size, default_mode, default_max_num_threads);
       return 1;
     }
 
@@ -40,8 +42,10 @@ int main(int argc, char* argv[]) {
   }
 
   // Get which mode to execute the program in.
+  std::string mode = default_mode;
   if (argc >= 3) mode = std::string(argv[2]);
 
+  unsigned int max_num_threads = default_max_num_threads;
   // Get the maximum number of threads.
   if (argc >= 4) {
     char* error;
@@ -49,7 +53,7 @@ int main(int argc, char* argv[]) {
     const unsigned long long_max_num_threads = strtoul(argv[3], &error, 10);
     // Check for errors
     if (*error) {
-      print_usage(size, max_num_threads);
+      print_usage(default_size, default_mode, default_max_num_threads);
       return 1;
     }
 
@@ -193,7 +197,7 @@ int main(int argc, char* argv[]) {
       algorithm =
           std::unique_ptr<FourierTransformAlgorithm>(iterative_algorithm);
     } else {
-      print_usage(size, max_num_threads);
+      print_usage(default_size, default_mode, default_max_num_threads);
       return 1;
     }
 
@@ -213,22 +217,24 @@ int main(int argc, char* argv[]) {
 
   // Wrong mode specified.
   else {
-    print_usage(size, max_num_threads);
+    print_usage(default_size, default_mode, default_max_num_threads);
     return 1;
   }
 
   return 0;
 }
 
-void print_usage(size_t size, unsigned int max_num_threads) {
+void print_usage(size_t size, const std::string& mode,
+                 unsigned int max_num_threads) {
   std::cerr << "Incorrect arguments!\n"
             << "Argument 1: size of the sequence (default: " << size
             << "), must be a power of 2\n"
-            << "Argument 2: execution mode (demo (default) / bitReversalTest / "
-               "scalingTest, timeTest)\n"
+            << "Argument 2: execution mode (demo / bitReversalTest / "
+               "scalingTest, timingTest) (default: "
+            << mode << ")\n"
             << "Argument 3: maximum number of threads (default: "
             << max_num_threads << ")\n"
-            << "Argument 4: algorithm for timeTest mode (classic, recursive, "
+            << "Argument 4: algorithm for timingTest mode (classic, recursive, "
                "iterative (default))"
             << std::endl;
 }
