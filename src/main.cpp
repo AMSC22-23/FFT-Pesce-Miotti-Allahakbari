@@ -112,6 +112,14 @@ int main(int argc, char* argv[]) {
     calculator.directTransform(input_sequence, iterative_dft_result);
     WriteToFile(iterative_dft_result, "iterative_dft_result.csv");
 
+    IterativeFFTGPU* fft_gpu_algorithm = new IterativeFFTGPU();
+    std::unique_ptr<FourierTransformAlgorithm> iterative_fft_gpu(
+        fft_gpu_algorithm);
+    calculator.setDirectAlgorithm(iterative_fft_gpu);
+    vec iterative_gpu_result(size, 0);
+    calculator.directTransform(input_sequence, iterative_gpu_result);
+    WriteToFile(iterative_dft_result, "iterative_gpu_result.csv");
+
     // Check the results for errors.
     if (!CompareVectors(classical_dft_result, recursive_dft_result, 1e-4,
                         false))
@@ -119,6 +127,9 @@ int main(int argc, char* argv[]) {
     if (!CompareVectors(classical_dft_result, iterative_dft_result, 1e-4,
                         false))
       std::cerr << "Errors detected in iterative direct FFT." << std::endl;
+    if (!CompareVectors(classical_dft_result, iterative_gpu_result, 1e-4,
+                        false))
+      std::cerr << "Errors detected in iterative GPU FFT." << std::endl;
 
     // Compute the O(n^2) Fourier Transform of the result.
     std::unique_ptr<FourierTransformAlgorithm> classical_ift(
@@ -174,7 +185,7 @@ int main(int argc, char* argv[]) {
 
   // Execute a single algorithm and calculate the elapsed time.
   else if (mode == std::string("timingTest")) {
-    std::string algorithm_name = "iterative";
+    std::string algorithm_name = "iterativeGPU";
 
     // Get which algorithm to choose.
     if (argc >= 5) algorithm_name = std::string(argv[4]);
@@ -196,6 +207,10 @@ int main(int argc, char* argv[]) {
           bit_reversal_algorithm);
       algorithm =
           std::unique_ptr<FourierTransformAlgorithm>(iterative_algorithm);
+    } else if (algorithm_name == std::string("iterativeGPU")) {
+      IterativeFFTGPU* iterativeGPU_algorithm = new IterativeFFTGPU();
+      algorithm =
+          std::unique_ptr<FourierTransformAlgorithm>(iterativeGPU_algorithm);
     } else {
       print_usage(default_size, default_mode, default_max_num_threads);
       return 1;
@@ -235,6 +250,6 @@ void print_usage(size_t size, const std::string& mode,
             << "Argument 3: maximum number of threads (default: "
             << max_num_threads << ")\n"
             << "Argument 4: algorithm for timingTest mode (classic, recursive, "
-               "iterative (default))"
+               "iterative, IterativeGPU(default))"
             << std::endl;
 }
