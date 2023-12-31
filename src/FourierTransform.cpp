@@ -1,5 +1,6 @@
 #include "FourierTransform.hpp"
 
+#include <cuda_runtime.h>
 #include <omp.h>
 #include <tgmath.h>
 
@@ -7,6 +8,7 @@
 #include <chrono>
 #include <iostream>
 
+#include "FFTGPU.hpp"
 #include "FourierTransform.hpp"
 #include "Utility.hpp"
 
@@ -109,6 +111,40 @@ void IterativeFourierTransformAlgorithm::operator()(
   }
 }
 
+void IterativeFFTGPU::operator()(const vec &input_sequence,
+                                 vec &output_sequence) const {
+  // Getting the input size.
+  const size_t n = input_sequence.size();
+
+  // Check that the size of the sequence is a power of 2.
+  const size_t log_n = static_cast<size_t>(log2(n));
+  assert(1UL << log_n == n);
+
+  // Perform bit reversal of the input sequence and store it into the output
+  // sequence.
+
+  cuda::std::complex<real> *input_sequence_dev;
+  cuda::std::complex<real> *output_sequence_dev;
+
+  cudaMalloc(&input_sequence_dev, n * sizeof(cuda::std::complex<real>));
+  cudaMalloc(&output_sequence_dev, n * sizeof(cuda::std::complex<real>));
+  cudaMemcpy(input_sequence_dev, input_sequence.data(),
+             n * sizeof(cuda::std::complex<real>), cudaMemcpyHostToDevice);
+
+  bitreverse_gpu(input_sequence_dev, output_sequence_dev, n, log_n);
+  // cudaDeviceSynchronize();
+
+  for (size_t s = 1; s <= log_n; s++) {
+    const size_t m = 1UL << s;
+    run_fft_gpu(output_sequence_dev, n, m, base_angle);
+  }
+
+  cudaDeviceSynchronize();
+  cudaMemcpy(output_sequence.data(), output_sequence_dev,
+             n * sizeof(cuda::std::complex<real>), cudaMemcpyDeviceToHost);
+
+  // #pragma acc exit data copyout(output_sequence)
+}
 /*
 // A version of FastFourierTransformIterative that allows for fusion of the two
 // inner looops. Experimental.
