@@ -1,6 +1,6 @@
 #include <cuda_runtime.h>
 
-#include "FourierTransformGPU.hpp"
+#include "FFTGPU.hpp"
 
 #define TILE_SIZE 1024
 
