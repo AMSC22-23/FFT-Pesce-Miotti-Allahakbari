@@ -5,6 +5,8 @@
 
 #include <cuda/std/complex>
 
+#define TILE_SIZE 1024
+
 // A simple way to make the code generic with respect to the real type.
 
 namespace FourierTransform {
@@ -23,8 +25,11 @@ using real = double;
 #endif
 #endif
 
-void run_fft_gpu(cuda::std::complex<FourierTransform::real> *data, int size,
+void run_fft_gpu(cuda::std::complex<FourierTransform::real>* data, int size,
                  int m, FourierTransform::real base);
+
+void bitreverse_gpu(cuda::std::complex<real>* in, cuda::std::complex<real>* out,
+                    int size, int s);
 
 }  // namespace FourierTransform
 
