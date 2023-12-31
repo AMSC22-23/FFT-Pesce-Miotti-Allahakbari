@@ -5,8 +5,6 @@
 
 #include <cuda/std/complex>
 
-#define TILE_SIZE 1024
-
 // A simple way to make the code generic with respect to the real type.
 
 namespace FourierTransform {
