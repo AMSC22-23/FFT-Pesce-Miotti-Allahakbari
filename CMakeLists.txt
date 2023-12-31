@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 #Set compiler flags for Release
 set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wextra -Ofast -march=native -mtune=native -funroll-all-loops -flto -fno-signed-zeros -fno-trapping-math")
-
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --use_fast_math")  
 #Set flags for Debug
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra")
 
