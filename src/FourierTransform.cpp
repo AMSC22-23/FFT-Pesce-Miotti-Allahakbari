@@ -142,9 +142,82 @@ void IterativeFFTGPU::operator()(const vec &input_sequence,
   cudaDeviceSynchronize();
   cudaMemcpy(output_sequence.data(), output_sequence_dev,
              n * sizeof(cuda::std::complex<real>), cudaMemcpyDeviceToHost);
-
-  // #pragma acc exit data copyout(output_sequence)
 }
+
+void IterativeFFTGPU2D::operator()(const vec &input_sequence,
+                                   vec &output_sequence) const {
+  // Getting the input size.
+  const size_t size = input_sequence.size();
+  const size_t n = sqrt(size);
+
+  // Check that the size of the sequence is a power of 2.
+  const size_t log_n = static_cast<size_t>(log2(n));
+  assert(1UL << log_n == n);
+
+  // Perform bit reversal of the input sequence and store it into the output
+  // sequence.
+
+  cuda::std::complex<real> *input_sequence_dev;
+  cuda::std::complex<real> *output_sequence_dev;
+  cuda::std::complex<real> *transposed_sequence_dev;
+
+  cudaMalloc(&input_sequence_dev, size * sizeof(cuda::std::complex<real>));
+  cudaMalloc(&output_sequence_dev, size * sizeof(cuda::std::complex<real>));
+  cudaMalloc(&transposed_sequence_dev, size * sizeof(cuda::std::complex<real>));
+
+  // Loop over all the rows
+  for (auto i = 0; i < n; i++) {
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+
+    cudaMemcpyAsync(&input_sequence_dev[i * n], &input_sequence.data()[i * n],
+                    n * sizeof(cuda::std::complex<real>),
+                    cudaMemcpyHostToDevice, stream);
+
+    bitreverse_gpu(&input_sequence_dev[i * n], &output_sequence_dev[i * n], n,
+                   log_n, stream);
+
+    for (size_t s = 1; s <= log_n; s++) {
+      const size_t m = 1UL << s;
+      run_fft_gpu(&output_sequence_dev[i * n], n, m, base_angle, stream);
+    }
+
+    cudaStreamDestroy(stream);
+  }
+
+  cudaDeviceSynchronize();
+
+  transpose_gpu(output_sequence_dev, transposed_sequence_dev, n);
+
+  cudaDeviceSynchronize();
+
+  /// Loop over all the columns
+  for (auto i = 0; i < n; i++) {
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+
+    bitreverse_gpu(&transposed_sequence_dev[i * n], &output_sequence_dev[i * n],
+                   n, log_n, stream);
+    // cudaDeviceSynchronize();
+
+    for (size_t s = 1; s <= log_n; s++) {
+      const size_t m = 1UL << s;
+      run_fft_gpu(&output_sequence_dev[i * n], n, m, base_angle, stream);
+    }
+
+    cudaStreamDestroy(stream);
+  }
+
+  cudaDeviceSynchronize();
+
+  transpose_gpu(output_sequence_dev, transposed_sequence_dev, n);
+
+  cudaDeviceSynchronize();
+
+  cudaMemcpy(output_sequence.data(), transposed_sequence_dev,
+             size * sizeof(cuda::std::complex<real>), cudaMemcpyDeviceToHost);
+}
+
 /*
 // A version of FastFourierTransformIterative that allows for fusion of the two
 // inner looops. Experimental.

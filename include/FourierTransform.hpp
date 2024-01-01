@@ -69,6 +69,14 @@ class IterativeFFTGPU : public FourierTransformAlgorithm {
   ~IterativeFFTGPU() = default;
 };
 
+class IterativeFFTGPU2D : public FourierTransformAlgorithm {
+ public:
+  void operator()(const vec &input_sequence,
+                  vec &output_sequence) const override;
+
+  ~IterativeFFTGPU2D() = default;
+};
+
 // Calculate the time needed to compute the Fourier transform of
 // "sequence" using an instance of "ft_algorithm", with 1 to "max_num_threads"
 // threads. The results are printed expressed in microseconds.

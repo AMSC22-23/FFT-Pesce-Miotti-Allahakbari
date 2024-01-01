@@ -24,10 +24,14 @@ using real = double;
 #endif
 
 void run_fft_gpu(cuda::std::complex<FourierTransform::real>* data, int size,
-                 int m, FourierTransform::real base);
+                 int m, FourierTransform::real base,
+                 cudaStream_t stream_id = 0);
 
 void bitreverse_gpu(cuda::std::complex<real>* in, cuda::std::complex<real>* out,
-                    int size, int s);
+                    int size, int s, cudaStream_t stream_id = 0);
+
+void transpose_gpu(cuda::std::complex<real>* in, cuda::std::complex<real>* out,
+                   int n, cudaStream_t stream_id = 0);
 
 }  // namespace FourierTransform
 
