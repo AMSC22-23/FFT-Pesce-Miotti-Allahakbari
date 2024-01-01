@@ -2,7 +2,7 @@
 
 #include "FFTGPU.hpp"
 
-#define TILE_SIZE 256
+#define TILE_SIZE 64
 
 #define BLOCK_SIZE 32
 
@@ -10,14 +10,28 @@ using namespace FourierTransform;
 
 // CUDA kernel for transposing a 2D array efficiently using shared memory
 __global__ void transpose(cuda::std::complex<real>* input,
-                          cuda::std::complex<real>* output, int n) {
+                          cuda::std::complex<real>* output, const int n) {
   int x = blockIdx.x * blockDim.x + threadIdx.x;
   int y = blockIdx.y * blockDim.y + threadIdx.y;
 
   if (x < n && y < n) {
     int in_index = y * n + x;
-    int out_index = x * n + y;
-    output[out_index] = input[in_index];
+
+    // Use shared memory to reduce global memory transactions
+    __shared__ cuda::std::complex<real> tile[BLOCK_SIZE]
+                                            [BLOCK_SIZE + 1];  // +1 for padding
+
+    // Load data from global memory to shared memory
+    tile[threadIdx.y][threadIdx.x] = input[in_index];
+
+    __syncthreads();
+
+    // Write transposed data to the output
+    x = blockIdx.y * blockDim.x + threadIdx.x;
+    y = blockIdx.x * blockDim.y + threadIdx.y;
+
+    int out_index = y * n + x;
+    output[out_index] = tile[threadIdx.x][threadIdx.y];
   }
 }
 
