@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 
   cv::split(planes[1], complex);
 
-  double epsilon = 0.0001f;
+  double epsilon = 1e-4;
 
   for (int i = 0; i < image.rows; i++)
     for (int j = 0; j < image.cols; j++) {
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
                     complex[1].at<double>(i, j)) > epsilon) {
         std::cout << "Error in GPU calculations at: " << i << ", " << j
                   << " GPU: " << output_sequence[i * image.cols + j]
-                  << ", CPU: (" << complex[0].at<float>(i, j) << ", "
+                  << ", CPU: (" << complex[0].at<double>(i, j) << ", "
                   << complex[1].at<double>(i, j) << ")" << std::endl;
         // break;
       }
