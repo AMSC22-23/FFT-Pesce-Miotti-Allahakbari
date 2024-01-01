@@ -3,16 +3,83 @@
 
 #include <iostream>
 #include <numbers>
+#include <opencv2/opencv.hpp>
 #include <string>
 
 #include "FourierTransformCalculator.hpp"
 #include "Utility.hpp"
 #include "VectorExporter.hpp"
 
+using namespace FourierTransform;
+
 void print_usage(size_t size, const std::string& mode,
                  unsigned int max_num_threads);
 
 int main(int argc, char* argv[]) {
+  // Load the image (grayscale)
+  cv::Mat image = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
+
+  if (image.empty()) {
+    std::cerr << "Error: Unable to load the image." << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  // Check image properties
+  std::cout << "Image size: " << image.size() << std::endl;
+  std::cout << "Image type: " << image.type() << std::endl;
+
+  // convert image to complex vector
+  vec input_sequence;
+  vec output_sequence;
+
+  input_sequence.reserve(image.rows * image.cols);
+  output_sequence.reserve(image.rows * image.cols);
+
+  for (int i = 0; i < image.rows; i++)
+    for (int j = 0; j < image.cols; j++)
+      input_sequence.emplace_back(image.at<uchar>(i, j), 0);
+
+  IterativeFFTGPU2D* iterativeGPU2D_algorithm = new IterativeFFTGPU2D();
+  std::unique_ptr<FourierTransformAlgorithm> algorithm =
+      std::unique_ptr<FourierTransformAlgorithm>(iterativeGPU2D_algorithm);
+
+  // Set the direct transform.
+  algorithm->setBaseAngle(-std::numbers::pi_v<real>);
+
+  // Execute the algorithm and calculate the time.
+  std::cout << algorithm->calculateTime(input_sequence, output_sequence) << "μs"
+            << std::endl;
+
+  image.convertTo(image, CV_32F);
+  cv::Mat planes[] = {image, cv::Mat::zeros(image.size(), CV_32F)};
+  cv::Mat complexInput;
+  cv::merge(planes, 2, complexInput);
+  cv::dft(complexInput, complexInput);
+
+  cv::Mat realPart = planes[0];
+  cv::Mat imaginaryPart = planes[1];
+
+  float epsilon = 0.0001f;
+
+  for (int i = 0; i < image.rows; i++)
+    for (int j = 0; j < image.cols; j++) {
+      if (std::fabs(input_sequence[i * image.cols + j].real() -
+                    realPart.at<float>(i, j)) > epsilon ||
+          std::fabs(input_sequence[i * image.cols + j].imag() -
+                    imaginaryPart.at<float>(i, j)) > epsilon) {
+        std::cout << "Error in GPU calculations at: " << i << ", " << j
+                  << std::endl;
+      }
+    }
+  // // Display the image using OpenCV (optional)
+  // cv::imshow("Loaded Image", image);
+  // cv::waitKey(0);
+  // cv::destroyAllWindows();
+
+  return EXIT_SUCCESS;
+}
+
+int main_random_sequence_mode(int argc, char* argv[]) {
   using namespace FourierTransform;
 
   constexpr size_t default_size = 1UL << 10;
