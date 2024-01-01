@@ -50,26 +50,33 @@ int main(int argc, char* argv[]) {
   std::cout << algorithm->calculateTime(input_sequence, output_sequence) << "μs"
             << std::endl;
 
-  image.convertTo(image, CV_32F);
-  cv::Mat planes[] = {image, cv::Mat::zeros(image.size(), CV_32F)};
+  image.convertTo(image, CV_64FC1);
+  cv::Mat planes[] = {image, cv::Mat::zeros(image.size(), CV_64FC1)};
   cv::Mat complexInput;
   cv::merge(planes, 2, complexInput);
-  cv::dft(complexInput, complexInput);
+  cv::dft(planes[0], planes[1], cv::DFT_COMPLEX_OUTPUT);
+  cv::Mat complex[2];
 
-  cv::Mat realPart = planes[0];
-  cv::Mat imaginaryPart = planes[1];
+  cv::split(planes[1], complex);
 
-  float epsilon = 0.0001f;
+  double epsilon = 0.0001f;
 
   for (int i = 0; i < image.rows; i++)
     for (int j = 0; j < image.cols; j++) {
-      if (std::fabs(input_sequence[i * image.cols + j].real() -
-                    realPart.at<float>(i, j)) > epsilon ||
-          std::fabs(input_sequence[i * image.cols + j].imag() -
-                    imaginaryPart.at<float>(i, j)) > epsilon) {
+      if (std::fabs(output_sequence[i * image.cols + j].real() -
+                    complex[0].at<double>(i, j)) > epsilon ||
+          std::fabs(output_sequence[i * image.cols + j].imag() -
+                    complex[1].at<double>(i, j)) > epsilon) {
         std::cout << "Error in GPU calculations at: " << i << ", " << j
-                  << std::endl;
+                  << " GPU: " << output_sequence[i * image.cols + j]
+                  << ", CPU: (" << complex[0].at<float>(i, j) << ", "
+                  << complex[1].at<double>(i, j) << ")" << std::endl;
+        // break;
       }
+      // std::cout << "Calculated by gpu: " << output_sequence[i * image.cols +
+      // j]
+      //           << ", Calculated by opencv: (" << complex[0].at<float>(i, j)
+      //           << ", " << complex[1].at<float>(i, j) << ")" << std::endl;
     }
   // // Display the image using OpenCV (optional)
   // cv::imshow("Loaded Image", image);
