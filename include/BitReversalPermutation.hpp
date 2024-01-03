@@ -3,6 +3,7 @@
 
 #include "Real.hpp"
 
+namespace Transform {
 namespace FourierTransform {
 
 // A class that represents a generic bit reversal algorithm. Calling the
@@ -57,5 +58,6 @@ void CompareTimesBitReversalPermutation(const vec &sequence,
                                         unsigned int max_num_threads);
 
 }  // namespace FourierTransform
+}  // namespace Transform
 
 #endif  // BIT_REVERSAL_PERMUTATION_HPP

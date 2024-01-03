@@ -7,12 +7,13 @@
 
 #include "FourierTransformCalculator.hpp"
 #include "Utility.hpp"
-#include "VectorExporter.hpp"
+#include "WaveletTransform.hpp"
 
 void print_usage(size_t size, const std::string& mode,
                  unsigned int max_num_threads);
 
 int main(int argc, char* argv[]) {
+  using namespace Transform;
   using namespace FourierTransform;
 
   constexpr size_t default_size = 1UL << 10;
@@ -215,6 +216,38 @@ int main(int argc, char* argv[]) {
               << std::endl;
   }
 
+  // Execute a test on the wavelet transform.
+  else if (mode == std::string("waveletTest")) {
+    std::vector<double> original_sequence;
+    original_sequence.reserve(32);
+    int i;
+
+    // Create a cubic signal. Source:
+    // https://web.archive.org/web/20120305164605/http://www.embl.de/~gpau/misc/dwt97.c
+    for (i = 0; i < 32; i++)
+      original_sequence.emplace_back(5 + i + 0.4 * i * i - 0.02 * i * i * i);
+
+    // Save the sequence to a file.
+    WriteToFile(original_sequence, "original_sequence.csv");
+
+    // Do the forward 9/7 transform
+    std::vector<double> fwt_result(original_sequence);
+    fwt97(&(fwt_result[0]), 32);
+
+    // Save the sequence to a file.
+    WriteToFile(fwt_result, "fwt_result.csv");
+
+    // Do the inverse 9/7 transform
+    std::vector<double> iwt_result(fwt_result);
+    iwt97(&(iwt_result[0]), 32);
+
+    // Save the sequence to a file.
+    WriteToFile(iwt_result, "iwt_result.csv");
+
+    // Check if the result is the same as the original sequence.
+    CompareVectors(original_sequence, iwt_result, 1e-6, true);
+  }
+
   // Wrong mode specified.
   else {
     print_usage(default_size, default_mode, default_max_num_threads);
@@ -230,7 +263,7 @@ void print_usage(size_t size, const std::string& mode,
             << "Argument 1: size of the sequence (default: " << size
             << "), must be a power of 2\n"
             << "Argument 2: execution mode (demo / bitReversalTest / "
-               "scalingTest, timingTest) (default: "
+               "scalingTest, timingTest / waveletTest) (default: "
             << mode << ")\n"
             << "Argument 3: maximum number of threads (default: "
             << max_num_threads << ")\n"

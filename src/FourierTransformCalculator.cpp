@@ -2,8 +2,7 @@
 
 #include <numbers>
 
-#include "Utility.hpp"
-
+namespace Transform {
 namespace FourierTransform {
 
 constexpr real pi = std::numbers::pi_v<real>;
@@ -34,7 +33,19 @@ void FourierTransformCalculator::directTransform(const vec &input_sequence,
 void FourierTransformCalculator::inverseTransform(const vec &input_sequence,
                                                   vec &output_sequence) {
   (*inverse_algorithm)(input_sequence, output_sequence);
-  ScaleVector(output_sequence, real(1.0) / output_sequence.size());
+  FourierTransformCalculator::scaleVector(output_sequence,
+                                          real(1.0) / output_sequence.size());
+}
+
+void FourierTransformCalculator::scaleVector(vec &sequence, real scalar) {
+  // Get the size of the sequence
+  const size_t n = sequence.size();
+
+#pragma omp parallel for default(none) shared(sequence) firstprivate(n, scalar)
+  for (size_t i = 0; i < n; i++) {
+    sequence[i] *= scalar;
+  }
 }
 
 }  // namespace FourierTransform
+}  // namespace Transform

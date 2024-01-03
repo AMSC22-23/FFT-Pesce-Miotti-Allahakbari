@@ -6,7 +6,7 @@
 
 // A simple way to make the code generic with respect to the real type.
 
-namespace FourierTransform {
+namespace Transform {
 
 #ifdef FLOAT
 using real = float;
@@ -22,8 +22,13 @@ using real = double;
 #endif
 #endif
 
-using vec = std::vector<std::complex<real>>;
+namespace FourierTransform {
+
+using complex = std::complex<real>;
+using vec = std::vector<complex>;
 
 }  // namespace FourierTransform
+
+}  // namespace Transform
 
 #endif  // REAL_HPP
