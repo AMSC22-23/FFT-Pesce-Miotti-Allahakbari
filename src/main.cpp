@@ -14,16 +14,16 @@ int main()
   using namespace FourierTransform;
 
   // Set a matrix size.
-  size_t size = 8;
+  size_t size = 2;
 
   // Create a vector that will represent the matrix.
   vec sequence(size * size, 0);
 
   // For each row.
-  for (size_t i = 1; i < size; i++)
+  for (size_t i = 0; i < size; i++)
   {
     // For each column.
-    for (size_t j = 1; j < size; j++)
+    for (size_t j = 0; j < size; j++)
     {
       // Generate a random real number between -10 and 10.
       const double random_number = (rand() % 2000 - 1000) / 100.0;

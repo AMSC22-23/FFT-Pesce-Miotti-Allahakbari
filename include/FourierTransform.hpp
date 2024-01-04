@@ -69,6 +69,8 @@ namespace FourierTransform
 
   // A 2D FFT algorithm. We assume that the input matrix is square and its size
   // is a power of 2. The algorithm is based on the 1D FFT algorithm.
+  // This algorithm is very slow and is only used to test the correctness of
+  // other algorithms, in a machine without CUDA support.
   class TrivialTwoDimensionalFourierTransformAlgorithm : public FourierTransformAlgorithm
   {
   public:

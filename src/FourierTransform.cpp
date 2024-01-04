@@ -165,6 +165,23 @@ namespace FourierTransform
       for (size_t j = 0; j < sqrt_n; j++)
         output_sequence[i * sqrt_n + j] = output_row[j];
     }
+
+    // Do the same, over the columns.
+    for (size_t j = 0; j < sqrt_n; j++)
+    {
+      // Get the j-th column of the input matrix.
+      vec column(sqrt_n, 0);
+      for (size_t i = 0; i < sqrt_n; i++)
+        column[i] = output_sequence[i * sqrt_n + j];
+
+      // Compute the j-th column of the output matrix.
+      vec output_column(sqrt_n, 0);
+      (*fft_algorithm)(column, output_column);
+
+      // Store the j-th column of the output matrix.
+      for (size_t i = 0; i < sqrt_n; i++)
+        output_sequence[i * sqrt_n + j] = output_column[i];
+    }
   }
 
   // Calculate time for execution using chrono.
