@@ -231,34 +231,47 @@ int main(int argc, char* argv[]) {
   } else {
     using namespace WaveletTransform;
 
-    std::vector<real> original_sequence;
-    original_sequence.reserve(size);
-
-    // Create a cubic signal. Source:
+    // Create a cubic signal. Source of the example:
     // https://web.archive.org/web/20120305164605/http://www.embl.de/~gpau/misc/dwt97.c.
+    std::vector<real> input_sequence;
+    input_sequence.reserve(size);
     for (size_t i = 0; i < size; i++)
-      original_sequence.emplace_back(5 + i + 0.4 * i * i - 0.02 * i * i * i);
+      input_sequence.emplace_back(5 + i + 0.4 * i * i - 0.02 * i * i * i);
 
     // Save the sequence to a file.
-    WriteToFile(original_sequence, "original_sequence.csv");
+    WriteToFile(input_sequence, "input_sequence.csv");
 
-    // Do the forward 9/7 transform with the new algorithm.
-    std::vector<real> fwt_result(original_sequence);
+    // Do the forward 9/7 transform with the old algorithm.
+    std::vector<real> fwt_result(input_sequence);
     DirectWaveletTransform97(fwt_result);
 
     // Save the sequence to a file.
     WriteToFile(fwt_result, "fwt_result.csv");
 
-    // Do the inverse 9/7 transform with the new algorithm.
+    // Do the inverse 9/7 transform with the old algorithm.
     std::vector<real> iwt_result(fwt_result);
     InverseWaveletTransform97(iwt_result);
 
-    // Save the sequence to a file.
-    WriteToFile(iwt_result, "iwt_result.csv");
-
-    // Check if the result is the same as the original sequence.
-    if (!CompareVectors(original_sequence, iwt_result, precision, false))
+    // Check if the result is the same as the input sequence.
+    if (!CompareVectors(input_sequence, iwt_result, precision, false))
       std::cerr << "Errors detected in wavelet transforms." << std::endl;
+
+    // Do the forward 9/7 transform with the new algorithm.
+    std::vector<real> high_sequence(size / 2, 0);
+    std::vector<real> low_sequence(size / 2, 0);
+    NewDirectWaveletTransform97(input_sequence, high_sequence, low_sequence);
+
+    // Save the sequences to a file.
+    WriteToFile(high_sequence, "high_sequence.csv");
+    WriteToFile(low_sequence, "low_sequence.csv");
+
+    // Do the inverse 9/7 transform with the new algorithm.
+    std::vector<real> final_result(size, 0);
+    NewInverseWaveletTransform97(final_result, high_sequence, low_sequence);
+
+    // Check if the result is the same as the input sequence.
+    if (!CompareVectors(input_sequence, final_result, precision, true))
+      std::cerr << "Errors detected in new wavelet transforms." << std::endl;
   }
 
   return 0;
