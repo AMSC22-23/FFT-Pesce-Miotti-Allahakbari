@@ -132,7 +132,6 @@ void IterativeFFTGPU::operator()(const vec &input_sequence,
              n * sizeof(cuda::std::complex<real>), cudaMemcpyHostToDevice);
 
   bitreverse_gpu(input_sequence_dev, output_sequence_dev, n, log_n);
-  // cudaDeviceSynchronize();
 
   for (size_t s = 1; s <= log_n; s++) {
     const size_t m = 1UL << s;
@@ -142,6 +141,9 @@ void IterativeFFTGPU::operator()(const vec &input_sequence,
   cudaDeviceSynchronize();
   cudaMemcpy(output_sequence.data(), output_sequence_dev,
              n * sizeof(cuda::std::complex<real>), cudaMemcpyDeviceToHost);
+
+  cudaFree(input_sequence_dev);
+  cudaFree(output_sequence_dev);
 }
 
 void IterativeFFTGPU2D::operator()(const vec &input_sequence,
@@ -185,11 +187,7 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
     cudaStreamDestroy(stream);
   }
 
-  cudaDeviceSynchronize();
-
   transpose_gpu(output_sequence_dev, transposed_sequence_dev, n);
-
-  cudaDeviceSynchronize();
 
   /// Loop over all the columns
   for (auto i = 0; i < n; i++) {
@@ -198,7 +196,6 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
 
     bitreverse_gpu(&transposed_sequence_dev[i * n], &output_sequence_dev[i * n],
                    n, log_n, stream);
-    // cudaDeviceSynchronize();
 
     for (size_t s = 1; s <= log_n; s++) {
       const size_t m = 1UL << s;
@@ -208,14 +205,16 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
     cudaStreamDestroy(stream);
   }
 
-  cudaDeviceSynchronize();
-
   transpose_gpu(output_sequence_dev, transposed_sequence_dev, n);
 
   cudaDeviceSynchronize();
 
   cudaMemcpy(output_sequence.data(), transposed_sequence_dev,
              size * sizeof(cuda::std::complex<real>), cudaMemcpyDeviceToHost);
+
+  cudaFree(&input_sequence_dev);
+  cudaFree(&output_sequence_dev);
+  cudaFree(&transposed_sequence_dev);
 }
 
 /*
