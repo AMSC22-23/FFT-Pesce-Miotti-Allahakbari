@@ -11,15 +11,14 @@ using namespace FourierTransform;
 // CUDA kernel for transposing a 2D array efficiently using shared memory
 __global__ void transpose(cuda::std::complex<real>* input,
                           cuda::std::complex<real>* output, const int n) {
+  // Use shared memory to reduce global memory transactions
+  __shared__ cuda::std::complex<real> tile[BLOCK_SIZE]
+                                          [BLOCK_SIZE + 1];  // +1 for padding
   int x = blockIdx.x * blockDim.x + threadIdx.x;
   int y = blockIdx.y * blockDim.y + threadIdx.y;
 
   if (x < n && y < n) {
     int in_index = y * n + x;
-
-    // Use shared memory to reduce global memory transactions
-    __shared__ cuda::std::complex<real> tile[BLOCK_SIZE]
-                                            [BLOCK_SIZE + 1];  // +1 for padding
 
     // Load data from global memory to shared memory
     tile[threadIdx.y][threadIdx.x] = input[in_index];
