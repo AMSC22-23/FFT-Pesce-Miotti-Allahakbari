@@ -3,16 +3,90 @@
 
 #include <iostream>
 #include <numbers>
+#include <opencv2/opencv.hpp>
 #include <string>
 
 #include "FourierTransformCalculator.hpp"
 #include "Utility.hpp"
 #include "VectorExporter.hpp"
 
+using namespace FourierTransform;
+
 void print_usage(size_t size, const std::string& mode,
                  unsigned int max_num_threads);
 
 int main(int argc, char* argv[]) {
+  // Load the image (grayscale)
+  cv::Mat image = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
+
+  if (image.empty()) {
+    std::cerr << "Error: Unable to load the image." << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  // Check image properties
+  std::cout << "Image size: " << image.size() << std::endl;
+  std::cout << "Image type: " << image.type() << std::endl;
+
+  // convert image to complex vector
+  vec input_sequence;
+  vec output_sequence;
+
+  input_sequence.reserve(image.rows * image.cols);
+  output_sequence.reserve(image.rows * image.cols);
+
+  for (int i = 0; i < image.rows; i++)
+    for (int j = 0; j < image.cols; j++)
+      input_sequence.emplace_back(image.at<uchar>(i, j), 0);
+
+  IterativeFFTGPU2D* iterativeGPU2D_algorithm = new IterativeFFTGPU2D();
+  std::unique_ptr<FourierTransformAlgorithm> algorithm =
+      std::unique_ptr<FourierTransformAlgorithm>(iterativeGPU2D_algorithm);
+
+  // Set the direct transform.
+  algorithm->setBaseAngle(-std::numbers::pi_v<real>);
+
+  // Execute the algorithm and calculate the time.
+  std::cout << algorithm->calculateTime(input_sequence, output_sequence) << "μs"
+            << std::endl;
+
+  image.convertTo(image, CV_64FC1);
+  cv::Mat planes[] = {image, cv::Mat::zeros(image.size(), CV_64FC1)};
+  cv::Mat complexInput;
+  cv::merge(planes, 2, complexInput);
+  cv::dft(planes[0], planes[1], cv::DFT_COMPLEX_OUTPUT);
+  cv::Mat complex[2];
+
+  cv::split(planes[1], complex);
+
+  double epsilon = 1e-4;
+
+  for (int i = 0; i < image.rows; i++)
+    for (int j = 0; j < image.cols; j++) {
+      if (std::fabs(output_sequence[i * image.cols + j].real() -
+                    complex[0].at<double>(i, j)) > epsilon ||
+          std::fabs(output_sequence[i * image.cols + j].imag() -
+                    complex[1].at<double>(i, j)) > epsilon) {
+        std::cout << "Error in GPU calculations at: " << i << ", " << j
+                  << " GPU: " << output_sequence[i * image.cols + j]
+                  << ", CPU: (" << complex[0].at<double>(i, j) << ", "
+                  << complex[1].at<double>(i, j) << ")" << std::endl;
+        // break;
+      }
+      // std::cout << "Calculated by gpu: " << output_sequence[i * image.cols +
+      // j]
+      //           << ", Calculated by opencv: (" << complex[0].at<float>(i, j)
+      //           << ", " << complex[1].at<float>(i, j) << ")" << std::endl;
+    }
+  // // Display the image using OpenCV (optional)
+  // cv::imshow("Loaded Image", image);
+  // cv::waitKey(0);
+  // cv::destroyAllWindows();
+
+  return EXIT_SUCCESS;
+}
+
+int main_random_sequence_mode(int argc, char* argv[]) {
   using namespace FourierTransform;
 
   constexpr size_t default_size = 1UL << 10;
@@ -112,6 +186,14 @@ int main(int argc, char* argv[]) {
     calculator.directTransform(input_sequence, iterative_dft_result);
     WriteToFile(iterative_dft_result, "iterative_dft_result.csv");
 
+    IterativeFFTGPU* fft_gpu_algorithm = new IterativeFFTGPU();
+    std::unique_ptr<FourierTransformAlgorithm> iterative_fft_gpu(
+        fft_gpu_algorithm);
+    calculator.setDirectAlgorithm(iterative_fft_gpu);
+    vec iterative_gpu_result(size, 0);
+    calculator.directTransform(input_sequence, iterative_gpu_result);
+    WriteToFile(iterative_dft_result, "iterative_gpu_result.csv");
+
     // Check the results for errors.
     if (!CompareVectors(classical_dft_result, recursive_dft_result, 1e-4,
                         false))
@@ -119,6 +201,9 @@ int main(int argc, char* argv[]) {
     if (!CompareVectors(classical_dft_result, iterative_dft_result, 1e-4,
                         false))
       std::cerr << "Errors detected in iterative direct FFT." << std::endl;
+    if (!CompareVectors(classical_dft_result, iterative_gpu_result, 1e-4,
+                        false))
+      std::cerr << "Errors detected in iterative GPU FFT." << std::endl;
 
     // Compute the O(n^2) Fourier Transform of the result.
     std::unique_ptr<FourierTransformAlgorithm> classical_ift(
@@ -174,7 +259,7 @@ int main(int argc, char* argv[]) {
 
   // Execute a single algorithm and calculate the elapsed time.
   else if (mode == std::string("timingTest")) {
-    std::string algorithm_name = "iterative";
+    std::string algorithm_name = "iterativeGPU";
 
     // Get which algorithm to choose.
     if (argc >= 5) algorithm_name = std::string(argv[4]);
@@ -196,6 +281,10 @@ int main(int argc, char* argv[]) {
           bit_reversal_algorithm);
       algorithm =
           std::unique_ptr<FourierTransformAlgorithm>(iterative_algorithm);
+    } else if (algorithm_name == std::string("iterativeGPU")) {
+      IterativeFFTGPU* iterativeGPU_algorithm = new IterativeFFTGPU();
+      algorithm =
+          std::unique_ptr<FourierTransformAlgorithm>(iterativeGPU_algorithm);
     } else {
       print_usage(default_size, default_mode, default_max_num_threads);
       return 1;
@@ -235,6 +324,6 @@ void print_usage(size_t size, const std::string& mode,
             << "Argument 3: maximum number of threads (default: "
             << max_num_threads << ")\n"
             << "Argument 4: algorithm for timingTest mode (classic, recursive, "
-               "iterative (default))"
+               "iterative, IterativeGPU(default))"
             << std::endl;
 }
