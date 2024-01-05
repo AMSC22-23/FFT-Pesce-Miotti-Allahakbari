@@ -13,8 +13,8 @@ namespace FourierTransform
         }
 
         // Get the image size.
-        unsigned int width = image.cols;
-        unsigned int height = image.rows;
+        int width = image.cols;
+        int height = image.rows;
 
         // Assert that the image size is a multiple of 8.
         assert(width % 8 == 0);
@@ -34,13 +34,15 @@ namespace FourierTransform
                 unsigned char pixel = image.at<unsigned char>(i, j);
 
                 // Add the pixel value to the decoded image.
-                this->decoded->push_back(pixel);
+                this->decoded.push_back(pixel);
             }
         }
+
+        return true;
     }
 
     unsigned int GrayscaleImage::getStandardBitsize() const
     {
-        return this->decoded->size() * 8;
+        return this->blockGridWidth * this->blockGridHeight * 64 * 8;
     }
 }

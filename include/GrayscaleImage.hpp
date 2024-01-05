@@ -58,22 +58,19 @@ namespace FourierTransform
         static vec quantizationTable;
 
         // The image in uncompressed form.
-        std::vector<unsigned char> *decoded;
+        std::vector<unsigned char> decoded;
 
         // The image in compressed form (expressed as a sequence of bytes).
-        std::vector<unsigned char> *encoded;
+        std::vector<unsigned char> encoded;
 
         // An array of 8x8 blocks. Each block is a vector of 64 elements.
         std::vector<vec> blocks;
 
         // Block grid width.
-        unsigned int blockGridWidth;
+        int blockGridWidth;
 
         // Block grid height.
-        unsigned int blockGridHeight;
-
-        // The quantization table.
-        vec quantizationTable;
+        int blockGridHeight;
     };
 } // namespace FourierTransform
 
