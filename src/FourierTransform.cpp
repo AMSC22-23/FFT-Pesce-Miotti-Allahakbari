@@ -134,17 +134,12 @@ namespace FourierTransform
     const size_t log_sqrt_n = static_cast<size_t>(log2(sqrt_n));
     assert(1UL << log_sqrt_n == sqrt_n);
 
-    // Initialize an algorithm for 1D FFT.
+    // Use the ClassicalFourierTransformAlgorithm to compute the 1D FFT.
     std::unique_ptr<FourierTransformAlgorithm> fft_algorithm =
-        std::make_unique<IterativeFourierTransformAlgorithm>();
+        std::make_unique<ClassicalFourierTransformAlgorithm>();
 
-    // Initialize an algorithm for bit reversal permutation.
-    std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm =
-        std::make_unique<MaskBitReversalPermutationAlgorithm>();
-
-    // Set the algorithm for bit reversal permutation.
-    static_cast<IterativeFourierTransformAlgorithm *>(fft_algorithm.get())
-        ->setBitReversalPermutationAlgorithm(bit_reversal_algorithm);
+    // Set the base angle to -pi.
+    fft_algorithm->setBaseAngle(-M_PI);
 
     // Use the 1D FFT algotithm to compute the 2D FFT.
     for (size_t i = 0; i < sqrt_n; i++)
@@ -153,9 +148,6 @@ namespace FourierTransform
       vec row(sqrt_n, 0);
       for (size_t j = 0; j < sqrt_n; j++)
         row[j] = input_sequence[i * sqrt_n + j];
-
-      // Print the value of sqrt_n.
-      std::cout << "sqrt_n: " << sqrt_n << std::endl;
 
       // Compute the i-th row of the output matrix.
       vec output_row(sqrt_n, 0);

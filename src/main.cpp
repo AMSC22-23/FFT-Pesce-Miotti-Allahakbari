@@ -14,7 +14,7 @@ int main()
   using namespace FourierTransform;
 
   // Set a matrix size.
-  size_t size = 2;
+  size_t size = 8;
 
   // Create a vector that will represent the matrix.
   vec sequence(size * size, 0);
