@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 #Set compiler flags 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Ofast -march=native -mtune=native -funroll-all-loops -flto -fno-signed-zeros -fno-trapping-math")
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --use_fast_math")  
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --use_fast_math -DCMAKE_CUDA_ARCHITECTURES=all")  
 
 find_package(CUDAToolkit REQUIRED)
 find_package(OpenCV REQUIRED)
