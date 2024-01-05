@@ -3,8 +3,6 @@
 
 #include "FourierTransform.hpp"
 
-#include <memory>
-
 namespace FourierTransform
 {
     // A class that represents a grayscale image.
@@ -60,10 +58,10 @@ namespace FourierTransform
         static vec quantizationTable;
 
         // The image in uncompressed form.
-        vec decoded;
+        std::vector<unsigned char> *decoded;
 
         // The image in compressed form (expressed as a sequence of bytes).
-        const std::vector<unsigned char> *encoded;
+        std::vector<unsigned char> *encoded;
 
         // An array of 8x8 blocks. Each block is a vector of 64 elements.
         std::vector<vec> blocks;

@@ -10,6 +10,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wextra -Ofast -march=native -mtune=native -f
 #Set flags for Debug
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra")
 
+find_package(OpenCV REQUIRED)
 
 #Add all .cpp and .c files in src folder to compile list
 file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp
@@ -27,4 +28,4 @@ target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -fopenmp -DDOUBLE)
 
 #Add link options
 find_package(OpenMP)
-target_link_libraries(${CMAKE_PROJECT_NAME} OpenMP::OpenMP_CXX)
+target_link_libraries(${CMAKE_PROJECT_NAME} OpenMP::OpenMP_CXX ${OpenCV_LIBS})
