@@ -1,5 +1,4 @@
-#include <omp.h>
-#include <tgmath.h>
+#include "GrayscaleImage.hpp"
 
 #include <iostream>
 #include <numbers>
@@ -89,79 +88,23 @@ int main(int argc, char* argv[]) {
 int main_random_sequence_mode(int argc, char* argv[]) {
   using namespace FourierTransform;
 
-  constexpr size_t default_size = 1UL << 10;
-  constexpr unsigned int default_max_num_threads = 8;
-  const std::string default_mode = "demo";
+  // Create a GrayscaleImage object.
+  GrayscaleImage grayscaleImage;
 
-  // Check the number of arguments.
-  if (argc > 5) {
-    print_usage(default_size, default_mode, default_max_num_threads);
+  // Load the image.
+  std::cout << "Loading image..." << std::endl;
+  bool success = grayscaleImage.loadStandard("../img/image.jpg");
+
+  // Check if the image was loaded successfully.
+  if (!success)
+  {
+    std::cout << "Failed to load image." << std::endl;
     return 1;
   }
 
-  size_t size = default_size;
-  // Get the size of the sequence.
-  if (argc >= 2) {
-    char* error;
-
-    const unsigned long long_size = strtoul(argv[1], &error, 10);
-    // Check for errors
-    if (*error ||
-        1UL << static_cast<unsigned long>(log2(long_size)) != long_size) {
-      print_usage(default_size, default_mode, default_max_num_threads);
-      return 1;
-    }
-
-    size = static_cast<size_t>(long_size);
-  }
-
-  // Get which mode to execute the program in.
-  std::string mode = default_mode;
-  if (argc >= 3) mode = std::string(argv[2]);
-
-  unsigned int max_num_threads = default_max_num_threads;
-  // Get the maximum number of threads.
-  if (argc >= 4) {
-    char* error;
-
-    const unsigned long long_max_num_threads = strtoul(argv[3], &error, 10);
-    // Check for errors
-    if (*error) {
-      print_usage(default_size, default_mode, default_max_num_threads);
-      return 1;
-    }
-
-    max_num_threads = static_cast<size_t>(long_max_num_threads);
-  }
-
-  // Generate a sequence of complex numbers.
-  vec input_sequence;
-  input_sequence.reserve(size);
-  for (size_t i = 0; i < size; i++) {
-    // Add a random complex number to the sequence.
-    input_sequence.emplace_back(rand() % 100, rand() % 100);
-  }
-
-  // Execute different code based on the chosen execution mode.
-  // Default execution mode: give a general demonstration of the implemented
-  // functionalities.
-  if (mode == std::string("demo")) {
-    omp_set_num_threads(max_num_threads);
-
-    // Save the sequence to a file.
-    WriteToFile(input_sequence, "input_sequence.csv");
-
-    // Create the FourierTransformCalculator object.
-    FourierTransformCalculator calculator;
-
-    // Compute the O(n^2) Fourier Transform of the sequence.
-    std::unique_ptr<FourierTransformAlgorithm> classical_dft(
-        new ClassicalFourierTransformAlgorithm());
-    calculator.setDirectAlgorithm(classical_dft);
-    vec classical_dft_result(size, 0);
-    calculator.directTransform(input_sequence, classical_dft_result);
-    WriteToFile(classical_dft_result, "classical_dft_result.csv");
-
+  // Get the bitsize of the image.
+  unsigned int bitsize = grayscaleImage.getStandardBitsize();
+  
     // Compute the O(n log n) Fourier Transform of the sequence with the
     // recursive algorithm.
     std::unique_ptr<FourierTransformAlgorithm> recursive_dft(
@@ -261,8 +204,12 @@ int main_random_sequence_mode(int argc, char* argv[]) {
   else if (mode == std::string("timingTest")) {
     std::string algorithm_name = "iterativeGPU";
 
-    // Get which algorithm to choose.
-    if (argc >= 5) algorithm_name = std::string(argv[4]);
+  // Print the bitsize.
+  std::cout << "The loaded image has a bitsize of " << bitsize << " bits." << std::endl;
+
+  // Display the image.
+  std::cout << "Displaying image..." << std::endl;
+  grayscaleImage.display();
 
     // Create the algorithm.
     std::unique_ptr<FourierTransformAlgorithm> algorithm;
