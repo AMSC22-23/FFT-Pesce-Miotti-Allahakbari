@@ -5,26 +5,14 @@
 
 #include <cuda/std/complex>
 
+#include "Real.hpp"
+
 // A simple way to make the code generic with respect to the real type.
 
+namespace Transform {
 namespace FourierTransform {
 
-#ifdef FLOAT
-using real = float;
-#else
-#ifdef DOUBLE
-using real = double;
-#else
-#ifdef LONG_DOUBLE
-using real = long double;
-#else
-using real = double;
-#endif
-#endif
-#endif
-
-void run_fft_gpu(cuda::std::complex<FourierTransform::real>* data, int size,
-                 int m, FourierTransform::real base,
+void run_fft_gpu(cuda::std::complex<real>* data, int size, int m, real base,
                  cudaStream_t stream_id = 0);
 
 void bitreverse_gpu(cuda::std::complex<real>* in, cuda::std::complex<real>* out,
@@ -34,5 +22,6 @@ void transpose_gpu(cuda::std::complex<real>* in, cuda::std::complex<real>* out,
                    int n, cudaStream_t stream_id = 0);
 
 }  // namespace FourierTransform
+}  // namespace Transform
 
 #endif  // REAL_HPP

@@ -204,7 +204,7 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
   cudaMalloc(&transposed_sequence_dev, size * sizeof(cuda::std::complex<real>));
 
   // Loop over all the rows
-  for (auto i = 0; i < n; i++) {
+  for (size_t i = 0; i < n; i++) {
     cudaStream_t stream;
     cudaStreamCreate(&stream);
 
@@ -226,7 +226,7 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
   transpose_gpu(output_sequence_dev, transposed_sequence_dev, n);
 
   /// Loop over all the columns
-  for (auto i = 0; i < n; i++) {
+  for (size_t i = 0; i < n; i++) {
     cudaStream_t stream;
     cudaStreamCreate(&stream);
 

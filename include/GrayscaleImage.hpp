@@ -1,77 +1,76 @@
 #ifndef GRAYSCALE_IMAGE_HPP
 #define GRAYSCALE_IMAGE_HPP
 
-#include "FourierTransform.hpp"
+#include "Real.hpp"
 
-namespace FourierTransform
-{
-    // A class that represents a grayscale image.
-    // This class may be used to load, save, encode, decode and display grayscale images.
-    // Please note that the image's width and height must be a multiple of 8.
-    class GrayscaleImage
-    {
-    public:
-        // Load regular image from file.
-        bool loadStandard(const std::string &filename);
+// A class that represents a grayscale image.
+// This class may be used to load, save, encode, decode and display grayscale
+// images. Please note that the image's width and height must be a multiple
+// of 8.
+class GrayscaleImage {
+ public:
+  // Load regular image from file.
+  bool loadStandard(const std::string &filename);
 
-        // Load compressed image from file.
-        bool loadCompressed(const std::string &filename);
+  // Load compressed image from file.
+  bool loadCompressed(const std::string &filename);
 
-        // Save compressed image to file.
-        bool save(const std::string &filename);
+  // Save compressed image to file.
+  bool save(const std::string &filename);
 
-        // Encode the last loaded or decoded image.
-        void encode();
+  // Encode the last loaded or decoded image.
+  void encode();
 
-        // Decode the last loaded or encoded image.
-        void decode();
+  // Decode the last loaded or encoded image.
+  void decode();
 
-        // Display the last loaded or decoded image.
-        void display();
+  // Display the last loaded or decoded image.
+  void display();
 
-        // Get the bitsize of the last loaded or decoded image.
-        unsigned int getStandardBitsize() const;
+  // Get the bitsize of the last loaded or decoded image.
+  unsigned int getStandardBitsize() const;
 
-        // Get the bitsize of the last loaded or encoded image.
-        unsigned int getCompressedBitsize() const;
+  // Get the bitsize of the last loaded or encoded image.
+  unsigned int getCompressedBitsize() const;
 
-    private:
-        // Split the image in blocks of size 8x8, and save the result in variable 'blocks'.
-        void splitBlocks();
+ private:
+  // Split the image in blocks of size 8x8, and save the result in variable
+  // 'blocks'.
+  void splitBlocks();
 
-        // Merge the blocks in variable 'blocks' and save the result in variable 'decoded'.
-        void mergeBlocks();
+  // Merge the blocks in variable 'blocks' and save the result in variable
+  // 'decoded'.
+  void mergeBlocks();
 
-        // Quantize the given block using the quantization table.
-        std::vector<unsigned char> quantize(const std::vector<unsigned char> block);
+  // Quantize the given block using the quantization table.
+  std::vector<unsigned char> quantize(const std::vector<unsigned char> block);
 
-        // Unquantize the given block using the quantization table.
-        std::vector<unsigned char> unquantize(const std::vector<unsigned char> block);
+  // Unquantize the given block using the quantization table.
+  std::vector<unsigned char> unquantize(const std::vector<unsigned char> block);
 
-        // Use entropy coding to encode the given block.
-        void entropyEncode();
+  // Use entropy coding to encode the given block.
+  void entropyEncode();
 
-        // Use entropy coding to decode the given block.
-        void entropyDecode();
+  // Use entropy coding to decode the given block.
+  void entropyDecode();
 
-        // Static member variable to store the quantization table.
-        static vec quantizationTable;
+  // Static member variable to store the quantization table.
+  static Transform::FourierTransform::vec quantizationTable;
 
-        // The image in uncompressed form.
-        std::vector<unsigned char> decoded;
+  // The image in uncompressed form.
+  std::vector<unsigned char> decoded;
 
-        // The image in compressed form (expressed as a sequence of bytes).
-        std::vector<unsigned char> encoded;
+  // The image in compressed form (expressed as a sequence of bytes).
+  std::vector<unsigned char> encoded;
 
-        // An array of 8x8 blocks. Each block is a vector of 64 elements.
-        std::vector<std::vector<unsigned char>> blocks;
+  // An array of 8x8 blocks. Each block is a vector of 64 elements.
+  std::vector<std::vector<unsigned char>> blocks;
 
-        // Block grid width.
-        int blockGridWidth;
+  // Block grid width.
+  int blockGridWidth;
 
-        // Block grid height.
-        int blockGridHeight;
-    };
-} // namespace FourierTransform
+  // Block grid height.
+  int blockGridHeight;
+};
 
-#endif // GRAYSCALE_IMAGE_HPP
+#endif  // GRAYSCALE_IMAGE_HPP
