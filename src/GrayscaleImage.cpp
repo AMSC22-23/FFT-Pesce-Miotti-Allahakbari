@@ -4,6 +4,7 @@
 
 namespace FourierTransform
 {
+    // Load regular image from file.
     bool GrayscaleImage::loadStandard(const std::string &filename)
     {
         cv::Mat image = cv::imread(filename, cv::IMREAD_GRAYSCALE);
@@ -41,8 +42,34 @@ namespace FourierTransform
         return true;
     }
 
+    // Get the bitsize of the last loaded or decoded image.
     unsigned int GrayscaleImage::getStandardBitsize() const
     {
         return this->blockGridWidth * this->blockGridHeight * 64 * 8;
+    }
+
+    // Display the last loaded or decoded image.
+    void GrayscaleImage::display()
+    {
+        // Create a new image.
+        cv::Mat image(this->blockGridHeight * 8, this->blockGridWidth * 8, CV_8UC1);
+
+        // For each row...
+        for (int i = 0; i < image.rows; i++)
+        {
+            // For each column...
+            for (int j = 0; j < image.cols; j++)
+            {
+                // Get the pixel value.
+                unsigned char pixel = this->decoded[i * image.cols + j];
+
+                // Set the pixel value.
+                image.at<unsigned char>(i, j) = pixel;
+            }
+        }
+
+        // Display the image.
+        cv::imshow("Image", image);
+        cv::waitKey(0);
     }
 }

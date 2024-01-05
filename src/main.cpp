@@ -26,5 +26,9 @@ int main()
   // Print the bitsize.
   std::cout << "The loaded image has a bitsize of " << bitsize << " bits." << std::endl;
 
+  // Display the image.
+  std::cout << "Displaying image..." << std::endl;
+  grayscaleImage.display();
+
   return 0;
 }
