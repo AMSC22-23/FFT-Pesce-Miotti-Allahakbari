@@ -43,10 +43,10 @@ namespace FourierTransform
         void mergeBlocks();
 
         // Quantize the given block using the quantization table.
-        vec quantize(const vec &block);
+        std::vector<unsigned char> quantize(const std::vector<unsigned char> block);
 
         // Unquantize the given block using the quantization table.
-        vec unquantize(const vec &block);
+        std::vector<unsigned char> unquantize(const std::vector<unsigned char> block);
 
         // Use entropy coding to encode the given block.
         void entropyEncode();
@@ -64,7 +64,7 @@ namespace FourierTransform
         std::vector<unsigned char> encoded;
 
         // An array of 8x8 blocks. Each block is a vector of 64 elements.
-        std::vector<vec> blocks;
+        std::vector<std::vector<unsigned char>> blocks;
 
         // Block grid width.
         int blockGridWidth;

@@ -72,4 +72,47 @@ namespace FourierTransform
         cv::imshow("Image", image);
         cv::waitKey(0);
     }
+
+    // Split the image in blocks of size 8x8, and save the result in variable 'blocks'.
+    void GrayscaleImage::splitBlocks()
+    {
+        // Clear the blocks vector.
+        this->blocks.clear();
+
+        // For each block row...
+        for (int i = 0; i < this->blockGridHeight; i++)
+        {
+            // For each block column...
+            for (int j = 0; j < this->blockGridWidth; j++)
+            {
+                // Create a new block.
+                std::vector<unsigned char> block;
+
+                // For each row in the block...
+                for (int k = 0; k < 8; k++)
+                {
+                    // For each column in the block...
+                    for (int l = 0; l < 8; l++)
+                    {
+                        // Get the top-left pixel coordinates of the block.
+                        int x = j * 8;
+                        int y = i * 8;
+
+                        // Get the pixel coordinates.
+                        int pixelX = x + l;
+                        int pixelY = y + k;
+
+                        // Get the pixel value.
+                        unsigned char pixel = this->decoded[pixelY * this->blockGridWidth * 8 + pixelX];
+
+                        // Add the pixel value to the block.
+                        block.push_back(pixel);
+                    }
+                }
+
+                // Add the block to the blocks vector.
+                this->blocks.push_back(block);
+            }
+        }
+    }
 }
