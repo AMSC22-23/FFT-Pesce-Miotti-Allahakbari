@@ -62,6 +62,34 @@ class IterativeFourierTransformAlgorithm : public FourierTransformAlgorithm {
   std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm;
 };
 
+// A 2D FFT algorithm. We assume that the input matrix is square and its size
+// is a power of 2. The algorithm is based on the 1D FFT algorithm.
+// This algorithm is very slow and is only used to test the correctness of
+// other algorithms, in a machine without CUDA support.
+class TrivialTwoDimensionalFourierTransformAlgorithm
+    : public FourierTransformAlgorithm {
+ public:
+  void operator()(const vec &input_sequence,
+                  vec &output_sequence) const override;
+  ~TrivialTwoDimensionalFourierTransformAlgorithm() = default;
+};
+
+class IterativeFFTGPU : public FourierTransformAlgorithm {
+ public:
+  void operator()(const vec &input_sequence,
+                  vec &output_sequence) const override;
+
+  ~IterativeFFTGPU() = default;
+};
+
+class IterativeFFTGPU2D : public FourierTransformAlgorithm {
+ public:
+  void operator()(const vec &input_sequence,
+                  vec &output_sequence) const override;
+
+  ~IterativeFFTGPU2D() = default;
+};
+
 // Calculate the time needed to compute the Fourier transform of
 // "sequence" using an instance of "ft_algorithm", with 1 to "max_num_threads"
 // threads. The results are printed expressed in microseconds.
