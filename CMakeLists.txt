@@ -4,8 +4,11 @@ enable_language(CUDA)
 #Use c++20
 set(CMAKE_CXX_STANDARD 20)
 
-#Set compiler flags 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Ofast -march=native -mtune=native -funroll-all-loops -flto -fno-signed-zeros -fno-trapping-math")
+#Set compiler flags for Release
+set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wextra -Ofast -march=native -mtune=native -funroll-all-loops -flto -fno-signed-zeros -fno-trapping-math")
+#Set flags for Debug
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Wextra")
+#Set compiler CUDA flags
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --use_fast_math")  
 
 find_package(CUDAToolkit REQUIRED)
