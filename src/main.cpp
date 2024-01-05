@@ -128,9 +128,8 @@ int cuda_main(int argc, char* argv[]) {
     for (int j = 0; j < image.cols; j++)
       input_sequence.emplace_back(image.at<uchar>(i, j), 0);
 
-  IterativeFFTGPU2D* iterativeGPU2D_algorithm = new IterativeFFTGPU2D();
   std::unique_ptr<FourierTransformAlgorithm> algorithm =
-      std::unique_ptr<FourierTransformAlgorithm>(iterativeGPU2D_algorithm);
+      std::make_unique<IterativeFFTGPU2D>();
 
   // Set the direct transform.
   algorithm->setBaseAngle(-std::numbers::pi_v<real>);
@@ -307,22 +306,25 @@ int fft_main(int argc, char* argv[]) {
   // Run a demo of the hands-on code.
   if (mode == std::string("demo")) {
     omp_set_num_threads(max_num_threads);
+
     // Save the sequence to a file.
     WriteToFile(input_sequence, "input_sequence.csv");
+
     // Create the FourierTransformCalculator object.
     FourierTransformCalculator calculator;
 
     // Compute the O(n^2) Fourier Transform of the sequence.
-    std::unique_ptr<FourierTransformAlgorithm> classical_dft(
-        new ClassicalFourierTransformAlgorithm());
+    std::unique_ptr<FourierTransformAlgorithm> classical_dft =
+        std::make_unique<ClassicalFourierTransformAlgorithm>();
     calculator.setDirectAlgorithm(classical_dft);
     vec classical_dft_result(size, 0);
     calculator.directTransform(input_sequence, classical_dft_result);
     WriteToFile(classical_dft_result, "classical_dft_result.csv");
+
     // Compute the O(n log n) Fourier Transform of the sequence with the
     // recursive algorithm.
-    std::unique_ptr<FourierTransformAlgorithm> recursive_dft(
-        new RecursiveFourierTransformAlgorithm());
+    std::unique_ptr<FourierTransformAlgorithm> recursive_dft =
+        std::make_unique<RecursiveFourierTransformAlgorithm>();
     calculator.setDirectAlgorithm(recursive_dft);
     vec recursive_dft_result(size, 0);
     calculator.directTransform(input_sequence, recursive_dft_result);
@@ -330,22 +332,23 @@ int fft_main(int argc, char* argv[]) {
 
     // Compute the O(n log n) Fourier Transform of the sequence with the
     // iterative algorithm.
-    IterativeFourierTransformAlgorithm* iterative_dft_algorithm =
-        new IterativeFourierTransformAlgorithm();
-    std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm(
-        new MaskBitReversalPermutationAlgorithm());
+    std::unique_ptr<IterativeFourierTransformAlgorithm>
+        iterative_dft_algorithm =
+            std::make_unique<IterativeFourierTransformAlgorithm>();
+    std::unique_ptr<BitReversalPermutationAlgorithm>
+        mask_bit_reversal_algorithm =
+            std::make_unique<MaskBitReversalPermutationAlgorithm>();
     iterative_dft_algorithm->setBitReversalPermutationAlgorithm(
-        bit_reversal_algorithm);
-    std::unique_ptr<FourierTransformAlgorithm> iterative_dft(
-        iterative_dft_algorithm);
+        mask_bit_reversal_algorithm);
+    std::unique_ptr<FourierTransformAlgorithm> iterative_dft =
+        std::move(iterative_dft_algorithm);
     calculator.setDirectAlgorithm(iterative_dft);
     vec iterative_dft_result(size, 0);
     calculator.directTransform(input_sequence, iterative_dft_result);
     WriteToFile(iterative_dft_result, "iterative_dft_result.csv");
 
-    IterativeFFTGPU* fft_gpu_algorithm = new IterativeFFTGPU();
-    std::unique_ptr<FourierTransformAlgorithm> iterative_fft_gpu(
-        fft_gpu_algorithm);
+    std::unique_ptr<FourierTransformAlgorithm> iterative_fft_gpu =
+        std::make_unique<IterativeFFTGPU>();
     calculator.setDirectAlgorithm(iterative_fft_gpu);
     vec iterative_gpu_result(size, 0);
     calculator.directTransform(input_sequence, iterative_gpu_result);
@@ -363,31 +366,33 @@ int fft_main(int argc, char* argv[]) {
       std::cerr << "Errors detected in iterative GPU FFT." << std::endl;
 
     // Compute the O(n^2) Fourier Transform of the result.
-    std::unique_ptr<FourierTransformAlgorithm> classical_ift(
-        new ClassicalFourierTransformAlgorithm());
+    std::unique_ptr<FourierTransformAlgorithm> classical_ift =
+        std::make_unique<ClassicalFourierTransformAlgorithm>();
     calculator.setInverseAlgorithm(classical_ift);
     vec classical_ift_result(size, 0);
     calculator.inverseTransform(classical_dft_result, classical_ift_result);
     WriteToFile(classical_ift_result, "classical_ift_result.csv");
 
     // Compute the iterative O(n log) Inverse Fourier Transform of the result.
-    IterativeFourierTransformAlgorithm* iterative_ift_algorithm =
-        new IterativeFourierTransformAlgorithm();
-    std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm2(
-        new FastBitReversalPermutationAlgorithm());
+    std::unique_ptr<IterativeFourierTransformAlgorithm>
+        iterative_ift_algorithm =
+            std::make_unique<IterativeFourierTransformAlgorithm>();
+    std::unique_ptr<BitReversalPermutationAlgorithm>
+        fast_bit_reversal_algorithm =
+            std::make_unique<FastBitReversalPermutationAlgorithm>();
     iterative_ift_algorithm->setBitReversalPermutationAlgorithm(
-        bit_reversal_algorithm2);
-    std::unique_ptr<FourierTransformAlgorithm> iterative_ift(
-        iterative_ift_algorithm);
+        fast_bit_reversal_algorithm);
+    std::unique_ptr<FourierTransformAlgorithm> iterative_ift =
+        std::move(iterative_ift_algorithm);
     calculator.setInverseAlgorithm(iterative_ift);
     vec iterative_ift_result(size, 0);
     calculator.inverseTransform(classical_dft_result, iterative_ift_result);
     WriteToFile(iterative_ift_result, "iterative_ift_result.csv");
 
     // Check if the new inverse sequences are equal to the original one.
-    if (!CompareVectors(input_sequence, classical_ift_result, 1e-4, false))
+    if (!CompareVectors(input_sequence, classical_ift_result, precision, false))
       std::cerr << "Errors detected in classical inverse FFT." << std::endl;
-    if (!CompareVectors(input_sequence, iterative_ift_result, 1e-4, false))
+    if (!CompareVectors(input_sequence, iterative_ift_result, precision, false))
       std::cerr << "Errors detected in iterative inverse FFT." << std::endl;
   }
 
@@ -402,15 +407,16 @@ int fft_main(int argc, char* argv[]) {
   else if (mode == std::string("scalingTest")) {
     // Calculate the times for up to max_num_threads threads for the iterative
     // fft.
-    IterativeFourierTransformAlgorithm* iterative_dft_algorithm =
-        new IterativeFourierTransformAlgorithm();
+    std::unique_ptr<IterativeFourierTransformAlgorithm>
+        iterative_dft_algorithm =
+            std::make_unique<IterativeFourierTransformAlgorithm>();
     iterative_dft_algorithm->setBaseAngle(-std::numbers::pi_v<real>);
-    std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm(
-        new MaskBitReversalPermutationAlgorithm());
+    std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm =
+        std::make_unique<MaskBitReversalPermutationAlgorithm>();
     iterative_dft_algorithm->setBitReversalPermutationAlgorithm(
         bit_reversal_algorithm);
-    std::unique_ptr<FourierTransformAlgorithm> iterative_dft(
-        iterative_dft_algorithm);
+    std::unique_ptr<FourierTransformAlgorithm> iterative_dft =
+        std::move(iterative_dft_algorithm);
     TimeEstimateFFT(iterative_dft, input_sequence, max_num_threads);
   }
 
@@ -424,24 +430,20 @@ int fft_main(int argc, char* argv[]) {
     // Create the algorithm.
     std::unique_ptr<FourierTransformAlgorithm> algorithm;
     if (algorithm_name == std::string("classic")) {
-      algorithm = std::unique_ptr<FourierTransformAlgorithm>(
-          new ClassicalFourierTransformAlgorithm());
+      algorithm = std::make_unique<ClassicalFourierTransformAlgorithm>();
     } else if (algorithm_name == std::string("recursive")) {
-      algorithm = std::unique_ptr<FourierTransformAlgorithm>(
-          new RecursiveFourierTransformAlgorithm());
+      algorithm = std::make_unique<RecursiveFourierTransformAlgorithm>();
     } else if (algorithm_name == std::string("iterative")) {
-      IterativeFourierTransformAlgorithm* iterative_algorithm =
-          new IterativeFourierTransformAlgorithm();
-      std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm(
-          new MaskBitReversalPermutationAlgorithm());
-      iterative_algorithm->setBitReversalPermutationAlgorithm(
+      std::unique_ptr<IterativeFourierTransformAlgorithm>
+          iterative_dft_algorithm =
+              std::make_unique<IterativeFourierTransformAlgorithm>();
+      std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm =
+          std::make_unique<MaskBitReversalPermutationAlgorithm>();
+      iterative_dft_algorithm->setBitReversalPermutationAlgorithm(
           bit_reversal_algorithm);
-      algorithm =
-          std::unique_ptr<FourierTransformAlgorithm>(iterative_algorithm);
+      algorithm = std::move(iterative_dft_algorithm);
     } else if (algorithm_name == std::string("iterativeGPU")) {
-      IterativeFFTGPU* iterativeGPU_algorithm = new IterativeFFTGPU();
-      algorithm =
-          std::unique_ptr<FourierTransformAlgorithm>(iterativeGPU_algorithm);
+      algorithm = std::make_unique<IterativeFFTGPU>();
     } else {
       print_usage_fft(default_size, default_mode, default_max_num_threads);
       return 1;
