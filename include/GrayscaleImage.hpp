@@ -3,50 +3,76 @@
 
 #include "FourierTransform.hpp"
 
+#include <memory>
+
 namespace FourierTransform
 {
+    // A class that represents a grayscale image.
+    // This class may be used to load, save, encode, decode and display grayscale images.
+    // Please note that the image's width and height must be a multiple of 8.
     class GrayscaleImage
     {
     public:
-        // Load image from file.
-        bool loadFile(const std::string &filename);
+        // Load regular image from file.
+        bool loadStandard(const std::string &filename);
+
+        // Load compressed image from file.
+        bool loadCompressed(const std::string &filename);
 
         // Save compressed image to file.
-        bool saveFile(const std::string &filename);
+        bool save(const std::string &filename);
 
-        // Encode the image in variable 'uncompressed' and save the result in variable 'compressed'.
+        // Encode the last loaded or decoded image.
         void encode();
 
-        // Decode the image in variable 'compressed' and save the result in variable 'uncompressed'.
+        // Decode the last loaded or encoded image.
         void decode();
+
+        // Display the last loaded or decoded image.
+        void display();
+
+        // Get the bitsize of the last loaded or decoded image.
+        unsigned int getStandardBitsize() const;
+
+        // Get the bitsize of the last loaded or encoded image.
+        unsigned int getCompressedBitsize() const;
 
     private:
         // Split the image in blocks of size 8x8, and save the result in variable 'blocks'.
         void splitBlocks();
 
-        // Merge the blocks in variable 'blocks' and save the result in variable 'output'.
+        // Merge the blocks in variable 'blocks' and save the result in variable 'decoded'.
         void mergeBlocks();
 
-        // Quantize the given block using a quantization table (class variable).
-        void quantize(vec &block);
+        // Quantize the given block using the quantization table.
+        vec quantize(const vec &block);
 
-        // Unquantize the given block using a quantization table (class variable).
-        void unQuantize();
+        // Unquantize the given block using the quantization table.
+        vec unquantize(const vec &block);
 
         // Use entropy coding to encode the given block.
-        void internalEncode();
+        void entropyEncode();
 
         // Use entropy coding to decode the given block.
-        void internalDecode();
+        void entropyDecode();
+
+        // Static member variable to store the quantization table.
+        static vec quantizationTable;
 
         // The image in uncompressed form.
-        vec uncompressed;
+        vec decoded;
 
-        // The image in compressed form.
-        vec compressed;
+        // The image in compressed form (expressed as a sequence of bytes).
+        const std::vector<unsigned char> *encoded;
 
         // An array of 8x8 blocks. Each block is a vector of 64 elements.
         std::vector<vec> blocks;
+
+        // Block grid width.
+        unsigned int blockGridWidth;
+
+        // Block grid height.
+        unsigned int blockGridHeight;
 
         // The quantization table.
         vec quantizationTable;
