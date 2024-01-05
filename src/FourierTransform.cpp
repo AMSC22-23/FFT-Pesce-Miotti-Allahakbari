@@ -12,6 +12,7 @@
 #include "FourierTransform.hpp"
 #include "Utility.hpp"
 
+namespace Transform {
 namespace FourierTransform {
 
 void ClassicalFourierTransformAlgorithm::operator()(
@@ -294,3 +295,4 @@ void TimeEstimateFFT(std::unique_ptr<FourierTransformAlgorithm> &ft_algorithm,
 }
 
 }  // namespace FourierTransform
+}  // namespace Transform

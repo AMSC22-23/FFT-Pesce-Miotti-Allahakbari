@@ -9,6 +9,7 @@
 
 #include "Utility.hpp"
 
+namespace Transform {
 namespace FourierTransform {
 
 // Compute the reverse bit order of "index", given a bitsize.
@@ -203,3 +204,4 @@ void CompareTimesBitReversalPermutation(const vec &sequence,
 }
 
 }  // namespace FourierTransform
+}  // namespace Transform

@@ -5,6 +5,7 @@
 
 #include "BitReversalPermutation.hpp"
 
+namespace Transform {
 namespace FourierTransform {
 
 // A class that represents a generic direct or inverse Fourier transform
@@ -96,5 +97,6 @@ void TimeEstimateFFT(std::unique_ptr<FourierTransformAlgorithm> &ft_algorithm,
                      const vec &sequence, unsigned int max_num_threads);
 
 }  // namespace FourierTransform
+}  // namespace Transform
 
 #endif  // FOURIER_TRANSFORM_HPP

@@ -1,6 +1,5 @@
 #include <omp.h>
 
-#include <iostream>
 #include <numbers>
 #include <opencv2/opencv.hpp>
 #include <string>
@@ -8,13 +7,13 @@
 #include "FourierTransformCalculator.hpp"
 #include "GrayscaleImage.hpp"
 #include "Utility.hpp"
-#include "VectorExporter.hpp"
+#include "WaveletTransform.hpp"
 
 void print_usage(size_t size, const std::string& mode,
                  unsigned int max_num_threads);
 
 int main(int argc, char* argv[]) {
-  using namespace FourierTransform;
+  using namespace Transform;
 
   constexpr size_t default_size = 1UL << 10;
   constexpr unsigned int default_max_num_threads = 8;
@@ -161,8 +160,55 @@ int main(int argc, char* argv[]) {
 
     return EXIT_SUCCESS;
   }
+     
+  // Run a test of wavelets.
+  else if (mode == std::string("waveletTest")) {
+    using namespace WaveletTransform;
 
-  // Not jpeg or CUDA code.
+    // Create a cubic signal. Source of the example:
+    // https://web.archive.org/web/20120305164605/http://www.embl.de/~gpau/misc/dwt97.c.
+    std::vector<real> input_sequence;
+    input_sequence.reserve(size);
+    for (size_t i = 0; i < size; i++)
+      input_sequence.emplace_back(5 + i + 0.4 * i * i - 0.02 * i * i * i);
+
+    // Save the sequence to a file.
+    WriteToFile(input_sequence, "input_sequence.csv");
+
+    // Do the forward 9/7 transform with the old algorithm.
+    std::vector<real> fwt_result(input_sequence);
+    DirectWaveletTransform97(fwt_result);
+
+    // Save the sequence to a file.
+    WriteToFile(fwt_result, "fwt_result.csv");
+
+    // Do the inverse 9/7 transform with the old algorithm.
+    std::vector<real> iwt_result(fwt_result);
+    InverseWaveletTransform97(iwt_result);
+
+    // Check if the result is the same as the input sequence.
+    if (!CompareVectors(input_sequence, iwt_result, precision, false))
+      std::cerr << "Errors detected in wavelet transforms." << std::endl;
+
+    // Do the forward 9/7 transform with the new algorithm.
+    std::vector<real> high_sequence(size / 2, 0);
+    std::vector<real> low_sequence(size / 2, 0);
+    NewDirectWaveletTransform97(input_sequence, high_sequence, low_sequence);
+
+    // Save the sequences to a file.
+    WriteToFile(high_sequence, "high_sequence.csv");
+    WriteToFile(low_sequence, "low_sequence.csv");
+
+    // Do the inverse 9/7 transform with the new algorithm.
+    std::vector<real> final_result(size, 0);
+    NewInverseWaveletTransform97(final_result, high_sequence, low_sequence);
+
+    // Check if the result is the same as the input sequence.
+    if (!CompareVectors(input_sequence, final_result, precision, true))
+      std::cerr << "Errors detected in new wavelet transforms." << std::endl;
+  }
+
+  // Run a FFT test.
   else {
     // Generate a sequence of complex numbers.
     vec input_sequence;
@@ -203,78 +249,6 @@ int main(int argc, char* argv[]) {
       // iterative algorithm.
       IterativeFourierTransformAlgorithm* iterative_dft_algorithm =
           new IterativeFourierTransformAlgorithm();
-      std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm(
-          new MaskBitReversalPermutationAlgorithm());
-      iterative_dft_algorithm->setBitReversalPermutationAlgorithm(
-          bit_reversal_algorithm);
-      std::unique_ptr<FourierTransformAlgorithm> iterative_dft(
-          iterative_dft_algorithm);
-      calculator.setDirectAlgorithm(iterative_dft);
-      vec iterative_dft_result(size, 0);
-      calculator.directTransform(input_sequence, iterative_dft_result);
-      WriteToFile(iterative_dft_result, "iterative_dft_result.csv");
-
-      IterativeFFTGPU* fft_gpu_algorithm = new IterativeFFTGPU();
-      std::unique_ptr<FourierTransformAlgorithm> iterative_fft_gpu(
-          fft_gpu_algorithm);
-      calculator.setDirectAlgorithm(iterative_fft_gpu);
-      vec iterative_gpu_result(size, 0);
-      calculator.directTransform(input_sequence, iterative_gpu_result);
-      WriteToFile(iterative_dft_result, "iterative_gpu_result.csv");
-
-      // Check the results for errors.
-      if (!CompareVectors(classical_dft_result, recursive_dft_result, 1e-4,
-                          false))
-        std::cerr << "Errors detected in recursive direct FFT." << std::endl;
-      if (!CompareVectors(classical_dft_result, iterative_dft_result, 1e-4,
-                          false))
-        std::cerr << "Errors detected in iterative direct FFT." << std::endl;
-      if (!CompareVectors(classical_dft_result, iterative_gpu_result, 1e-4,
-                          false))
-        std::cerr << "Errors detected in iterative GPU FFT." << std::endl;
-
-      // Compute the O(n^2) Fourier Transform of the result.
-      std::unique_ptr<FourierTransformAlgorithm> classical_ift(
-          new ClassicalFourierTransformAlgorithm());
-      calculator.setInverseAlgorithm(classical_ift);
-      vec classical_ift_result(size, 0);
-      calculator.inverseTransform(classical_dft_result, classical_ift_result);
-      WriteToFile(classical_ift_result, "classical_ift_result.csv");
-
-      // Compute the iterative O(n log) Inverse Fourier Transform of the result.
-      IterativeFourierTransformAlgorithm* iterative_ift_algorithm =
-          new IterativeFourierTransformAlgorithm();
-      std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm2(
-          new FastBitReversalPermutationAlgorithm());
-      iterative_ift_algorithm->setBitReversalPermutationAlgorithm(
-          bit_reversal_algorithm2);
-      std::unique_ptr<FourierTransformAlgorithm> iterative_ift(
-          iterative_ift_algorithm);
-      calculator.setInverseAlgorithm(iterative_ift);
-      vec iterative_ift_result(size, 0);
-      calculator.inverseTransform(classical_dft_result, iterative_ift_result);
-      WriteToFile(iterative_ift_result, "iterative_ift_result.csv");
-
-      // Check if the new inverse sequences are equal to the original one.
-      if (!CompareVectors(input_sequence, classical_ift_result, 1e-4, false))
-        std::cerr << "Errors detected in classical inverse FFT." << std::endl;
-      if (!CompareVectors(input_sequence, iterative_ift_result, 1e-4, false))
-        std::cerr << "Errors detected in iterative inverse FFT." << std::endl;
-    }
-
-    // Run a performance comparison of different bit reversal permutation
-    // techniques.
-    else if (mode == std::string("bitReversalTest")) {
-      // Run a comparison between mask and fast bit reversal permutations.
-      CompareTimesBitReversalPermutation(input_sequence, max_num_threads);
-    }
-
-    // Run a scaling test with the best performing algorithm.
-    else if (mode == std::string("scalingTest")) {
-      // Calculate the times for up to max_num_threads threads for the iterative
-      // fft.
-      IterativeFourierTransformAlgorithm* iterative_dft_algorithm =
-          new IterativeFourierTransformAlgorithm();
       iterative_dft_algorithm->setBaseAngle(-std::numbers::pi_v<real>);
       std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm(
           new MaskBitReversalPermutationAlgorithm());
@@ -284,54 +258,7 @@ int main(int argc, char* argv[]) {
           iterative_dft_algorithm);
       TimeEstimateFFT(iterative_dft, input_sequence, max_num_threads);
     }
-
-    // Execute a single algorithm and calculate the elapsed time.
-    else if (mode == std::string("timingTest")) {
-      std::string algorithm_name = "iterative";
-
-      // Get which algorithm to choose.
-      if (argc >= 5) algorithm_name = std::string(argv[4]);
-
-      // Create the algorithm.
-      std::unique_ptr<FourierTransformAlgorithm> algorithm;
-      if (algorithm_name == std::string("classic")) {
-        algorithm = std::unique_ptr<FourierTransformAlgorithm>(
-            new ClassicalFourierTransformAlgorithm());
-      } else if (algorithm_name == std::string("recursive")) {
-        algorithm = std::unique_ptr<FourierTransformAlgorithm>(
-            new RecursiveFourierTransformAlgorithm());
-      } else if (algorithm_name == std::string("iterative")) {
-        IterativeFourierTransformAlgorithm* iterative_algorithm =
-            new IterativeFourierTransformAlgorithm();
-        std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm(
-            new MaskBitReversalPermutationAlgorithm());
-        iterative_algorithm->setBitReversalPermutationAlgorithm(
-            bit_reversal_algorithm);
-        algorithm =
-            std::unique_ptr<FourierTransformAlgorithm>(iterative_algorithm);
-      } else if (algorithm_name == std::string("iterativeGPU")) {
-        IterativeFFTGPU* iterativeGPU_algorithm = new IterativeFFTGPU();
-        algorithm =
-            std::unique_ptr<FourierTransformAlgorithm>(iterativeGPU_algorithm);
-      } else {
-        print_usage(default_size, default_mode, default_max_num_threads);
-        return 1;
-      }
-
-      // Set the direct transform.
-      algorithm->setBaseAngle(-std::numbers::pi_v<real>);
-
-      // Create an output vector.
-      vec result(size, 0);
-
-      // Set the number of threads.
-      omp_set_num_threads(max_num_threads);
-
-      // Execute the algorithm and calculate the time.
-      std::cout << algorithm->calculateTime(input_sequence, result) << "μs"
-                << std::endl;
-    }
-
+    
     // Wrong mode specified.
     else {
       print_usage(default_size, default_mode, default_max_num_threads);
@@ -348,7 +275,7 @@ void print_usage(size_t size, const std::string& mode,
             << "Argument 1: size of the sequence (default: " << size
             << "), must be a power of 2\n"
             << "Argument 2: execution mode (demo / bitReversalTest / "
-               "scalingTest / timingTest / cudaTest / imageTest) (default: "
+               "scalingTest / timingTest / cudaTest / imageTest, waveletTest) (default: "
             << mode << ")\n"
             << "Argument 3: maximum number of threads (default: "
             << max_num_threads << ")\n"
