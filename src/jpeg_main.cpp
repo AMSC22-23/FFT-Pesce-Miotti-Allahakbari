@@ -51,6 +51,14 @@ int jpeg_main(int argc, char *argv[])
   std::cout << "Encoding image..." << std::endl;
   grayscaleImage.encode();
 
+  // Decode the image.
+  std::cout << "Decoding image..." << std::endl;
+  grayscaleImage.decode();
+
+  // Display the image.
+  std::cout << "Displaying image..." << std::endl;
+  grayscaleImage.display();
+
   // Print the bitsize of the encoded image.
   std::cout << "Encoded bitsize: " << grayscaleImage.getCompressedBitsize() << std::endl;
 

@@ -408,10 +408,10 @@ void GrayscaleImage::entropyDecode()
       }
 
       // Create a new block.
-      std::vector<char> block;
+      std::vector<char> block(64, 0);
 
       // For each element in the reconstructed zigZag vector...
-      for (size_t j = 0; j < reconstructedZigZagVector.size(); j++)
+      for (size_t j = 0; j < 64; j++)
       {
         // Get the zigZag map coordinates.
         int x = GrayscaleImage::zigZagMap[j].first;
@@ -478,10 +478,10 @@ void GrayscaleImage::entropyDecode()
     if (reconstructedZigZagVector.size() == 64)
     {
       // Create a new block.
-      std::vector<char> block;
+      std::vector<char> block(64, 0);
 
       // For each element in the reconstructed zigZag vector...
-      for (size_t j = 0; j < reconstructedZigZagVector.size(); j++)
+      for (size_t j = 0; j < 64; j++)
       {
         // Get the zigZag map coordinates.
         int x = GrayscaleImage::zigZagMap[j].first;
@@ -555,6 +555,63 @@ void GrayscaleImage::encode()
 
   // Use entropy coding to encode all blocks.
   this->entropyEncode();
+}
+
+// Decode the last loaded or encoded image.
+void GrayscaleImage::decode()
+{
+  // Initialize a TrivialTwoDimensionalFourierTransformAlgorithm object.
+  Transform::FourierTransform::TrivialTwoDimensionalFourierTransformAlgorithm
+      fft_algorithm;
+
+  // Set the base angle to +pi.
+  fft_algorithm.setBaseAngle(+M_PI);
+
+  // Use entropy coding to decode all blocks.
+  this->entropyDecode();
+
+  // Iterate over all blocks.
+  for (size_t i = 0; i < this->blocks.size(); i++)
+  {
+    // Get the block.
+    std::vector<char> block = this->blocks[i];
+
+    // Unquantize the block.
+    std::vector<char>
+        unquantizedBlock = this->unquantize(block);
+
+    // Change block structure from char to vec.
+    Transform::FourierTransform::vec vecBlock;
+    for (size_t j = 0; j < unquantizedBlock.size(); j++)
+    {
+      vecBlock.push_back(unquantizedBlock[j]);
+    }
+
+    // Create an output block.
+    Transform::FourierTransform::vec transformedBlock(64, 0);
+
+    // Apply the inverse Fourier transform to the block.
+    fft_algorithm(vecBlock, transformedBlock);
+
+    // Change block structure from vec to char.
+    std::vector<char> transformedCharBlock;
+    for (size_t j = 0; j < transformedBlock.size(); j++)
+    {
+      transformedCharBlock.push_back(transformedBlock[j].real());
+    }
+
+    // Shift the block by 128.
+    for (size_t j = 0; j < transformedCharBlock.size(); j++)
+    {
+      transformedCharBlock[j] += 128;
+    }
+
+    // Add the block to the blocks vector.
+    this->blocks[i] = transformedCharBlock;
+  }
+
+  // Merge the blocks in variable 'blocks'.
+  this->mergeBlocks();
 }
 
 // Get the bitsize of the last loaded or encoded image.
