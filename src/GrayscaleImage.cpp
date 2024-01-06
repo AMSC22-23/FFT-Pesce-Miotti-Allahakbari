@@ -553,6 +553,45 @@ void GrayscaleImage::encode()
     this->blocks[i] = quantizedBlock;
   }
 
+  for (size_t i = 0; i < this->blocks.size(); i++)
+  {
+    // Get the block.
+    std::vector<char> block = this->blocks[i];
+
+    // Shift the block by -128.
+    for (size_t j = 0; j < block.size(); j++)
+    {
+      block[j] -= 128;
+    }
+
+    // Change block structure from char to vec.
+    Transform::FourierTransform::vec vecBlock;
+    for (size_t j = 0; j < block.size(); j++)
+    {
+      vecBlock.push_back(block[j]);
+    }
+
+    // Create an output block.
+    Transform::FourierTransform::vec transformedBlock(64, 0);
+
+    // Apply the Fourier transform to the block.
+    fft_algorithm(vecBlock, transformedBlock);
+
+    // Change block structure from vec to char.
+    std::vector<char> transformedCharBlock;
+    for (size_t j = 0; j < transformedBlock.size(); j++)
+    {
+      transformedCharBlock.push_back(transformedBlock[j].imag());
+    }
+
+    // Quantize the block.
+    std::vector<char>
+        quantizedBlock = this->quantize(transformedCharBlock);
+
+    // Encode the block.
+    this->blocks[i] = quantizedBlock;
+  }
+
   // Use entropy coding to encode all blocks.
   this->entropyEncode();
 }
@@ -571,20 +610,21 @@ void GrayscaleImage::decode()
   this->entropyDecode();
 
   // Iterate over all blocks.
-  for (size_t i = 0; i < this->blocks.size(); i++)
+  for (size_t i = 0; i < this->blocks.size() / 2; i++)
   {
     // Get the block.
-    std::vector<char> block = this->blocks[i];
+    std::vector<char> blockReal = this->blocks[i];
+    std::vector<char> blockImag = this->blocks[i + this->blocks.size() / 2];
 
-    // Unquantize the block.
-    std::vector<char>
-        unquantizedBlock = this->unquantize(block);
+    // Unquantize the blocks.
+    std::vector<char> unquantizedBlockReal = this->unquantize(blockReal);
+    std::vector<char> unquantizedBlockImag = this->unquantize(blockImag);
 
     // Change block structure from char to vec.
     Transform::FourierTransform::vec vecBlock;
-    for (size_t j = 0; j < unquantizedBlock.size(); j++)
+    for (size_t j = 0; j < unquantizedBlockReal.size(); j++)
     {
-      vecBlock.push_back(unquantizedBlock[j]);
+      vecBlock.push_back(std::complex<double>(unquantizedBlockReal[j], unquantizedBlockImag[j]));
     }
 
     // Create an output block.
