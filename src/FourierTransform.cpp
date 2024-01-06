@@ -132,13 +132,78 @@ void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
       std::make_unique<ClassicalFourierTransformAlgorithm>();
 
   // Set the base angle to -pi.
-  fft_algorithm->setBaseAngle(this->base_angle);
+  constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
+  fft_algorithm->setBaseAngle(-pi);
 
   // Use the 1D FFT algotithm to compute the 2D FFT.
   for (size_t i = 0; i < sqrt_n; i++) {
     // Get the i-th row of the input matrix.
     vec row(sqrt_n, 0);
     for (size_t j = 0; j < sqrt_n; j++) row[j] = input_sequence[i * sqrt_n + j];
+
+    // Compute the i-th row of the output matrix.
+    vec output_row(sqrt_n, 0);
+    (*fft_algorithm)(row, output_row);
+
+    // Store the i-th row of the output matrix.
+    for (size_t j = 0; j < sqrt_n; j++)
+      output_sequence[i * sqrt_n + j] = output_row[j];
+  }
+
+  // Do the same for the columns.
+  for (size_t j = 0; j < sqrt_n; j++) {
+    // Get the j-th column of the input matrix.
+    vec column(sqrt_n, 0);
+    for (size_t i = 0; i < sqrt_n; i++) column[i] = output_sequence[i * sqrt_n + j];
+
+    // Compute the j-th column of the output matrix.
+    vec output_column(sqrt_n, 0);
+    (*fft_algorithm)(column, output_column);
+
+    // Store the j-th column of the output matrix.
+    for (size_t i = 0; i < sqrt_n; i++)
+      output_sequence[i * sqrt_n + j] = output_column[i];
+  }
+}
+
+void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
+    const vec &input_sequence, vec &output_sequence) const {
+  // Getting the input size.
+  const size_t n = input_sequence.size();
+
+  // Get the square root of the input size.
+  const size_t sqrt_n = static_cast<size_t>(sqrt(n));
+
+  // Check that the size of the sequence is a power of 2.
+  const size_t log_sqrt_n = static_cast<size_t>(log2(sqrt_n));
+  assert(1UL << log_sqrt_n == sqrt_n);
+
+  // Use the ClassicalFourierTransformAlgorithm to compute the 1D FFT.
+  std::unique_ptr<FourierTransformAlgorithm> fft_algorithm =
+      std::make_unique<ClassicalFourierTransformAlgorithm>();
+
+  // Set the base angle to +pi.
+  constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
+  fft_algorithm->setBaseAngle(+pi);
+
+  for (size_t j = 0; j < sqrt_n; j++) {
+    // Get the j-th column of the input matrix.
+    vec column(sqrt_n, 0);
+    for (size_t i = 0; i < sqrt_n; i++) column[i] = input_sequence[i * sqrt_n + j];
+
+    // Compute the j-th column of the output matrix.
+    vec output_column(sqrt_n, 0);
+    (*fft_algorithm)(column, output_column);
+
+    // Store the j-th column of the output matrix.
+    for (size_t i = 0; i < sqrt_n; i++)
+      output_sequence[i * sqrt_n + j] = output_column[i];
+  }
+
+  for (size_t i = 0; i < sqrt_n; i++) {
+    // Get the i-th row of the input matrix.
+    vec row(sqrt_n, 0);
+    for (size_t j = 0; j < sqrt_n; j++) row[j] = output_sequence[i * sqrt_n + j];
 
     // Compute the i-th row of the output matrix.
     vec output_row(sqrt_n, 0);

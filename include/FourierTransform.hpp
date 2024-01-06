@@ -74,6 +74,18 @@ class TrivialTwoDimensionalFourierTransformAlgorithm
   ~TrivialTwoDimensionalFourierTransformAlgorithm() = default;
 };
 
+// A 2D IFFT algorithm. We assume that the input matrix is square and its size
+// is a power of 2. The algorithm is based on the 1D FFT algorithm.
+// This algorithm is very slow and is only used to test the correctness of
+// other algorithms, in a machine without CUDA support.
+class TrivialTwoDimensionalInverseFourierTransformAlgorithm
+    : public FourierTransformAlgorithm {
+ public:
+  void operator()(const vec &input_sequence,
+                  vec &output_sequence) const override;
+  ~TrivialTwoDimensionalInverseFourierTransformAlgorithm() = default;
+};
+
 class IterativeFFTGPU : public FourierTransformAlgorithm {
  public:
   void operator()(const vec &input_sequence,

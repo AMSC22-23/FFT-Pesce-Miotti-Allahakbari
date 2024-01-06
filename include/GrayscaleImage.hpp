@@ -8,8 +8,9 @@
 // This class may be used to load, save, encode, decode and display grayscale
 // images. Please note that the image's width and height must be a multiple
 // of 8.
-class GrayscaleImage {
- public:
+class GrayscaleImage
+{
+public:
   // Load regular image from file.
   bool loadStandard(const std::string &filename);
 
@@ -42,7 +43,7 @@ class GrayscaleImage {
           algorithm,
       bool direct);
 
- private:
+private:
   // Split the image in blocks of size 8x8, and save the result in variable
   // 'blocks'.
   void splitBlocks();
@@ -53,11 +54,11 @@ class GrayscaleImage {
 
   // Quantize the given vec using the quantization table.
   void quantize(const Transform::FourierTransform::vec &vec,
-                std::vector<char> &realBlock, std::vector<char> &imagBlock);
+                std::vector<unsigned char> &realBlock, std::vector<unsigned char> &imagBlock);
 
   // Unquantize the given vec using the quantization table.
   void unquantize(Transform::FourierTransform::vec &vec,
-                  std::vector<char> &realBlock, std::vector<char> &imagBlock);
+                  std::vector<unsigned char> &realBlock, std::vector<unsigned char> &imagBlock);
 
   // Use entropy coding to encode all blocks.
   void entropyEncode();
@@ -66,7 +67,7 @@ class GrayscaleImage {
   void entropyDecode();
 
   // Static member variable to store the quantization table.
-  static std::vector<char> quantizationTable;
+  static std::vector<unsigned char> quantizationTable;
 
   // Static member variable to store the zigZag map.
   static std::vector<std::pair<int, int>> zigZagMap;
@@ -78,8 +79,8 @@ class GrayscaleImage {
   std::vector<char> encoded;
 
   // An array of 8x8 blocks. Each block is a vector of 64 elements.
-  std::vector<std::vector<char>> blocks;
-  std::vector<std::vector<char>> imagBlocks;
+  std::vector<std::vector<unsigned char>> blocks;
+  std::vector<std::vector<unsigned char>> imagBlocks;
 
   // Block grid width.
   int blockGridWidth;
@@ -88,4 +89,4 @@ class GrayscaleImage {
   int blockGridHeight;
 };
 
-#endif  // GRAYSCALE_IMAGE_HPP
+#endif // GRAYSCALE_IMAGE_HPP
