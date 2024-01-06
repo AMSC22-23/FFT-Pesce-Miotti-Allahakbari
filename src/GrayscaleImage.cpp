@@ -251,10 +251,6 @@ void GrayscaleImage::decode() {
   Transform::FourierTransform::TrivialTwoDimensionalFourierTransformAlgorithm
       fft;
 
-  // Set the base angle to +pi.
-  constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
-  fft.setBaseAngle(+pi);
-
   // For each block...
   for (size_t i = 0; i < this->blocks.size(); i++) {
     // Get the block.

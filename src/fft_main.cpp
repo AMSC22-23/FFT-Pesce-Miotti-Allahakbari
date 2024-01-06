@@ -184,16 +184,12 @@ int fft_main(int argc, char *argv[]) {
     }
 
     // Run the algorithms.
-    std::unique_ptr<FourierTransformAlgorithm> two_d_fft =
-        std::make_unique<TrivialTwoDimensionalFourierTransformAlgorithm>();
-    calculator.setDirectAlgorithm(two_d_fft);
+    TrivialTwoDimensionalFourierTransformAlgorithm two_d_fft;
     vec two_d_fft_result(size * size, 0);
-    calculator.directTransform(input_matrix, two_d_fft_result);
-    std::unique_ptr<FourierTransformAlgorithm> two_d_ift =
-        std::make_unique<TrivialTwoDimensionalFourierTransformAlgorithm>();
-    calculator.setInverseAlgorithm(two_d_ift);
+    two_d_fft(input_matrix, two_d_fft_result);
+    TrivialTwoDimensionalInverseFourierTransformAlgorithm two_d_ift;
     vec two_d_ift_result(size * size, 0);
-    calculator.inverseTransform(two_d_fft_result, two_d_ift_result);
+    two_d_ift(two_d_fft_result, two_d_ift_result);
 
     // Check the result.
     if (!CompareVectors(input_matrix, two_d_ift_result, precision, false))
