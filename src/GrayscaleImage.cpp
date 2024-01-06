@@ -222,16 +222,9 @@ void GrayscaleImage::encode()
   Transform::FourierTransform::TrivialTwoDimensionalFourierTransformAlgorithm
       fft;
 
-  // Set the base angle to -pi.
-  constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
-  fft.setBaseAngle(-pi);
-
-  // Initialize a TrivialTwoDimensionalDiscreteFourierTransform object.
-  Transform::FourierTransform::TrivialTwoDimensionalFourierTransformAlgorithm
+  // Initialize a TrivialTwoDimensionalInverseFourierTransform object.
+  Transform::FourierTransform::TrivialTwoDimensionalInverseFourierTransformAlgorithm
       ifft;
-
-  // Set the base angle to +pi.
-  ifft.setBaseAngle(+pi);
 
   // For each block...
   this->imagBlocks.clear();
@@ -241,24 +234,24 @@ void GrayscaleImage::encode()
     std::vector<unsigned char> block = this->blocks[i];
 
     // Turn the block into a vec object.
-    Transform::FourierTransform::vec vecBlock(64, 0);
-    Transform::FourierTransform::vec outputVecBlock(64, 0);
+    Transform::FourierTransform::vec vecBlock(64, 0.0);
+    Transform::FourierTransform::vec outputVecBlock(64, 0.0);
     for (size_t j = 0; j < block.size(); j++)
     {
       vecBlock[j] = block[j];
       vecBlock[j] -= 128;
     }
 
-    /* // Apply the Fourier transform to the block.
+    // Apply the Fourier transform to the block.
     fft(vecBlock, outputVecBlock);
 
     // Apply the Inverse Fourier transform to the block.
-    ifft(outputVecBlock, vecBlock); */
+    ifft(outputVecBlock, vecBlock);
 
     // Add 128 to each element in the block.
     for (size_t j = 0; j < vecBlock.size(); j++)
     {
-      vecBlock[j] += 128;
+      vecBlock[j] += 128.0;
     }
 
     // Turn the vec object into a block.
