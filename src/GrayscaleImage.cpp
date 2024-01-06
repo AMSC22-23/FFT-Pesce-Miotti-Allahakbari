@@ -377,9 +377,6 @@ void GrayscaleImage::entropyDecode()
   // Set a marker to the current bit position we're reading from.
   int bitPosition = 0;
 
-  // Set an incremental byte index.
-  int byteIndex = 0;
-
   // Initialize a reconstructed zigZag vector.
   std::vector<char> reconstructedZigZagVector;
 
@@ -387,7 +384,7 @@ void GrayscaleImage::entropyDecode()
   for (size_t i = 0; i < this->encoded.size(); i++)
   {
     // Initialize the first byte.
-    char firstByte = 0;
+    unsigned char firstByte = 0;
 
     // Get the first byte.
     if (bitPosition == 0)
