@@ -69,19 +69,20 @@ int jpeg_main(int argc, char *argv[])
 {
   using namespace FourierTransform;
 
+  std::string image_path = "../img/image.jpg";
+
   // We expect at most 1 extra argument.
   if (argc > 3)
   {
     std::cerr << "Incorrect arguments!\n"
               << "Argument 1: jpeg\n"
-              << "Argument 2: image path (default: ../img/image.jpg)\n"
+              << "Argument 2: image path (default: " << image_path << ")\n"
               << std::endl;
     return 1;
   }
 
   // Get the image path.
-  std::string image_path = "../img/image.jpg";
-  if (argc >= 2)
+  if (argc > 2)
     image_path = std::string(argv[2]);
 
   // Create a GrayscaleImage object.
