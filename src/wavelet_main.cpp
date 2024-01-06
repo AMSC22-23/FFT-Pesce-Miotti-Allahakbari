@@ -51,17 +51,17 @@ int wavelet_main(int argc, char *argv[]) {
     // Display the image.
     image.display();
 
-    // Create the two wavelet transform algorithms.
-    std::shared_ptr<WaveletTransformAlgorithm> gp_algorithm =
+    // Create the two direct wavelet transform algorithms.
+    std::shared_ptr<WaveletTransformAlgorithm> gp_direct_algorithm =
         std::make_shared<GPDirectWaveletTransform97>();
-    std::shared_ptr<WaveletTransformAlgorithm> db_algorithm =
+    std::shared_ptr<WaveletTransformAlgorithm> db_direct_algorithm =
         std::make_shared<DaubechiesDirectWaveletTransform97>();
 
     // Perform the transform with the algorithm by Gregoire Pau.
-    image.waveletTransform(gp_algorithm);
+    image.waveletTransform(gp_direct_algorithm, true);
     image.display();
 
-    // Reload the image.
+    // Load a second copy of the image.
     GrayscaleImage image2;
     success = image2.loadStandard(path);
 
@@ -72,7 +72,21 @@ int wavelet_main(int argc, char *argv[]) {
     }
 
     // Perform the transform with the algorithm by Daubechies.
-    image2.waveletTransform(db_algorithm);
+    image2.waveletTransform(db_direct_algorithm, true);
+    image2.display();
+
+    // Create the two inverse wavelet transform algorithms.
+    std::shared_ptr<WaveletTransformAlgorithm> gp_inverse_algorithm =
+        std::make_shared<GPInverseWaveletTransform97>();
+    std::shared_ptr<WaveletTransformAlgorithm> db_inverse_algorithm =
+        std::make_shared<DaubechiesInverseWaveletTransform97>();
+
+    // Perform the inverse transform with the algorithm by Gregoire Pau.
+    image.waveletTransform(gp_inverse_algorithm, false);
+    image.display();
+
+    // Perform the inverse transform with the algorithm by Daubechies.
+    image2.waveletTransform(db_inverse_algorithm, false);
     image2.display();
 
     // Perform a demo of the wavelet transforms.
@@ -117,7 +131,7 @@ int wavelet_main(int argc, char *argv[]) {
 
     // Check if the result is the same as the input sequence.
     if (!CompareVectors(input_sequence, iwt_result, precision, false))
-      std::cerr << "Errors detected in wavelet transforms." << std::endl;
+      std::cerr << "Errors detected in GP wavelet transforms." << std::endl;
 
     // Do the forward 9/7 transform with the algorithm by Daubechies.
     DaubechiesDirectWaveletTransform97 db_direct;
@@ -132,7 +146,37 @@ int wavelet_main(int argc, char *argv[]) {
 
     // Check if the result is the same as the input sequence.
     if (!CompareVectors(input_sequence, iwt_result, precision, true))
-      std::cerr << "Errors detected in new wavelet transforms." << std::endl;
+      std::cerr << "Errors detected in DB wavelet transforms." << std::endl;
+
+    // Create a 2D example.
+    std::vector<real> input_matrix;
+    input_matrix.reserve(size * size);
+    for (size_t i = 0; i < size * size; i++)
+      input_matrix.emplace_back(rand() % 100);
+    std::vector<real> dwt_matrix(size * size, 0);
+    std::vector<real> iwt_matrix(size * size, 0);
+
+    // Test the algorithm by Gregoire Pau.
+    TwoDimensionalWaveletTransformAlgorithm algorithm_2d;
+    std::shared_ptr<WaveletTransformAlgorithm> gp_direct_algorithm =
+        std::make_shared<GPDirectWaveletTransform97>();
+    algorithm_2d.directTransform(input_matrix, dwt_matrix, gp_direct_algorithm);
+    std::shared_ptr<WaveletTransformAlgorithm> gp_inverse_algorithm =
+        std::make_shared<GPInverseWaveletTransform97>();
+    algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, gp_inverse_algorithm);
+    if (!CompareVectors(input_matrix, iwt_matrix, precision, false))
+      std::cerr << "Errors detected in 2D GP wavelet transforms." << std::endl;
+
+    // Test the algorithm by Daubechies.
+    std::shared_ptr<WaveletTransformAlgorithm> db_direct_algorithm =
+        std::make_shared<DaubechiesDirectWaveletTransform97>();
+    algorithm_2d.directTransform(input_matrix, dwt_matrix, db_direct_algorithm);
+    std::shared_ptr<WaveletTransformAlgorithm> db_inverse_algorithm =
+        std::make_shared<DaubechiesInverseWaveletTransform97>();
+    algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, db_inverse_algorithm);
+    if (!CompareVectors(input_matrix, iwt_matrix, precision, false))
+      std::cerr << "Errors detected in 2D DB wavelet transforms." << std::endl;
+
   } else {
     print_usage(default_size, default_mode, default_image);
     return 1;

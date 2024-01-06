@@ -173,6 +173,31 @@ int fft_main(int argc, char *argv[]) {
       std::cerr << "Errors detected in classical inverse FFT." << std::endl;
     if (!CompareVectors(input_sequence, iterative_ift_result, precision, false))
       std::cerr << "Errors detected in iterative inverse FFT." << std::endl;
+
+    // Test the 2D algorithms.
+    // Generate a sequence.
+    vec input_matrix;
+    input_matrix.reserve(size * size);
+    for (size_t i = 0; i < size * size; i++) {
+      // Add a random complex number to the sequence.
+      input_matrix.emplace_back(rand() % 100, rand() % 100);
+    }
+
+    // Run the algorithms.
+    std::unique_ptr<FourierTransformAlgorithm> two_d_fft =
+        std::make_unique<TrivialTwoDimensionalFourierTransformAlgorithm>();
+    calculator.setDirectAlgorithm(two_d_fft);
+    vec two_d_fft_result(size * size, 0);
+    calculator.directTransform(input_matrix, two_d_fft_result);
+    std::unique_ptr<FourierTransformAlgorithm> two_d_ift =
+        std::make_unique<TrivialTwoDimensionalFourierTransformAlgorithm>();
+    calculator.setInverseAlgorithm(two_d_ift);
+    vec two_d_ift_result(size * size, 0);
+    calculator.inverseTransform(two_d_fft_result, two_d_ift_result);
+
+    // Check the result.
+    if (!CompareVectors(input_matrix, two_d_ift_result, precision, false))
+      std::cerr << "Errors detected in 2D FFT." << std::endl;
   }
 
   // Run a performance comparison of different bit reversal permutation

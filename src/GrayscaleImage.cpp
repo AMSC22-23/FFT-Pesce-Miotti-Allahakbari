@@ -1,9 +1,11 @@
 #include "GrayscaleImage.hpp"
 
+#include <limits>
 #include <numbers>
 #include <opencv2/opencv.hpp>
 
 #include "FourierTransform.hpp"
+#include "Utility.hpp"
 
 // Load regular image from file.
 bool GrayscaleImage::loadStandard(const std::string &filename) {
@@ -556,7 +558,8 @@ unsigned int GrayscaleImage::getCompressedBitsize() const {
 void GrayscaleImage::waveletTransform(
     const std::shared_ptr<
         Transform::WaveletTransform::WaveletTransformAlgorithm>
-        algorithm) {
+        algorithm,
+    bool direct) {
   using namespace Transform;
   using namespace WaveletTransform;
 
@@ -572,7 +575,26 @@ void GrayscaleImage::waveletTransform(
 
   // Perform the direct wavelet transform.
   TwoDimensionalWaveletTransformAlgorithm algorithm_2d;
-  algorithm_2d.directTransform(real_input, real_output, algorithm);
+  if (direct) {
+    algorithm_2d.directTransform(real_input, real_output, algorithm);
+  } else {
+    algorithm_2d.inverseTransform(real_input, real_output, algorithm);
+  }
+
+  /*
+  // Calculate the maximum and minimum coefficients.
+  real max_value = -std::numeric_limits<real>::max();
+  real min_value = std::numeric_limits<real>::max();
+  for (size_t i = 0; i < this->decoded.size(); i++) {
+    if (real_output[i] > max_value) {
+      max_value = real_output[i];
+    }
+    if (real_output[i] < min_value) {
+      min_value = real_output[i];
+    }
+  }
+  std::cout << min_value << " " << max_value << std::endl;
+  */
 
   // Update the decoded image.
   for (size_t i = 0; i < this->decoded.size(); i++) {
