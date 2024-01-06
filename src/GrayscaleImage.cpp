@@ -294,7 +294,6 @@ void GrayscaleImage::entropyEncode()
       {
         // Add the special code to the encoded vector.
         this->encoded.push_back(0xF0);
-        this->encoded.push_back(0x00);
 
         // Decrement the zero counter by 16.
         zeroCounter -= 16;
@@ -367,4 +366,138 @@ void GrayscaleImage::entropyEncode()
   // Add an EOB code to the encoded vector.
   // We're not dealing with unassigned bits here, since we're adding only zeros.
   this->encoded.push_back(0x00);
+}
+
+// Use entropy coding to decode all blocks.
+void GrayscaleImage::entropyDecode()
+{
+  // Clear the blocks vector.
+  this->blocks.clear();
+
+  // Set a marker to the current bit position we're reading from.
+  int bitPosition = 0;
+
+  // Set an incremental byte index.
+  int byteIndex = 0;
+
+  // Initialize a reconstructed zigZag vector.
+  std::vector<char> reconstructedZigZagVector;
+
+  // Begin the entropy decoding by iterating over the encoded vector.
+  for (size_t i = 0; i < this->encoded.size(); i++)
+  {
+    // Initialize the first byte.
+    char firstByte = 0;
+
+    // Get the first byte.
+    if (bitPosition == 0)
+    {
+      firstByte = this->encoded[i];
+    }
+    else
+    {
+      firstByte = this->encoded[i] << bitPosition | this->encoded[i + 1] >> (8 - bitPosition);
+    }
+
+    // Check if the first byte is an EOB code.
+    if (firstByte == 0x00)
+    {
+      // If so, keep adding zeros to the reconstructed zigZag vector until it
+      // has 64 elements.
+      while (reconstructedZigZagVector.size() < 64)
+      {
+        reconstructedZigZagVector.push_back(0);
+      }
+
+      // Create a new block.
+      std::vector<char> block;
+
+      // For each element in the reconstructed zigZag vector...
+      for (size_t j = 0; j < reconstructedZigZagVector.size(); j++)
+      {
+        // Get the zigZag map coordinates.
+        int x = GrayscaleImage::zigZagMap[j].first;
+        int y = GrayscaleImage::zigZagMap[j].second;
+
+        // Put the element at the right position in the block.
+        block[y * 8 + x] = reconstructedZigZagVector[j];
+
+        // Add the block to the blocks vector.
+        this->blocks.push_back(block);
+      }
+
+      // Clear the reconstructed zigZag vector.
+      reconstructedZigZagVector.clear();
+      continue;
+    }
+
+    // If the first byte is a special code...
+    if (firstByte == 0xF0)
+    {
+      // Add 16 zeros to the reconstructed zigZag vector.
+      for (int j = 0; j < 16; j++)
+      {
+        reconstructedZigZagVector.push_back(0);
+      }
+
+      continue;
+    }
+
+    // Get the zero counter.
+    int zeroCounter = firstByte >> 4;
+
+    // Get the bit size.
+    int bitSize = firstByte & 0x0F;
+
+    // Get the second byte.
+    char secondByte = 0;
+
+    if (bitPosition == 0)
+    {
+      secondByte = this->encoded[i + 1];
+    }
+    else
+    {
+      secondByte = this->encoded[i + 1] << bitPosition | this->encoded[i + 2] >> (8 - bitPosition);
+    }
+
+    // Get the element value.
+    char element = secondByte >> (8 - bitSize);
+
+    // Update the bit position.
+    bitPosition = (bitPosition + bitSize) % 8;
+
+    // Add the zero counter number of zeros to the reconstructed zigZag vector.
+    for (int j = 0; j < zeroCounter; j++)
+    {
+      reconstructedZigZagVector.push_back(0);
+    }
+
+    // Add the element value to the reconstructed zigZag vector.
+    reconstructedZigZagVector.push_back(element);
+
+    // If the reconstructed zigZag vector has 64 elements...
+    if (reconstructedZigZagVector.size() == 64)
+    {
+      // Create a new block.
+      std::vector<char> block;
+
+      // For each element in the reconstructed zigZag vector...
+      for (size_t j = 0; j < reconstructedZigZagVector.size(); j++)
+      {
+        // Get the zigZag map coordinates.
+        int x = GrayscaleImage::zigZagMap[j].first;
+        int y = GrayscaleImage::zigZagMap[j].second;
+
+        // Put the element at the right position in the block.
+        block[y * 8 + x] = reconstructedZigZagVector[j];
+
+        // Add the block to the blocks vector.
+        this->blocks.push_back(block);
+      }
+
+      // Clear the reconstructed zigZag vector.
+      reconstructedZigZagVector.clear();
+    }
+  }
 }
