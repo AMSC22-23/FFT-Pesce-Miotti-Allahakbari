@@ -9,19 +9,21 @@
 #include "Utility.hpp"
 #include "WaveletTransform.hpp"
 
-void print_usage_fft(size_t size, const std::string& mode,
+void print_usage_fft(size_t size, const std::string &mode,
                      unsigned int max_num_threads);
 void print_usage_wavelet(size_t size);
 
-int jpeg_main(int argc, char* argv[]);
-int cuda_main(int argc, char* argv[]);
-int wavelet_main(int argc, char* argv[]);
-int fft_main(int argc, char* argv[]);
+int jpeg_main(int argc, char *argv[]);
+int cuda_main(int argc, char *argv[]);
+int wavelet_main(int argc, char *argv[]);
+int fft_main(int argc, char *argv[]);
 
 using namespace Transform;
 
-int main(int argc, char* argv[]) {
-  if (argc <= 1) {
+int main(int argc, char *argv[])
+{
+  if (argc <= 1)
+  {
     std::cerr << "Incorrect arguments!\n"
               << "Specify the execution mode!" << std::endl;
     return 1;
@@ -31,23 +33,28 @@ int main(int argc, char* argv[]) {
   std::string mode = std::string(argv[1]);
 
   // Run a test with images.
-  if (mode == std::string("jpeg")) {
+  if (mode == std::string("jpeg"))
+  {
     return jpeg_main(argc, argv);
   }
   // Run a test with CUDA.
-  else if (mode == std::string("cuda")) {
+  else if (mode == std::string("cuda"))
+  {
     return cuda_main(argc, argv);
   }
   // Run a test of wavelets.
-  else if (mode == std::string("wavelet")) {
+  else if (mode == std::string("wavelet"))
+  {
     return wavelet_main(argc, argv);
   }
   // Run a FFT test.
-  else if (mode == std::string("fft")) {
+  else if (mode == std::string("fft"))
+  {
     return fft_main(argc, argv);
   }
   // Wrong mode.
-  else {
+  else
+  {
     std::cerr
         << "Incorrect arguments!\n"
         << "Specify the execution mode: fft (default) / jpeg / cuda / wavelet"
@@ -58,24 +65,35 @@ int main(int argc, char* argv[]) {
   return 0;
 }
 
-int jpeg_main(int argc, char* argv[]) {
+int jpeg_main(int argc, char *argv[])
+{
   using namespace FourierTransform;
 
-  if (argc > 2) {
+  // We expect at most 1 extra argument.
+  if (argc > 3)
+  {
     std::cerr << "Incorrect arguments!\n"
-              << "Argument 1: jpeg" << std::endl;
+              << "Argument 1: jpeg\n"
+              << "Argument 2: image path (default: ../img/image.jpg)\n"
+              << std::endl;
     return 1;
   }
+
+  // Get the image path.
+  std::string image_path = "../img/image.jpg";
+  if (argc >= 2)
+    image_path = std::string(argv[2]);
 
   // Create a GrayscaleImage object.
   GrayscaleImage grayscaleImage;
 
   // Load the image.
   std::cout << "Loading image..." << std::endl;
-  bool success = grayscaleImage.loadStandard("../img/image.jpg");
+  bool success = grayscaleImage.loadStandard(image_path);
 
   // Check if the image was loaded successfully.
-  if (!success) {
+  if (!success)
+  {
     std::cout << "Failed to load image." << std::endl;
     return 1;
   }
@@ -89,10 +107,12 @@ int jpeg_main(int argc, char* argv[]) {
   return 0;
 }
 
-int cuda_main(int argc, char* argv[]) {
+int cuda_main(int argc, char *argv[])
+{
   using namespace FourierTransform;
 
-  if (argc > 3) {
+  if (argc > 3)
+  {
     std::cerr << "Incorrect arguments!\n"
               << "Argument 1: cuda\n"
               << "Argument 2: image path (default: ../img/image.jpg)\n"
@@ -103,12 +123,14 @@ int cuda_main(int argc, char* argv[]) {
   std::string image_path = "../img/image.jpg";
 
   // Get which algorithm to choose.
-  if (argc >= 3) image_path = std::string(argv[2]);
+  if (argc >= 3)
+    image_path = std::string(argv[2]);
 
   // Load the image (grayscale)
   cv::Mat image = cv::imread(image_path, cv::IMREAD_GRAYSCALE);
 
-  if (image.empty()) {
+  if (image.empty())
+  {
     std::cerr << "Error: Unable to load the image." << std::endl;
     return EXIT_FAILURE;
   }
@@ -150,11 +172,13 @@ int cuda_main(int argc, char* argv[]) {
   double epsilon = 1e-4;
 
   for (int i = 0; i < image.rows; i++)
-    for (int j = 0; j < image.cols; j++) {
+    for (int j = 0; j < image.cols; j++)
+    {
       if (std::fabs(output_sequence[i * image.cols + j].real() -
                     complex[0].at<double>(i, j)) > epsilon ||
           std::fabs(output_sequence[i * image.cols + j].imag() -
-                    complex[1].at<double>(i, j)) > epsilon) {
+                    complex[1].at<double>(i, j)) > epsilon)
+      {
         std::cout << "Error in GPU calculations at: " << i << ", " << j
                   << " GPU: " << output_sequence[i * image.cols + j]
                   << ", CPU: (" << complex[0].at<double>(i, j) << ", "
@@ -175,25 +199,29 @@ int cuda_main(int argc, char* argv[]) {
   return EXIT_SUCCESS;
 }
 
-int wavelet_main(int argc, char* argv[]) {
+int wavelet_main(int argc, char *argv[])
+{
   using namespace WaveletTransform;
 
   constexpr size_t default_size = 1UL << 10;
   constexpr real precision = 1e-4;
 
-  if (argc > 3) {
+  if (argc > 3)
+  {
     print_usage_wavelet(default_size);
     return 1;
   }
 
   // Get the size of the sequence.
   size_t size = default_size;
-  if (argc >= 2) {
-    char* error;
+  if (argc >= 2)
+  {
+    char *error;
 
     const unsigned long long_size = strtoul(argv[1], &error, 10);
     // Check for errors
-    if (*error) {
+    if (*error)
+    {
       print_usage_wavelet(default_size);
       return 1;
     }
@@ -246,7 +274,8 @@ int wavelet_main(int argc, char* argv[]) {
   return 0;
 }
 
-int fft_main(int argc, char* argv[]) {
+int fft_main(int argc, char *argv[])
+{
   using namespace FourierTransform;
 
   constexpr size_t default_size = 1UL << 10;
@@ -255,20 +284,23 @@ int fft_main(int argc, char* argv[]) {
   constexpr real precision = 1e-4;
 
   // Check the number of arguments.
-  if (argc > 6) {
+  if (argc > 6)
+  {
     print_usage_fft(default_size, default_mode, default_max_num_threads);
     return 1;
   }
 
   // Get the size of the sequence.
   size_t size = default_size;
-  if (argc >= 3) {
-    char* error;
+  if (argc >= 3)
+  {
+    char *error;
 
     const unsigned long long_size = strtoul(argv[2], &error, 10);
     // Check for errors
     if (*error ||
-        1UL << static_cast<unsigned long>(log2(long_size)) != long_size) {
+        1UL << static_cast<unsigned long>(log2(long_size)) != long_size)
+    {
       print_usage_fft(default_size, default_mode, default_max_num_threads);
       return 1;
     }
@@ -278,16 +310,19 @@ int fft_main(int argc, char* argv[]) {
 
   // Get the FFT execution mode.
   std::string mode = default_mode;
-  if (argc >= 4) mode = std::string(argv[3]);
+  if (argc >= 4)
+    mode = std::string(argv[3]);
 
   // Get the maximum number of threads.
   unsigned int max_num_threads = default_max_num_threads;
-  if (argc >= 5) {
-    char* error;
+  if (argc >= 5)
+  {
+    char *error;
 
     const unsigned long long_max_num_threads = strtoul(argv[4], &error, 10);
     // Check for errors
-    if (*error) {
+    if (*error)
+    {
       print_usage_fft(default_size, default_mode, default_max_num_threads);
       return 1;
     }
@@ -298,13 +333,15 @@ int fft_main(int argc, char* argv[]) {
   // Generate a sequence of complex numbers.
   vec input_sequence;
   input_sequence.reserve(size);
-  for (size_t i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++)
+  {
     // Add a random complex number to the sequence.
     input_sequence.emplace_back(rand() % 100, rand() % 100);
   }
 
   // Run a demo of the hands-on code.
-  if (mode == std::string("demo")) {
+  if (mode == std::string("demo"))
+  {
     omp_set_num_threads(max_num_threads);
 
     // Save the sequence to a file.
@@ -398,13 +435,15 @@ int fft_main(int argc, char* argv[]) {
 
   // Run a performance comparison of different bit reversal permutation
   // techniques.
-  else if (mode == std::string("bitReversalTest")) {
+  else if (mode == std::string("bitReversalTest"))
+  {
     // Run a comparison between mask and fast bit reversal permutations.
     CompareTimesBitReversalPermutation(input_sequence, max_num_threads);
   }
 
   // Run a scaling test with the best performing algorithm.
-  else if (mode == std::string("scalingTest")) {
+  else if (mode == std::string("scalingTest"))
+  {
     // Calculate the times for up to max_num_threads threads for the iterative
     // fft.
     std::unique_ptr<IterativeFourierTransformAlgorithm>
@@ -421,19 +460,26 @@ int fft_main(int argc, char* argv[]) {
   }
 
   // Execute a single algorithm and calculate the elapsed time.
-  else if (mode == std::string("timingTest")) {
+  else if (mode == std::string("timingTest"))
+  {
     std::string algorithm_name = "iterative";
 
     // Get which algorithm to choose.
-    if (argc >= 6) algorithm_name = std::string(argv[5]);
+    if (argc >= 6)
+      algorithm_name = std::string(argv[5]);
 
     // Create the algorithm.
     std::unique_ptr<FourierTransformAlgorithm> algorithm;
-    if (algorithm_name == std::string("classic")) {
+    if (algorithm_name == std::string("classic"))
+    {
       algorithm = std::make_unique<ClassicalFourierTransformAlgorithm>();
-    } else if (algorithm_name == std::string("recursive")) {
+    }
+    else if (algorithm_name == std::string("recursive"))
+    {
       algorithm = std::make_unique<RecursiveFourierTransformAlgorithm>();
-    } else if (algorithm_name == std::string("iterative")) {
+    }
+    else if (algorithm_name == std::string("iterative"))
+    {
       std::unique_ptr<IterativeFourierTransformAlgorithm>
           iterative_dft_algorithm =
               std::make_unique<IterativeFourierTransformAlgorithm>();
@@ -442,9 +488,13 @@ int fft_main(int argc, char* argv[]) {
       iterative_dft_algorithm->setBitReversalPermutationAlgorithm(
           bit_reversal_algorithm);
       algorithm = std::move(iterative_dft_algorithm);
-    } else if (algorithm_name == std::string("iterativeGPU")) {
+    }
+    else if (algorithm_name == std::string("iterativeGPU"))
+    {
       algorithm = std::make_unique<IterativeFFTGPU>();
-    } else {
+    }
+    else
+    {
       print_usage_fft(default_size, default_mode, default_max_num_threads);
       return 1;
     }
@@ -466,15 +516,17 @@ int fft_main(int argc, char* argv[]) {
   return 0;
 }
 
-void print_usage_wavelet(size_t size) {
+void print_usage_wavelet(size_t size)
+{
   std::cerr << "Incorrect arguments!\n"
             << "Argument 1: wavelet\n"
             << "Argument 2: size of the sequence (default: " << size << ")"
             << std::endl;
 }
 
-void print_usage_fft(size_t size, const std::string& mode,
-                     unsigned int max_num_threads) {
+void print_usage_fft(size_t size, const std::string &mode,
+                     unsigned int max_num_threads)
+{
   std::cerr << "Incorrect arguments!\n"
             << "Argument 1: fft\n"
             << "Argument 2: size of the sequence (default: " << size

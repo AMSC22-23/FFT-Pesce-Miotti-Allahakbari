@@ -3,9 +3,11 @@
 #include <opencv2/opencv.hpp>
 
 // Load regular image from file.
-bool GrayscaleImage::loadStandard(const std::string &filename) {
+bool GrayscaleImage::loadStandard(const std::string &filename)
+{
   cv::Mat image = cv::imread(filename, cv::IMREAD_GRAYSCALE);
-  if (image.empty()) {
+  if (image.empty())
+  {
     return false;
   }
 
@@ -22,9 +24,11 @@ bool GrayscaleImage::loadStandard(const std::string &filename) {
   this->blockGridHeight = height / 8;
 
   // For each row...
-  for (int i = 0; i < image.rows; i++) {
+  for (int i = 0; i < image.rows; i++)
+  {
     // For each column...
-    for (int j = 0; j < image.cols; j++) {
+    for (int j = 0; j < image.cols; j++)
+    {
       // Get the pixel value.
       unsigned char pixel = image.at<unsigned char>(i, j);
 
@@ -37,19 +41,23 @@ bool GrayscaleImage::loadStandard(const std::string &filename) {
 }
 
 // Get the bitsize of the last loaded or decoded image.
-unsigned int GrayscaleImage::getStandardBitsize() const {
+unsigned int GrayscaleImage::getStandardBitsize() const
+{
   return this->blockGridWidth * this->blockGridHeight * 64 * 8;
 }
 
 // Display the last loaded or decoded image.
-void GrayscaleImage::display() {
+void GrayscaleImage::display()
+{
   // Create a new image.
   cv::Mat image(this->blockGridHeight * 8, this->blockGridWidth * 8, CV_8UC1);
 
   // For each row...
-  for (int i = 0; i < image.rows; i++) {
+  for (int i = 0; i < image.rows; i++)
+  {
     // For each column...
-    for (int j = 0; j < image.cols; j++) {
+    for (int j = 0; j < image.cols; j++)
+    {
       // Get the pixel value.
       unsigned char pixel = this->decoded[i * image.cols + j];
 
@@ -65,21 +73,26 @@ void GrayscaleImage::display() {
 
 // Split the image in blocks of size 8x8, and save the result in variable
 // 'blocks'.
-void GrayscaleImage::splitBlocks() {
+void GrayscaleImage::splitBlocks()
+{
   // Clear the blocks vector.
   this->blocks.clear();
 
   // For each block row...
-  for (int i = 0; i < this->blockGridHeight; i++) {
+  for (int i = 0; i < this->blockGridHeight; i++)
+  {
     // For each block column...
-    for (int j = 0; j < this->blockGridWidth; j++) {
+    for (int j = 0; j < this->blockGridWidth; j++)
+    {
       // Create a new block.
       std::vector<unsigned char> block;
 
       // For each row in the block...
-      for (int k = 0; k < 8; k++) {
+      for (int k = 0; k < 8; k++)
+      {
         // For each column in the block...
-        for (int l = 0; l < 8; l++) {
+        for (int l = 0; l < 8; l++)
+        {
           // Get the top-left pixel coordinates of the block.
           int x = j * 8;
           int y = i * 8;
@@ -99,6 +112,47 @@ void GrayscaleImage::splitBlocks() {
 
       // Add the block to the blocks vector.
       this->blocks.push_back(block);
+    }
+  }
+}
+
+// Merge the blocks in variable 'blocks' and save the result in variable
+// 'decoded'.
+void GrayscaleImage::mergeBlocks()
+{
+  // Clear the decoded vector.
+  this->decoded.clear();
+
+  // For each block row...
+  for (int i = 0; i < this->blockGridHeight; i++)
+  {
+    // For each block column...
+    for (int j = 0; j < this->blockGridWidth; j++)
+    {
+      // Get the block.
+      std::vector<unsigned char> block = this->blocks[i * this->blockGridWidth + j];
+
+      // For each row in the block...
+      for (int k = 0; k < 8; k++)
+      {
+        // For each column in the block...
+        for (int l = 0; l < 8; l++)
+        {
+          // Get the top-left pixel coordinates of the block.
+          int x = j * 8;
+          int y = i * 8;
+
+          // Get the pixel coordinates.
+          int pixelX = x + l;
+          int pixelY = y + k;
+
+          // Get the pixel value.
+          unsigned char pixel = block[k * 8 + l];
+
+          // Add the pixel value to the decoded vector, at the right position.
+          this->decoded[pixelY * this->blockGridWidth * 8 + pixelX] = pixel;
+        }
+      }
     }
   }
 }
