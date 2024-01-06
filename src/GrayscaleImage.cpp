@@ -553,3 +553,9 @@ void GrayscaleImage::encode()
   // Use entropy coding to encode all blocks.
   this->entropyEncode();
 }
+
+// Get the bitsize of the last loaded or encoded image.
+unsigned int GrayscaleImage::getCompressedBitsize() const
+{
+  return this->encoded.size() * 8;
+}
