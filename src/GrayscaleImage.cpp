@@ -167,3 +167,55 @@ std::vector<unsigned char> GrayscaleImage::quantizationTable = {
     24, 35, 55, 64, 81, 104, 113, 92,
     49, 64, 78, 87, 103, 121, 120, 101,
     72, 92, 95, 98, 112, 100, 103, 99};
+
+// Quantize the given block using the quantization table.
+std::vector<unsigned char> GrayscaleImage::quantize(
+    const std::vector<unsigned char> &block)
+{
+  // Create a new block.
+  std::vector<unsigned char> quantizedBlock;
+
+  // For element in the block...
+  for (int i = 0; i < 64; i++)
+  {
+    // Get the element value.
+    unsigned char element = block[i];
+
+    // Get the quantization table value.
+    unsigned char quantizationTableValue = GrayscaleImage::quantizationTable[i];
+
+    // Quantize the element value.
+    unsigned char quantizedElement = element / quantizationTableValue;
+
+    // Add the quantized element value to the quantized block.
+    quantizedBlock.push_back(quantizedElement);
+  }
+
+  return quantizedBlock;
+}
+
+// Unquantize the given block using the quantization table.
+std::vector<unsigned char> GrayscaleImage::unquantize(
+    const std::vector<unsigned char> &block)
+{
+  // Create a new block.
+  std::vector<unsigned char> unquantizedBlock;
+
+  // For element in the block...
+  for (int i = 0; i < 64; i++)
+  {
+    // Get the element value.
+    unsigned char element = block[i];
+
+    // Get the quantization table value.
+    unsigned char quantizationTableValue = GrayscaleImage::quantizationTable[i];
+
+    // Unquantize the element value.
+    unsigned char unquantizedElement = element * quantizationTableValue;
+
+    // Add the unquantized element value to the unquantized block.
+    unquantizedBlock.push_back(unquantizedElement);
+  }
+
+  return unquantizedBlock;
+}

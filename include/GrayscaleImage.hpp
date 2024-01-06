@@ -44,10 +44,10 @@ private:
   void mergeBlocks();
 
   // Quantize the given block using the quantization table.
-  std::vector<unsigned char> quantize(const std::vector<unsigned char> block);
+  std::vector<unsigned char> quantize(const std::vector<unsigned char> &block);
 
   // Unquantize the given block using the quantization table.
-  std::vector<unsigned char> unquantize(const std::vector<unsigned char> block);
+  std::vector<unsigned char> unquantize(const std::vector<unsigned char> &block);
 
   // Use entropy coding to encode the given block.
   void entropyEncode();
