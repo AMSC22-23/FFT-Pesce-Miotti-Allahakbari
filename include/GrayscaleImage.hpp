@@ -48,11 +48,11 @@ class GrayscaleImage {
   // Unquantize the given block using the quantization table.
   std::vector<char> unquantize(const std::vector<char> &block);
 
-  // Use entropy coding to encode the given block.
-  std::vector<char> entropyEncode(const std::vector<char> &block);
+  // Use entropy coding to encode all blocks.
+  void entropyEncode();
 
-  // Use entropy coding to decode the given block.
-  std::vector<char> entropyDecode(const std::vector<char> &block);
+  // Use entropy coding to decode all blocks.
+  void entropyDecode();
 
   // Static member variable to store the quantization table.
   static std::vector<char> quantizationTable;
