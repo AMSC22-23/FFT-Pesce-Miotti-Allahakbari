@@ -1,4 +1,5 @@
 #include "GrayscaleImage.hpp"
+#include "FourierTransform.hpp"
 
 #include <opencv2/opencv.hpp>
 
@@ -497,4 +498,58 @@ void GrayscaleImage::entropyDecode()
       reconstructedZigZagVector.clear();
     }
   }
+}
+
+// Encode the last loaded or decoded image.
+void GrayscaleImage::encode()
+{
+  // Initialize a TrivialTwoDimensionalFourierTransformAlgorithm object.
+  Transform::FourierTransform::TrivialTwoDimensionalFourierTransformAlgorithm
+      fft_algorithm;
+
+  // Split the image in blocks of size 8x8.
+  this->splitBlocks();
+
+  // Iterate over all blocks.
+  for (size_t i = 0; i < this->blocks.size(); i++)
+  {
+    // Get the block.
+    std::vector<char> block = this->blocks[i];
+
+    // Shift the block by -128.
+    for (size_t j = 0; j < block.size(); j++)
+    {
+      block[j] -= 128;
+    }
+
+    // Change block structure from char to vec.
+    Transform::FourierTransform::vec vecBlock;
+    for (size_t j = 0; j < block.size(); j++)
+    {
+      vecBlock.push_back(block[j]);
+    }
+
+    // Create an output block.
+    Transform::FourierTransform::vec transformedBlock;
+
+    // Apply the Fourier transform to the block.
+    fft_algorithm(vecBlock, transformedBlock);
+
+    // Change block structure from vec to char.
+    std::vector<char> transformedCharBlock;
+    for (size_t j = 0; j < transformedBlock.size(); j++)
+    {
+      transformedCharBlock.push_back(transformedBlock[j].real());
+    }
+
+    // Quantize the block.
+    std::vector<char>
+        quantizedBlock = this->quantize(transformedCharBlock);
+
+    // Encode the block.
+    this->blocks[i] = quantizedBlock;
+  }
+
+  // Use entropy coding to encode all blocks.
+  this->entropyEncode();
 }
