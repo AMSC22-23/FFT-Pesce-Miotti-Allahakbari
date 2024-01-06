@@ -1,5 +1,6 @@
 #include "GrayscaleImage.hpp"
 
+#include <numbers>
 #include <opencv2/opencv.hpp>
 
 #include "FourierTransform.hpp"
@@ -142,56 +143,66 @@ void GrayscaleImage::mergeBlocks() {
 }
 
 // Static member variable to store the quantization table.
-std::vector<char> GrayscaleImage::quantizationTable = {
-    16, 11, 10, 16, 24,  40,  51,  61,  12, 12, 14, 19, 26,  58,  60,  55,
-    14, 13, 16, 24, 40,  57,  69,  56,  14, 17, 22, 29, 51,  87,  80,  62,
-    18, 22, 37, 56, 68,  109, 103, 77,  24, 35, 55, 64, 81,  104, 113, 92,
-    49, 64, 78, 87, 103, 121, 120, 101, 72, 92, 95, 98, 112, 100, 103, 99};
+std::vector<char> GrayscaleImage::quantizationTable = /* {
+    16, 11, 10, 16, 24, 40, 51, 61,
+    12, 12, 14, 19, 26, 58, 60, 55,
+    14, 13, 16, 24, 40, 57, 69, 56,
+    14, 17, 22, 29, 51, 87, 80, 62,
+    18, 22, 37, 56, 68, 109, 103, 77,
+    24, 35, 55, 64, 81, 104, 113, 92,
+    49, 64, 78, 87, 103, 121, 120, 101,
+    72, 92, 95, 98, 112, 100, 103, 99}; */
 
-// Quantize the given block using the quantization table.
-std::vector<char> GrayscaleImage::quantize(const std::vector<char> &block) {
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+// Quantize the given vec into two blocks using the quantization table.
+void GrayscaleImage::quantize(const Transform::FourierTransform::vec &vec,
+                              std::vector<char> &realBlock,
+                              std::vector<char> &imagBlock) {
   // Create a new block.
   std::vector<char> quantizedBlock;
 
   // For element in the block...
   for (int i = 0; i < 64; i++) {
     // Get the element value.
-    char element = block[i];
+    int realValue = vec[i].real();
+    int imagValue = vec[i].imag();
 
     // Get the quantization table value.
     char quantizationTableValue = GrayscaleImage::quantizationTable[i];
 
     // Quantize the element value.
-    char quantizedElement = element / quantizationTableValue;
+    char quantizedRealValue = realValue / quantizationTableValue;
+    char quantizedImagValue = imagValue / quantizationTableValue;
 
-    // Add the quantized element value to the quantized block.
-    quantizedBlock.push_back(quantizedElement);
+    // Set the element value to the quantized value.
+    realBlock[i] = quantizedRealValue;
+    imagBlock[i] = quantizedImagValue;
   }
-
-  return quantizedBlock;
 }
 
 // Unquantize the given block using the quantization table.
-std::vector<char> GrayscaleImage::unquantize(const std::vector<char> &block) {
-  // Create a new block.
-  std::vector<char> unquantizedBlock;
-
-  // For element in the block...
+void GrayscaleImage::unquantize(Transform::FourierTransform::vec &vec,
+                                std::vector<char> &realBlock,
+                                std::vector<char> &imagBlock) {
   for (int i = 0; i < 64; i++) {
     // Get the element value.
-    char element = block[i];
+    int realValue = realBlock[i];
+    int imagValue = imagBlock[i];
 
     // Get the quantization table value.
     char quantizationTableValue = GrayscaleImage::quantizationTable[i];
 
     // Unquantize the element value.
-    char unquantizedElement = element * quantizationTableValue;
+    char unquantizedRealValue = realValue * quantizationTableValue;
+    char unquantizedImagValue = imagValue * quantizationTableValue;
 
-    // Add the unquantized element value to the unquantized block.
-    unquantizedBlock.push_back(unquantizedElement);
+    // Set the element value to the unquantized value.
+    vec[i] = Transform::FourierTransform::complex(unquantizedRealValue,
+                                                  unquantizedImagValue);
   }
-
-  return unquantizedBlock;
 }
 
 // Static member variable to store the zigZag map.
@@ -454,137 +465,83 @@ void GrayscaleImage::entropyDecode() {
 
 // Encode the last loaded or decoded image.
 void GrayscaleImage::encode() {
-  // Initialize a TrivialTwoDimensionalFourierTransformAlgorithm object.
-  Transform::FourierTransform::TrivialTwoDimensionalFourierTransformAlgorithm
-      fft_algorithm;
-
-  // Set the base angle to -pi.
-  fft_algorithm.setBaseAngle(-M_PI);
-
   // Split the image in blocks of size 8x8.
   this->splitBlocks();
 
-  // Iterate over all blocks.
+  // Initialize a TrivialTwoDimensionalDiscreteFourierTransform object.
+  Transform::FourierTransform::TrivialTwoDimensionalFourierTransformAlgorithm
+      fft;
+
+  // Set the base angle to -pi.
+  constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
+  fft.setBaseAngle(-pi);
+  this->imagBlocks.clear();
+
+  // For each block...
   for (size_t i = 0; i < this->blocks.size(); i++) {
     // Get the block.
     std::vector<char> block = this->blocks[i];
 
-    // Shift the block by -128.
+    // Shift the block values by -128.
     for (size_t j = 0; j < block.size(); j++) {
       block[j] -= 128;
     }
 
-    // Change block structure from char to vec.
-    Transform::FourierTransform::vec vecBlock;
+    // Turn the block into a vec object.
+    Transform::FourierTransform::vec vecBlock(64, 0);
+    Transform::FourierTransform::vec outputVecBlock(64, 0);
     for (size_t j = 0; j < block.size(); j++) {
-      vecBlock.push_back(block[j]);
+      vecBlock[j] = block[j];
     }
-
-    // Create an output block.
-    Transform::FourierTransform::vec transformedBlock(64, 0);
 
     // Apply the Fourier transform to the block.
-    fft_algorithm(vecBlock, transformedBlock);
-
-    // Change block structure from vec to char.
-    std::vector<char> transformedCharBlock;
-    for (size_t j = 0; j < transformedBlock.size(); j++) {
-      transformedCharBlock.push_back(transformedBlock[j].real());
-    }
+    fft(vecBlock, outputVecBlock);
 
     // Quantize the block.
-    std::vector<char> quantizedBlock = this->quantize(transformedCharBlock);
+    std::vector<char> realBlock(64, 0);
+    std::vector<char> imagBlock(64, 0);
 
-    // Encode the block.
-    this->blocks[i] = quantizedBlock;
+    this->quantize(outputVecBlock, realBlock, imagBlock);
+
+    this->blocks[i] = realBlock;
+    this->imagBlocks.push_back(imagBlock);
   }
-
-  for (size_t i = 0; i < this->blocks.size(); i++) {
-    // Get the block.
-    std::vector<char> block = this->blocks[i];
-
-    // Shift the block by -128.
-    for (size_t j = 0; j < block.size(); j++) {
-      block[j] -= 128;
-    }
-
-    // Change block structure from char to vec.
-    Transform::FourierTransform::vec vecBlock;
-    for (size_t j = 0; j < block.size(); j++) {
-      vecBlock.push_back(block[j]);
-    }
-
-    // Create an output block.
-    Transform::FourierTransform::vec transformedBlock(64, 0);
-
-    // Apply the Fourier transform to the block.
-    fft_algorithm(vecBlock, transformedBlock);
-
-    // Change block structure from vec to char.
-    std::vector<char> transformedCharBlock;
-    for (size_t j = 0; j < transformedBlock.size(); j++) {
-      transformedCharBlock.push_back(transformedBlock[j].imag());
-    }
-
-    // Quantize the block.
-    std::vector<char> quantizedBlock = this->quantize(transformedCharBlock);
-
-    // Encode the block.
-    this->blocks[i] = quantizedBlock;
-  }
-
-  // Use entropy coding to encode all blocks.
-  this->entropyEncode();
 }
 
 // Decode the last loaded or encoded image.
 void GrayscaleImage::decode() {
-  // Initialize a TrivialTwoDimensionalFourierTransformAlgorithm object.
+  // Initialize a TrivialTwoDimensionalDiscreteFourierTransform object.
   Transform::FourierTransform::TrivialTwoDimensionalFourierTransformAlgorithm
-      fft_algorithm;
+      fft;
 
   // Set the base angle to +pi.
-  fft_algorithm.setBaseAngle(+M_PI);
+  constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
+  fft.setBaseAngle(+pi);
 
-  // Use entropy coding to decode all blocks.
-  this->entropyDecode();
-
-  // Iterate over all blocks.
-  for (size_t i = 0; i < this->blocks.size() / 2; i++) {
+  // For each block...
+  for (size_t i = 0; i < this->blocks.size(); i++) {
     // Get the block.
-    std::vector<char> blockReal = this->blocks[i];
-    std::vector<char> blockImag = this->blocks[i + this->blocks.size() / 2];
+    std::vector<char> realBlock = this->blocks[i];
+    std::vector<char> imagBlock = this->imagBlocks[i];
 
-    // Unquantize the blocks.
-    std::vector<char> unquantizedBlockReal = this->unquantize(blockReal);
-    std::vector<char> unquantizedBlockImag = this->unquantize(blockImag);
+    // Unquantize the block.
+    Transform::FourierTransform::vec vecBlock(64, 0);
+    Transform::FourierTransform::vec outputVecBlock(64, 0);
+    this->unquantize(vecBlock, realBlock, imagBlock);
 
-    // Change block structure from char to vec.
-    Transform::FourierTransform::vec vecBlock;
-    for (size_t j = 0; j < unquantizedBlockReal.size(); j++) {
-      vecBlock.push_back(std::complex<double>(unquantizedBlockReal[j],
-                                              unquantizedBlockImag[j]));
+    // Apply the Fourier transform to the block.
+    fft(vecBlock, outputVecBlock);
+
+    // Turn the output vec object into a block.
+    std::vector<char> block(64, 0);
+    for (size_t j = 0; j < outputVecBlock.size(); j++) {
+      block[j] = outputVecBlock[j].real();
     }
 
-    // Create an output block.
-    Transform::FourierTransform::vec transformedBlock(64, 0);
-
-    // Apply the inverse Fourier transform to the block.
-    fft_algorithm(vecBlock, transformedBlock);
-
-    // Change block structure from vec to char.
-    std::vector<char> transformedCharBlock;
-    for (size_t j = 0; j < transformedBlock.size(); j++) {
-      transformedCharBlock.push_back(transformedBlock[j].real());
+    // Shift the block values by +128.
+    for (size_t j = 0; j < block.size(); j++) {
+      block[j] += 128;
     }
-
-    // Shift the block by 128.
-    for (size_t j = 0; j < transformedCharBlock.size(); j++) {
-      transformedCharBlock[j] += 128;
-    }
-
-    // Add the block to the blocks vector.
-    this->blocks[i] = transformedCharBlock;
   }
 
   // Merge the blocks in variable 'blocks'.
