@@ -9,18 +9,18 @@
 #include "Utility.hpp"
 #include "WaveletTransform.hpp"
 
-void print_usage_fft(size_t size, const std::string& mode,
+void print_usage_fft(size_t size, const std::string &mode,
                      unsigned int max_num_threads);
 void print_usage_wavelet(size_t size);
 
-int jpeg_main(int argc, char* argv[]);
-int cuda_main(int argc, char* argv[]);
-int wavelet_main(int argc, char* argv[]);
-int fft_main(int argc, char* argv[]);
+int jpeg_main(int argc, char *argv[]);
+int cuda_main(int argc, char *argv[]);
+int wavelet_main(int argc, char *argv[]);
+int fft_main(int argc, char *argv[]);
 
 using namespace Transform;
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   if (argc <= 1) {
     std::cerr << "Incorrect arguments!\n"
               << "Specify the execution mode!" << std::endl;
@@ -58,21 +58,29 @@ int main(int argc, char* argv[]) {
   return 0;
 }
 
-int jpeg_main(int argc, char* argv[]) {
+int jpeg_main(int argc, char *argv[]) {
   using namespace FourierTransform;
 
-  if (argc > 2) {
+  std::string image_path = "../img/image.jpg";
+
+  // We expect at most 1 extra argument.
+  if (argc > 3) {
     std::cerr << "Incorrect arguments!\n"
-              << "Argument 1: jpeg" << std::endl;
+              << "Argument 1: jpeg\n"
+              << "Argument 2: image path (default: " << image_path << ")\n"
+              << std::endl;
     return 1;
   }
+
+  // Get the image path.
+  if (argc > 2) image_path = std::string(argv[2]);
 
   // Create a GrayscaleImage object.
   GrayscaleImage grayscaleImage;
 
   // Load the image.
   std::cout << "Loading image..." << std::endl;
-  bool success = grayscaleImage.loadStandard("../img/image.jpg");
+  bool success = grayscaleImage.loadStandard(image_path);
 
   // Check if the image was loaded successfully.
   if (!success) {
@@ -89,7 +97,7 @@ int jpeg_main(int argc, char* argv[]) {
   return 0;
 }
 
-int cuda_main(int argc, char* argv[]) {
+int cuda_main(int argc, char *argv[]) {
   using namespace FourierTransform;
 
   if (argc > 3) {
@@ -175,7 +183,7 @@ int cuda_main(int argc, char* argv[]) {
   return EXIT_SUCCESS;
 }
 
-int wavelet_main(int argc, char* argv[]) {
+int wavelet_main(int argc, char *argv[]) {
   using namespace WaveletTransform;
 
   constexpr size_t default_size = 1UL << 10;
@@ -189,7 +197,7 @@ int wavelet_main(int argc, char* argv[]) {
   // Get the size of the sequence.
   size_t size = default_size;
   if (argc >= 3) {
-    char* error;
+    char *error;
 
     const unsigned long long_size = strtoul(argv[2], &error, 10);
     // Check for errors
@@ -242,7 +250,7 @@ int wavelet_main(int argc, char* argv[]) {
   return 0;
 }
 
-int fft_main(int argc, char* argv[]) {
+int fft_main(int argc, char *argv[]) {
   using namespace FourierTransform;
 
   constexpr size_t default_size = 1UL << 10;
@@ -259,7 +267,7 @@ int fft_main(int argc, char* argv[]) {
   // Get the size of the sequence.
   size_t size = default_size;
   if (argc >= 3) {
-    char* error;
+    char *error;
 
     const unsigned long long_size = strtoul(argv[2], &error, 10);
     // Check for errors
@@ -279,7 +287,7 @@ int fft_main(int argc, char* argv[]) {
   // Get the maximum number of threads.
   unsigned int max_num_threads = default_max_num_threads;
   if (argc >= 5) {
-    char* error;
+    char *error;
 
     const unsigned long long_max_num_threads = strtoul(argv[4], &error, 10);
     // Check for errors
@@ -469,7 +477,7 @@ void print_usage_wavelet(size_t size) {
             << std::endl;
 }
 
-void print_usage_fft(size_t size, const std::string& mode,
+void print_usage_fft(size_t size, const std::string &mode,
                      unsigned int max_num_threads) {
   std::cerr << "Incorrect arguments!\n"
             << "Argument 1: fft\n"

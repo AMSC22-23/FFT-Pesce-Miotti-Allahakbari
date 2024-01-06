@@ -7,8 +7,9 @@
 // This class may be used to load, save, encode, decode and display grayscale
 // images. Please note that the image's width and height must be a multiple
 // of 8.
-class GrayscaleImage {
- public:
+class GrayscaleImage
+{
+public:
   // Load regular image from file.
   bool loadStandard(const std::string &filename);
 
@@ -33,7 +34,7 @@ class GrayscaleImage {
   // Get the bitsize of the last loaded or encoded image.
   unsigned int getCompressedBitsize() const;
 
- private:
+private:
   // Split the image in blocks of size 8x8, and save the result in variable
   // 'blocks'.
   void splitBlocks();
@@ -43,10 +44,10 @@ class GrayscaleImage {
   void mergeBlocks();
 
   // Quantize the given block using the quantization table.
-  std::vector<unsigned char> quantize(const std::vector<unsigned char> block);
+  std::vector<unsigned char> quantize(const std::vector<unsigned char> &block);
 
   // Unquantize the given block using the quantization table.
-  std::vector<unsigned char> unquantize(const std::vector<unsigned char> block);
+  std::vector<unsigned char> unquantize(const std::vector<unsigned char> &block);
 
   // Use entropy coding to encode the given block.
   void entropyEncode();
@@ -55,7 +56,7 @@ class GrayscaleImage {
   void entropyDecode();
 
   // Static member variable to store the quantization table.
-  static Transform::FourierTransform::vec quantizationTable;
+  static std::vector<unsigned char> quantizationTable;
 
   // The image in uncompressed form.
   std::vector<unsigned char> decoded;
@@ -73,4 +74,4 @@ class GrayscaleImage {
   int blockGridHeight;
 };
 
-#endif  // GRAYSCALE_IMAGE_HPP
+#endif // GRAYSCALE_IMAGE_HPP
