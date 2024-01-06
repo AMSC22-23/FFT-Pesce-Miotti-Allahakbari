@@ -1,3 +1,6 @@
+#ifndef UTILITY_HPP
+#define UTILITY_HPP
+
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -81,3 +84,5 @@ inline void WriteToFile(const Transform::FourierTransform::vec &sequence,
   // Notify the user.
   std::cout << "Written data to [" << filename << "]." << std::endl;
 }
+
+#endif  // UTILITY_HPP
