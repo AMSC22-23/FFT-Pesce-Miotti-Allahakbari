@@ -239,3 +239,132 @@ std::vector<std::pair<int, int>> GrayscaleImage::zigZagMap = {{0, 0}, {0, 1}, {1
 {6, 7}, {7, 6},
 {7, 7}
 *************************************************/
+
+// Use entropy coding to encode all blocks.
+void GrayscaleImage::entropyEncode()
+{
+  // Clear the encoded vector.
+  this->encoded.clear();
+
+  // Note the unassigned bits in the last byte.
+  int unassignedBits = 0;
+
+  // For each block...
+  for (size_t i = 0; i < this->blocks.size(); i++)
+  {
+    // Create a linearized zigZag vector.
+    std::vector<char> zigZagVector;
+
+    // Get the already quantized block.
+    std::vector<char> block = this->blocks[i];
+
+    // For each element in the block...
+    for (int j = 0; j < 64; j++)
+    {
+      // Get the zigZag map coordinates.
+      int x = GrayscaleImage::zigZagMap[j].first;
+      int y = GrayscaleImage::zigZagMap[j].second;
+
+      // Get the element value.
+      char element = block[y * 8 + x];
+
+      // Add the element value to the zigZag block.
+      zigZagVector.push_back(element);
+    }
+
+    // Initialize a counter for the number of zeros.
+    int zeroCounter = 0;
+
+    // Begin the entropy encoding by iterating over the zigZag vector.
+    for (size_t j = 0; j < zigZagVector.size(); j++)
+    {
+      // Get the element value.
+      char element = zigZagVector[j];
+
+      // If the element value is zero...
+      if (element == 0)
+      {
+        // Increment the zero counter.
+        zeroCounter++;
+        continue;
+      }
+
+      // Else, if the zero counter is greater than 15...
+      while (zeroCounter > 15)
+      {
+        // Add the special code to the encoded vector.
+        this->encoded.push_back(0xF0);
+        this->encoded.push_back(0x00);
+
+        // Decrement the zero counter by 16.
+        zeroCounter -= 16;
+      }
+
+      // Get the bit size of the element value.
+      int bitSize = 0;
+      char temp = element;
+      if (temp < 0)
+      {
+        bitSize = 8;
+      }
+      else
+      {
+        while (temp > 0)
+        {
+          temp = temp << 1;
+          bitSize++;
+        }
+      }
+
+      // Initialize the first byte.
+      char firstByte = 0;
+
+      // Set the first 4 bits of the first byte to the zero counter.
+      firstByte |= zeroCounter << 4;
+
+      // Set the last 4 bits of the first byte to the bit size.
+      firstByte |= bitSize;
+
+      // Add the first byte to the encoded vector, by filling the unassigned
+      // bits of the last byte first, and then adding the first byte.
+      // This operation does not change the number of unassigned bits, since
+      // we're adding a byte.
+      if (unassignedBits == 0)
+      {
+        this->encoded.push_back(firstByte);
+      }
+      else
+      {
+        this->encoded[this->encoded.size() - 1] |= firstByte >> (8 - unassignedBits);
+        this->encoded.push_back(firstByte << unassignedBits);
+      }
+
+      // Add the element value to the encoded vector, by filling the unassigned
+      // bits of the last byte first, and then adding the element value.
+      // This operation changes the number of unassigned bits, since we're
+      // adding a variable number of bits.
+      if (unassignedBits == 0)
+      {
+        this->encoded.push_back(element << (8 - bitSize));
+      }
+      else
+      {
+        this->encoded[this->encoded.size() - 1] |= element >> (8 - unassignedBits) << (8 - bitSize);
+        if (bitSize > unassignedBits)
+        {
+          this->encoded.push_back(element << (8 - bitSize + unassignedBits));
+        }
+      }
+
+      // Update the number of unassigned bits.
+      unassignedBits = (unassignedBits + bitSize) % 8;
+
+      // Reset the zero counter.
+      zeroCounter = 0;
+    }
+  }
+
+  // Add an EOB code to the encoded vector.
+  // We're not dealing with unassigned bits here, since we're adding only zeros.
+  this->encoded.push_back(0x00);
+}
