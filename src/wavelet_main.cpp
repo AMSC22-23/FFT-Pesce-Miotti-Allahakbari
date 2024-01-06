@@ -48,6 +48,33 @@ int wavelet_main(int argc, char *argv[]) {
       return 1;
     }
 
+    // Display the image.
+    image.display();
+
+    // Create the two wavelet transform algorithms.
+    std::shared_ptr<WaveletTransformAlgorithm> gp_algorithm =
+        std::make_shared<GPDirectWaveletTransform97>();
+    std::shared_ptr<WaveletTransformAlgorithm> db_algorithm =
+        std::make_shared<DaubechiesDirectWaveletTransform97>();
+
+    // Perform the transform with the algorithm by Gregoire Pau.
+    image.waveletTransform(gp_algorithm);
+    image.display();
+
+    // Reload the image.
+    GrayscaleImage image2;
+    success = image2.loadStandard(path);
+
+    // Check if the image was loaded successfully.
+    if (!success) {
+      std::cout << "Failed to load image." << std::endl;
+      return 1;
+    }
+
+    // Perform the transform with the algorithm by Daubechies.
+    image2.waveletTransform(db_algorithm);
+    image2.display();
+
     // Perform a demo of the wavelet transforms.
   } else if (mode == std::string("demo")) {
     // Get the size of the sequence.

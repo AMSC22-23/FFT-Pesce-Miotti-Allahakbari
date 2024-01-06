@@ -2,6 +2,7 @@
 #define GRAYSCALE_IMAGE_HPP
 
 #include "Real.hpp"
+#include "WaveletTransform.hpp"
 
 // A class that represents a grayscale image.
 // This class may be used to load, save, encode, decode and display grayscale
@@ -32,6 +33,11 @@ class GrayscaleImage {
 
   // Get the bitsize of the last loaded or encoded image.
   unsigned int getCompressedBitsize() const;
+
+  // Perform a wavelet transform on the decoded image.
+  void waveletTransform(const std::shared_ptr<
+                        Transform::WaveletTransform::WaveletTransformAlgorithm>
+                            algorithm);
 
  private:
   // Split the image in blocks of size 8x8, and save the result in variable

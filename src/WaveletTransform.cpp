@@ -258,7 +258,7 @@ void TwoDimensionalWaveletTransformAlgorithm::transformRows(
 
   // Check that the matrix is square and that the side length is a power of 2.
   assert(n * n == n_squared);
-  assert(1UL << static_cast<size_t>(log2(n)) == n);
+  assert((1UL << static_cast<size_t>(log2(n))) == n);
 
   // Perform the transform on all rows
   for (size_t i = 0; i < n; i++) {
@@ -266,18 +266,18 @@ void TwoDimensionalWaveletTransformAlgorithm::transformRows(
     std::vector<real> row;
     row.reserve(n);
     for (size_t j = 0; j < n; j++) {
-      row.emplace_back(input_matrix[i + j]);
+      row.emplace_back(input_matrix[n * i + j]);
     }
 
     // Allocate space for the result.
-    std::vector<real> transformed_row(n);
+    std::vector<real> transformed_row(n, 0);
 
     // Transform the row.
     algorithm->operator()(row, transformed_row);
 
     // Write the result to the output matrix.
     for (size_t j = 0; j < n; j++) {
-      output_matrix[i + j] = transformed_row[j];
+      output_matrix[n * i + j] = transformed_row[j];
     }
   }
 }
@@ -293,7 +293,7 @@ void TwoDimensionalWaveletTransformAlgorithm::transformColumns(
 
   // Check that the matrix is square and that the side length is a power of 2.
   assert(n * n == n_squared);
-  assert(1UL << static_cast<size_t>(log2(n)) == n);
+  assert((1UL << static_cast<size_t>(log2(n))) == n);
 
   // Perform the transform on all columns
   for (size_t i = 0; i < n; i++) {
@@ -305,7 +305,7 @@ void TwoDimensionalWaveletTransformAlgorithm::transformColumns(
     }
 
     // Allocate space for the result.
-    std::vector<real> transformed_column(n);
+    std::vector<real> transformed_column(n, 0);
 
     // Transform the column.
     algorithm->operator()(column, transformed_column);
