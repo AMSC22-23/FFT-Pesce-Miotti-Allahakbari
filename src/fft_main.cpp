@@ -20,7 +20,7 @@ void print_usage(size_t size, const std::string &mode,
             << "Argument 4: maximum number of threads (default: "
             << max_num_threads << ")\n"
             << "Argument 5: algorithm for timingTest mode (classic, recursive, "
-               "iterative(default)"
+               "iterative (default))"
             << std::endl;
 }
 

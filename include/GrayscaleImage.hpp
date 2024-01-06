@@ -7,9 +7,8 @@
 // This class may be used to load, save, encode, decode and display grayscale
 // images. Please note that the image's width and height must be a multiple
 // of 8.
-class GrayscaleImage
-{
-public:
+class GrayscaleImage {
+ public:
   // Load regular image from file.
   bool loadStandard(const std::string &filename);
 
@@ -34,7 +33,7 @@ public:
   // Get the bitsize of the last loaded or encoded image.
   unsigned int getCompressedBitsize() const;
 
-private:
+ private:
   // Split the image in blocks of size 8x8, and save the result in variable
   // 'blocks'.
   void splitBlocks();
@@ -77,4 +76,4 @@ private:
   int blockGridHeight;
 };
 
-#endif // GRAYSCALE_IMAGE_HPP
+#endif  // GRAYSCALE_IMAGE_HPP

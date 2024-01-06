@@ -1,6 +1,8 @@
 #ifndef WAVELET_TRANSFORM_HPP
 #define WAVELET_TRANSFORM_HPP
 
+#include <memory>
+
 #include "Real.hpp"
 
 namespace Transform {
@@ -64,6 +66,28 @@ class DaubechiesInverseWaveletTransform97 : public WaveletTransformAlgorithm {
   void operator()(const std::vector<real> &input_sequence,
                   std::vector<real> &output_sequence) const override;
   ~DaubechiesInverseWaveletTransform97() = default;
+};
+
+// Perform a 2D wavelet direct or inverse transform. The direct transform is
+// performed transforming each row and then each column. The inverse transforms
+// each column and then each row.
+class TwoDimensionalWaveletTransformAlgorithm {
+ public:
+  void directTransform(
+      const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
+      const std::shared_ptr<WaveletTransformAlgorithm> algorithm) const;
+  void inverseTransform(
+      const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
+      const std::shared_ptr<WaveletTransformAlgorithm> algorithm) const;
+  ~TwoDimensionalWaveletTransformAlgorithm() = default;
+
+ private:
+  void transformRows(
+      const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
+      const std::shared_ptr<WaveletTransformAlgorithm> algorithm) const;
+  void transformColumns(
+      const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
+      const std::shared_ptr<WaveletTransformAlgorithm> algorithm) const;
 };
 
 }  // namespace WaveletTransform
