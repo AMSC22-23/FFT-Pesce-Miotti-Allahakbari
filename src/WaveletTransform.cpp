@@ -16,128 +16,132 @@ constexpr real gamma = 0.8829110762;
 constexpr real delta = 0.4435068522;
 constexpr real xi = 1.0 / 1.149604398;
 
-void DirectWaveletTransform97(std::vector<real> &sequence) {
+void GPDirectWaveletTransform97(const std::vector<real> &input_sequence,
+                              std::vector<real> &output_sequence) {
+  // Copy the input.
+  std::vector<real> temporary_sequence(input_sequence);
+
   // Get the input size.
-  const size_t n = sequence.size();
+  const size_t n = temporary_sequence.size();
 
   // Check that the size of the sequence is a power of 2.
-  const size_t log_n = static_cast<size_t>(log2(n));
-  assert(1UL << log_n == n);
-
-  // Allocate space for a temporary sequence.
-  std::vector<real> temporary_sequence(n, 0);
+  assert(1UL << static_cast<size_t>(log2(n)) == n);
 
   // Predict 1.
   for (size_t i = 1; i < n - 2; i += 2) {
-    sequence[i] += alpha * (sequence[i - 1] + sequence[i + 1]);
+    temporary_sequence[i] +=
+        alpha * (temporary_sequence[i - 1] + temporary_sequence[i + 1]);
   }
-  sequence[n - 1] += 2 * alpha * sequence[n - 2];
+  temporary_sequence[n - 1] += 2 * alpha * temporary_sequence[n - 2];
 
   // Update 1.
   for (size_t i = 2; i < n; i += 2) {
-    sequence[i] += beta * (sequence[i - 1] + sequence[i + 1]);
+    temporary_sequence[i] +=
+        beta * (temporary_sequence[i - 1] + temporary_sequence[i + 1]);
   }
-  sequence[0] += 2 * beta * sequence[1];
+  temporary_sequence[0] += 2 * beta * temporary_sequence[1];
 
   // Predict 2.
   for (size_t i = 1; i < n - 2; i += 2) {
-    sequence[i] += gamma * (sequence[i - 1] + sequence[i + 1]);
+    temporary_sequence[i] +=
+        gamma * (temporary_sequence[i - 1] + temporary_sequence[i + 1]);
   }
-  sequence[n - 1] += 2 * gamma * sequence[n - 2];
+  temporary_sequence[n - 1] += 2 * gamma * temporary_sequence[n - 2];
 
   // Update 2.
   for (size_t i = 2; i < n; i += 2) {
-    sequence[i] += delta * (sequence[i - 1] + sequence[i + 1]);
+    temporary_sequence[i] +=
+        delta * (temporary_sequence[i - 1] + temporary_sequence[i + 1]);
   }
-  sequence[0] += 2 * delta * sequence[1];
+  temporary_sequence[0] += 2 * delta * temporary_sequence[1];
 
   // Scale.
   for (size_t i = 0; i < n; i++) {
     if (i % 2)
-      sequence[i] *= xi;
+      temporary_sequence[i] *= xi;
     else
-      sequence[i] /= xi;
+      temporary_sequence[i] /= xi;
   }
 
-  // Pack.
+  // Pack and copy data into the output sequence.
   for (size_t i = 0; i < n; i++) {
     if (i % 2 == 0)
-      temporary_sequence[i / 2] = sequence[i];
+      output_sequence[i / 2] = temporary_sequence[i];
     else
-      temporary_sequence[n / 2 + i / 2] = sequence[i];
-  }
-
-  // Copy data into the final sequence.
-  for (size_t i = 0; i < n; i++) {
-    sequence[i] = temporary_sequence[i];
+      output_sequence[n / 2 + i / 2] = temporary_sequence[i];
   }
 }
 
-void InverseWaveletTransform97(std::vector<real> &sequence) {
+void GPInverseWaveletTransform97(const std::vector<real> &input_sequence,
+                              std::vector<real> &output_sequence) {
+  // Copy the input.
+  std::vector<real> temporary_sequence(input_sequence);
+
   // Get the input size.
-  const size_t n = sequence.size();
+  const size_t n = temporary_sequence.size();
 
   // Check that the size of the sequence is a power of 2.
-  const size_t log_n = static_cast<size_t>(log2(n));
-  assert(1UL << log_n == n);
-
-  // Allocate space for a temporary sequence.
-  std::vector<real> temporary_sequence(n, 0);
+  assert(1UL << static_cast<size_t>(log2(n)) == n);
 
   // Unpack.
   for (size_t i = 0; i < n / 2; i++) {
-    temporary_sequence[i * 2] = sequence[i];
-    temporary_sequence[i * 2 + 1] = sequence[i + n / 2];
+    temporary_sequence[i * 2] = input_sequence[i];
+    temporary_sequence[i * 2 + 1] = input_sequence[i + n / 2];
   }
 
   // Copy data into the result sequence.
   for (size_t i = 0; i < n; i++) {
-    sequence[i] = temporary_sequence[i];
+    output_sequence[i] = temporary_sequence[i];
   }
 
   // Undo scale.
   for (size_t i = 0; i < n; i++) {
     if (i % 2)
-      sequence[i] /= xi;
+      output_sequence[i] /= xi;
     else
-      sequence[i] *= xi;
+      output_sequence[i] *= xi;
   }
 
   // Undo update 2.
   for (size_t i = 2; i < n; i += 2) {
-    sequence[i] -= delta * (sequence[i - 1] + sequence[i + 1]);
+    output_sequence[i] -= delta * (output_sequence[i - 1] + output_sequence[i + 1]);
   }
-  sequence[0] -= 2 * delta * sequence[1];
+  output_sequence[0] -= 2 * delta * output_sequence[1];
 
   // Undo predict 2.
   for (size_t i = 1; i < n - 2; i += 2) {
-    sequence[i] -= gamma * (sequence[i - 1] + sequence[i + 1]);
+    output_sequence[i] -= gamma * (output_sequence[i - 1] + output_sequence[i + 1]);
   }
-  sequence[n - 1] -= 2 * gamma * sequence[n - 2];
+  output_sequence[n - 1] -= 2 * gamma * output_sequence[n - 2];
 
   // Undo update 1.
   for (size_t i = 2; i < n; i += 2) {
-    sequence[i] -= beta * (sequence[i - 1] + sequence[i + 1]);
+    output_sequence[i] -= beta * (output_sequence[i - 1] + output_sequence[i + 1]);
   }
-  sequence[0] -= 2 * beta * sequence[1];
+  output_sequence[0] -= 2 * beta * output_sequence[1];
 
   // Undo predict 1.
   for (size_t i = 1; i < n - 2; i += 2) {
-    sequence[i] -= alpha * (sequence[i - 1] + sequence[i + 1]);
+    output_sequence[i] -= alpha * (output_sequence[i - 1] + output_sequence[i + 1]);
   }
-  sequence[n - 1] -= 2 * alpha * sequence[n - 2];
+  output_sequence[n - 1] -= 2 * alpha * output_sequence[n - 2];
 }
 
-void NewDirectWaveletTransform97(const std::vector<real> &sequence,
-                                 std::vector<real> &high_sequence,
-                                 std::vector<real> &low_sequence) {
+void DaubechiesDirectWaveletTransform97(const std::vector<real> &input_sequence,
+                                        std::vector<real> &output_sequence) {
   // Get the input size.
-  const size_t n = sequence.size();
+  const size_t n = input_sequence.size();
+
+  // Allocate two temporary vectors.
+  std::vector<real> low_sequence;
+  std::vector<real> high_sequence;
+  low_sequence.reserve(n/2);
+  high_sequence.reserve(n/2);
 
   // Splitting phase.
   for (size_t i = 0; i < n / 2; i++) {
-    low_sequence[i] = sequence[2 * i];
-    high_sequence[i] = sequence[2 * i + 1];
+    low_sequence.emplace_back(input_sequence[2 * i]);
+    high_sequence.emplace_back(input_sequence[2 * i + 1]);
   }
 
   // Prediction phase 1.
@@ -169,13 +173,34 @@ void NewDirectWaveletTransform97(const std::vector<real> &sequence,
     low_sequence[i] *= xi;
     high_sequence[i] /= xi;
   }
+
+  // Merging into a single sequence.
+  for (size_t i = 0; i < n / 2; i++) {
+    output_sequence[i] = low_sequence[i];
+  }
+  for (size_t i = n / 2; i < n; i++) {
+    output_sequence[i] = high_sequence[i - n/2];
+  }
 }
 
-void NewInverseWaveletTransform97(std::vector<real> &sequence,
-                                  std::vector<real> &high_sequence,
-                                  std::vector<real> &low_sequence) {
+void DaubechiesInverseWaveletTransform97(const std::vector<real> &input_sequence,
+                                         std::vector<real> &output_sequence) {
   // Get the input size.
-  const size_t n = sequence.size();
+  const size_t n = input_sequence.size();
+
+  // Allocate two temporary vectors.
+  std::vector<real> low_sequence;
+  std::vector<real> high_sequence;
+  low_sequence.reserve(n/2);
+  high_sequence.reserve(n/2);
+
+  // Undo merging into a single sequence.
+  for (size_t i = 0; i < n / 2; i++) {
+    low_sequence.emplace_back(input_sequence[i]);
+  }
+  for (size_t i = n / 2; i < n; i++) {
+    high_sequence.emplace_back(input_sequence[i]);
+  }
 
   // Undo Scaling.
   for (size_t i = 0; i < n / 2; i++) {
@@ -209,8 +234,8 @@ void NewInverseWaveletTransform97(std::vector<real> &sequence,
 
   // Undo splitting phase.
   for (size_t i = 0; i < n / 2; i++) {
-    sequence[2 * i] = low_sequence[i];
-    sequence[2 * i + 1] = high_sequence[i];
+    output_sequence[2 * i] = low_sequence[i];
+    output_sequence[2 * i + 1] = high_sequence[i];
   }
 }
 
