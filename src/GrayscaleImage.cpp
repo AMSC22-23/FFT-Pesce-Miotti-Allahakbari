@@ -507,6 +507,9 @@ void GrayscaleImage::encode()
   Transform::FourierTransform::TrivialTwoDimensionalFourierTransformAlgorithm
       fft_algorithm;
 
+  // Set the base angle to -pi.
+  fft_algorithm.setBaseAngle(-M_PI);
+
   // Split the image in blocks of size 8x8.
   this->splitBlocks();
 
