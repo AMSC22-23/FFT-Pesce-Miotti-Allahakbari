@@ -52,8 +52,8 @@ int jpeg_main(int argc, char *argv[])
   grayscaleImage.encode();
 
   // Decode the image.
-  std::cout << "Decoding image..." << std::endl;
-  grayscaleImage.decode();
+  /* std::cout << "Decoding image..." << std::endl;
+  grayscaleImage.decode(); */
 
   // Display the image.
   std::cout << "Displaying image..." << std::endl;
