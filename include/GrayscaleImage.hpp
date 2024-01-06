@@ -44,28 +44,31 @@ private:
   void mergeBlocks();
 
   // Quantize the given block using the quantization table.
-  std::vector<unsigned char> quantize(const std::vector<unsigned char> &block);
+  std::vector<char> quantize(const std::vector<char> &block);
 
   // Unquantize the given block using the quantization table.
-  std::vector<unsigned char> unquantize(const std::vector<unsigned char> &block);
+  std::vector<char> unquantize(const std::vector<char> &block);
 
   // Use entropy coding to encode the given block.
-  void entropyEncode();
+  std::vector<char> entropyEncode(const std::vector<char> &block);
 
   // Use entropy coding to decode the given block.
-  void entropyDecode();
+  std::vector<char> entropyDecode(const std::vector<char> &block);
 
   // Static member variable to store the quantization table.
-  static std::vector<unsigned char> quantizationTable;
+  static std::vector<char> quantizationTable;
+
+  // Static member variable to store the zigZag map.
+  static std::vector<std::pair<int, int>> zigZagMap;
 
   // The image in uncompressed form.
-  std::vector<unsigned char> decoded;
+  std::vector<char> decoded;
 
   // The image in compressed form (expressed as a sequence of bytes).
-  std::vector<unsigned char> encoded;
+  std::vector<char> encoded;
 
   // An array of 8x8 blocks. Each block is a vector of 64 elements.
-  std::vector<std::vector<unsigned char>> blocks;
+  std::vector<std::vector<char>> blocks;
 
   // Block grid width.
   int blockGridWidth;

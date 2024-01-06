@@ -30,7 +30,7 @@ bool GrayscaleImage::loadStandard(const std::string &filename)
     for (int j = 0; j < image.cols; j++)
     {
       // Get the pixel value.
-      unsigned char pixel = image.at<unsigned char>(i, j);
+      char pixel = image.at<char>(i, j);
 
       // Add the pixel value to the decoded image.
       this->decoded.push_back(pixel);
@@ -59,10 +59,10 @@ void GrayscaleImage::display()
     for (int j = 0; j < image.cols; j++)
     {
       // Get the pixel value.
-      unsigned char pixel = this->decoded[i * image.cols + j];
+      char pixel = this->decoded[i * image.cols + j];
 
       // Set the pixel value.
-      image.at<unsigned char>(i, j) = pixel;
+      image.at<char>(i, j) = pixel;
     }
   }
 
@@ -85,7 +85,7 @@ void GrayscaleImage::splitBlocks()
     for (int j = 0; j < this->blockGridWidth; j++)
     {
       // Create a new block.
-      std::vector<unsigned char> block;
+      std::vector<char> block;
 
       // For each row in the block...
       for (int k = 0; k < 8; k++)
@@ -102,7 +102,7 @@ void GrayscaleImage::splitBlocks()
           int pixelY = y + k;
 
           // Get the pixel value.
-          unsigned char pixel =
+          char pixel =
               this->decoded[pixelY * this->blockGridWidth * 8 + pixelX];
 
           // Add the pixel value to the block.
@@ -130,7 +130,7 @@ void GrayscaleImage::mergeBlocks()
     for (int j = 0; j < this->blockGridWidth; j++)
     {
       // Get the block.
-      std::vector<unsigned char> block = this->blocks[i * this->blockGridWidth + j];
+      std::vector<char> block = this->blocks[i * this->blockGridWidth + j];
 
       // For each row in the block...
       for (int k = 0; k < 8; k++)
@@ -147,7 +147,7 @@ void GrayscaleImage::mergeBlocks()
           int pixelY = y + k;
 
           // Get the pixel value.
-          unsigned char pixel = block[k * 8 + l];
+          char pixel = block[k * 8 + l];
 
           // Add the pixel value to the decoded vector, at the right position.
           this->decoded[pixelY * this->blockGridWidth * 8 + pixelX] = pixel;
@@ -158,7 +158,7 @@ void GrayscaleImage::mergeBlocks()
 }
 
 // Static member variable to store the quantization table.
-std::vector<unsigned char> GrayscaleImage::quantizationTable = {
+std::vector<char> GrayscaleImage::quantizationTable = {
     16, 11, 10, 16, 24, 40, 51, 61,
     12, 12, 14, 19, 26, 58, 60, 55,
     14, 13, 16, 24, 40, 57, 69, 56,
@@ -169,23 +169,23 @@ std::vector<unsigned char> GrayscaleImage::quantizationTable = {
     72, 92, 95, 98, 112, 100, 103, 99};
 
 // Quantize the given block using the quantization table.
-std::vector<unsigned char> GrayscaleImage::quantize(
-    const std::vector<unsigned char> &block)
+std::vector<char> GrayscaleImage::quantize(
+    const std::vector<char> &block)
 {
   // Create a new block.
-  std::vector<unsigned char> quantizedBlock;
+  std::vector<char> quantizedBlock;
 
   // For element in the block...
   for (int i = 0; i < 64; i++)
   {
     // Get the element value.
-    unsigned char element = block[i];
+    char element = block[i];
 
     // Get the quantization table value.
-    unsigned char quantizationTableValue = GrayscaleImage::quantizationTable[i];
+    char quantizationTableValue = GrayscaleImage::quantizationTable[i];
 
     // Quantize the element value.
-    unsigned char quantizedElement = element / quantizationTableValue;
+    char quantizedElement = element / quantizationTableValue;
 
     // Add the quantized element value to the quantized block.
     quantizedBlock.push_back(quantizedElement);
@@ -195,23 +195,23 @@ std::vector<unsigned char> GrayscaleImage::quantize(
 }
 
 // Unquantize the given block using the quantization table.
-std::vector<unsigned char> GrayscaleImage::unquantize(
-    const std::vector<unsigned char> &block)
+std::vector<char> GrayscaleImage::unquantize(
+    const std::vector<char> &block)
 {
   // Create a new block.
-  std::vector<unsigned char> unquantizedBlock;
+  std::vector<char> unquantizedBlock;
 
   // For element in the block...
   for (int i = 0; i < 64; i++)
   {
     // Get the element value.
-    unsigned char element = block[i];
+    char element = block[i];
 
     // Get the quantization table value.
-    unsigned char quantizationTableValue = GrayscaleImage::quantizationTable[i];
+    char quantizationTableValue = GrayscaleImage::quantizationTable[i];
 
     // Unquantize the element value.
-    unsigned char unquantizedElement = element * quantizationTableValue;
+    char unquantizedElement = element * quantizationTableValue;
 
     // Add the unquantized element value to the unquantized block.
     unquantizedBlock.push_back(unquantizedElement);
@@ -219,3 +219,23 @@ std::vector<unsigned char> GrayscaleImage::unquantize(
 
   return unquantizedBlock;
 }
+
+// Static member variable to store the zigZag map.
+std::vector<std::pair<int, int>> GrayscaleImage::zigZagMap = {{0, 0}, {0, 1}, {1, 0}, {2, 0}, {1, 1}, {0, 2}, {0, 3}, {1, 2}, {2, 1}, {3, 0}, {4, 0}, {3, 1}, {2, 2}, {1, 3}, {0, 4}, {0, 5}, {1, 4}, {2, 3}, {3, 2}, {4, 1}, {5, 0}, {6, 0}, {5, 1}, {4, 2}, {3, 3}, {2, 4}, {1, 5}, {0, 6}, {0, 7}, {1, 6}, {2, 5}, {3, 4}, {4, 3}, {5, 2}, {6, 1}, {7, 0}, {7, 1}, {6, 2}, {5, 3}, {4, 4}, {3, 5}, {2, 6}, {1, 7}, {2, 7}, {3, 6}, {4, 5}, {5, 4}, {6, 3}, {7, 2}, {7, 3}, {6, 4}, {5, 5}, {4, 6}, {3, 7}, {4, 7}, {5, 6}, {6, 5}, {7, 4}, {7, 5}, {6, 6}, {5, 7}, {6, 7}, {7, 6}, {7, 7}};
+/*************************************************
+{0, 0},
+{0, 1}, {1, 0},
+{2, 0}, {1, 1}, {0, 2},
+{0, 3}, {1, 2}, {2, 1}, {3, 0},
+{4, 0}, {3, 1}, {2, 2}, {1, 3}, {0, 4},
+{0, 5}, {1, 4}, {2, 3}, {3, 2}, {4, 1}, {5, 0},
+{6, 0}, {5, 1}, {4, 2}, {3, 3}, {2, 4}, {1, 5}, {0, 6},
+{0, 7}, {1, 6}, {2, 5}, {3, 4}, {4, 3}, {5, 2}, {6, 1}, {7, 0},
+{7, 1}, {6, 2}, {5, 3}, {4, 4}, {3, 5}, {2, 6}, {1, 7},
+{2, 7}, {3, 6}, {4, 5}, {5, 4}, {6, 3}, {7, 2},
+{7, 3}, {6, 4}, {5, 5}, {4, 6}, {3, 7},
+{4, 7}, {5, 6}, {6, 5}, {7, 4},
+{7, 5}, {6, 6}, {5, 7},
+{6, 7}, {7, 6},
+{7, 7}
+*************************************************/
