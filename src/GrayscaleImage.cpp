@@ -530,7 +530,7 @@ void GrayscaleImage::encode()
     }
 
     // Create an output block.
-    Transform::FourierTransform::vec transformedBlock;
+    Transform::FourierTransform::vec transformedBlock(64, 0);
 
     // Apply the Fourier transform to the block.
     fft_algorithm(vecBlock, transformedBlock);
