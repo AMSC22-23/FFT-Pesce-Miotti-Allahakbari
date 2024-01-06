@@ -7,6 +7,7 @@
 #include <cassert>
 #include <chrono>
 #include <iostream>
+#include <numbers>
 
 #include "FFTGPU.hpp"
 #include "FourierTransform.hpp"
@@ -14,6 +15,8 @@
 
 namespace Transform {
 namespace FourierTransform {
+
+constexpr real pi = std::numbers::pi_v<real>;
 
 void ClassicalFourierTransformAlgorithm::operator()(
     const vec &input_sequence, vec &output_sequence) const {
@@ -129,7 +132,7 @@ void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
       std::make_unique<ClassicalFourierTransformAlgorithm>();
 
   // Set the base angle to -pi.
-  fft_algorithm->setBaseAngle(-M_PI);
+  fft_algorithm->setBaseAngle(-pi);
 
   // Use the 1D FFT algotithm to compute the 2D FFT.
   for (size_t i = 0; i < sqrt_n; i++) {

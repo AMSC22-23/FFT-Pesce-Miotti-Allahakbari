@@ -51,27 +51,31 @@ int wavelet_main(int argc, char *argv[]) {
 
   // Do the forward 9/7 transform with the algorithm by Gregoire Pau.
   std::vector<real> fwt_result(input_sequence);
-  GPDirectWaveletTransform97(input_sequence, fwt_result);
+  GPDirectWaveletTransform97 gp_direct;
+  gp_direct(input_sequence, fwt_result);
 
   // Save the sequence to a file.
   WriteToFile(fwt_result, "gp_fwt_result.csv");
 
   // Do the inverse 9/7 transform with the algorithm by Gregoire Pau.
   std::vector<real> iwt_result(fwt_result);
-  GPInverseWaveletTransform97(fwt_result, iwt_result);
+  GPInverseWaveletTransform97 gp_inverse;
+  gp_inverse(fwt_result, iwt_result);
 
   // Check if the result is the same as the input sequence.
   if (!CompareVectors(input_sequence, iwt_result, precision, false))
     std::cerr << "Errors detected in wavelet transforms." << std::endl;
 
   // Do the forward 9/7 transform with the algorithm by Daubechies.
-  DaubechiesDirectWaveletTransform97(input_sequence, fwt_result);
+  DaubechiesDirectWaveletTransform97 db_direct;
+  db_direct(input_sequence, fwt_result);
 
   // Save the sequences to a file.
   WriteToFile(fwt_result, "daubechies_fwt_result.csv");
 
   // Do the inverse 9/7 transform with the algorithm by Daubechies.
-  DaubechiesInverseWaveletTransform97(fwt_result, iwt_result);
+  DaubechiesInverseWaveletTransform97 db_inverse;
+  db_inverse(fwt_result, iwt_result);
 
   // Check if the result is the same as the input sequence.
   if (!CompareVectors(input_sequence, iwt_result, precision, true))

@@ -16,8 +16,9 @@ constexpr real gamma = 0.8829110762;
 constexpr real delta = 0.4435068522;
 constexpr real xi = 1.0 / 1.149604398;
 
-void GPDirectWaveletTransform97(const std::vector<real> &input_sequence,
-                              std::vector<real> &output_sequence) {
+void GPDirectWaveletTransform97::operator()(
+    const std::vector<real> &input_sequence,
+    std::vector<real> &output_sequence) const {
   // Copy the input.
   std::vector<real> temporary_sequence(input_sequence);
 
@@ -72,8 +73,9 @@ void GPDirectWaveletTransform97(const std::vector<real> &input_sequence,
   }
 }
 
-void GPInverseWaveletTransform97(const std::vector<real> &input_sequence,
-                              std::vector<real> &output_sequence) {
+void GPInverseWaveletTransform97::operator()(
+    const std::vector<real> &input_sequence,
+    std::vector<real> &output_sequence) const {
   // Copy the input.
   std::vector<real> temporary_sequence(input_sequence);
 
@@ -104,39 +106,44 @@ void GPInverseWaveletTransform97(const std::vector<real> &input_sequence,
 
   // Undo update 2.
   for (size_t i = 2; i < n; i += 2) {
-    output_sequence[i] -= delta * (output_sequence[i - 1] + output_sequence[i + 1]);
+    output_sequence[i] -=
+        delta * (output_sequence[i - 1] + output_sequence[i + 1]);
   }
   output_sequence[0] -= 2 * delta * output_sequence[1];
 
   // Undo predict 2.
   for (size_t i = 1; i < n - 2; i += 2) {
-    output_sequence[i] -= gamma * (output_sequence[i - 1] + output_sequence[i + 1]);
+    output_sequence[i] -=
+        gamma * (output_sequence[i - 1] + output_sequence[i + 1]);
   }
   output_sequence[n - 1] -= 2 * gamma * output_sequence[n - 2];
 
   // Undo update 1.
   for (size_t i = 2; i < n; i += 2) {
-    output_sequence[i] -= beta * (output_sequence[i - 1] + output_sequence[i + 1]);
+    output_sequence[i] -=
+        beta * (output_sequence[i - 1] + output_sequence[i + 1]);
   }
   output_sequence[0] -= 2 * beta * output_sequence[1];
 
   // Undo predict 1.
   for (size_t i = 1; i < n - 2; i += 2) {
-    output_sequence[i] -= alpha * (output_sequence[i - 1] + output_sequence[i + 1]);
+    output_sequence[i] -=
+        alpha * (output_sequence[i - 1] + output_sequence[i + 1]);
   }
   output_sequence[n - 1] -= 2 * alpha * output_sequence[n - 2];
 }
 
-void DaubechiesDirectWaveletTransform97(const std::vector<real> &input_sequence,
-                                        std::vector<real> &output_sequence) {
+void DaubechiesDirectWaveletTransform97::operator()(
+    const std::vector<real> &input_sequence,
+    std::vector<real> &output_sequence) const {
   // Get the input size.
   const size_t n = input_sequence.size();
 
   // Allocate two temporary vectors.
   std::vector<real> low_sequence;
   std::vector<real> high_sequence;
-  low_sequence.reserve(n/2);
-  high_sequence.reserve(n/2);
+  low_sequence.reserve(n / 2);
+  high_sequence.reserve(n / 2);
 
   // Splitting phase.
   for (size_t i = 0; i < n / 2; i++) {
@@ -179,20 +186,21 @@ void DaubechiesDirectWaveletTransform97(const std::vector<real> &input_sequence,
     output_sequence[i] = low_sequence[i];
   }
   for (size_t i = n / 2; i < n; i++) {
-    output_sequence[i] = high_sequence[i - n/2];
+    output_sequence[i] = high_sequence[i - n / 2];
   }
 }
 
-void DaubechiesInverseWaveletTransform97(const std::vector<real> &input_sequence,
-                                         std::vector<real> &output_sequence) {
+void DaubechiesInverseWaveletTransform97::operator()(
+    const std::vector<real> &input_sequence,
+    std::vector<real> &output_sequence) const {
   // Get the input size.
   const size_t n = input_sequence.size();
 
   // Allocate two temporary vectors.
   std::vector<real> low_sequence;
   std::vector<real> high_sequence;
-  low_sequence.reserve(n/2);
-  high_sequence.reserve(n/2);
+  low_sequence.reserve(n / 2);
+  high_sequence.reserve(n / 2);
 
   // Undo merging into a single sequence.
   for (size_t i = 0; i < n / 2; i++) {
