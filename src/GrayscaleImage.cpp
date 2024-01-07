@@ -451,8 +451,11 @@ void GrayscaleImage::entropyDecode() {
   // Initialize a reconstructed zigZag vector.
   std::vector<char> reconstructedZigZagVector;
 
+  // Use an index to denote the current byte we're reading from.
+  size_t i = 0;
+
   // Begin the entropy decoding by iterating over the encoded vector.
-  for (size_t i = 0; i < this->encoded.size(); i++) {
+  while (true) {
     // Initialize the first byte.
     unsigned char firstByte = 0;
 
@@ -490,6 +493,7 @@ void GrayscaleImage::entropyDecode() {
 
       // Clear the reconstructed zigZag vector.
       reconstructedZigZagVector.clear();
+      i += 1;
       continue;
     }
 
@@ -500,14 +504,15 @@ void GrayscaleImage::entropyDecode() {
         reconstructedZigZagVector.push_back(0);
       }
 
+      i += 1;
       continue;
     }
 
     // Get the zero counter.
-    int zeroCounter = firstByte >> 4;
+    unsigned char zeroCounter = firstByte >> 4;
 
     // Get the bit size.
-    int bitSize = firstByte & 0x0F;
+    unsigned char bitSize = firstByte & 0x0F;
 
     // Get the second byte.
     char secondByte = 0;
@@ -521,6 +526,16 @@ void GrayscaleImage::entropyDecode() {
 
     // Get the element value.
     char element = secondByte >> (8 - bitSize);
+
+    // At this points, we have advanced one byte to read the first byte, and
+    // some bits 1 < bitSize < 8 to read the second byte. Therefore, we need to
+    // advance the index i by 1 or 2, depending on the sum of bitPosition and
+    // bitSize.
+    if (bitPosition + bitSize <= 8) {
+      i += 2;
+    } else {
+      i += 3;
+    }
 
     // Update the bit position.
     bitPosition = (bitPosition + bitSize) % 8;
@@ -554,6 +569,8 @@ void GrayscaleImage::entropyDecode() {
       // Clear the reconstructed zigZag vector.
       reconstructedZigZagVector.clear();
     }
+
+    i += 2;
   }
 
   // Get the size of the blocks vector.
