@@ -116,10 +116,9 @@ void transpose_gpu(cuda::std::complex<real>* in, cuda::std::complex<real>* out,
   transpose<<<grid_dim, block_dim, 0, stream_id>>>(in, out, n);
 }
 
-void FourierTransform::swap_row_col_gpu(cuda::std::complex<real>* in,
-                                        cuda::std::complex<real>* out,
-                                        const int row, const int col, int n,
-                                        cudaStream_t stream_id) {
+void swap_row_col_gpu(cuda::std::complex<real>* in,
+                      cuda::std::complex<real>* out, const int row,
+                      const int col, int n, cudaStream_t stream_id) {
   int block_dim = TILE_SIZE;
   int grid_dim = (n + TILE_SIZE - 1) / TILE_SIZE;
 
