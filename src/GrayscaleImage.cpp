@@ -147,14 +147,14 @@ void GrayscaleImage::mergeBlocks() {
 
 // Static member variable to store the quantization table.
 std::vector<int> GrayscaleImage::quantizationTable = {
-   240, 60, 30, 30, 60, 60, 60, 60,
-    60, 30, 30, 60, 60, 60, 60, 60,
-    30, 30, 60, 60, 60, 60, 60, 60,
-    30, 60, 60, 60, 60, 60, 60, 60,
-    60, 60, 60, 60, 60, 60, 60, 60,
-    60, 60, 60, 60, 60, 60, 60, 120,
-    60, 60, 60, 60, 60, 60, 120, 120,
-    60, 60, 60, 60, 60, 120, 120, 120};
+   200, 100, 100, 100, 100, 100, 100, 100,
+   100, 100, 100, 100, 100, 100, 100, 100,
+   100, 100, 100, 100, 100, 100, 100, 100,
+   100, 100, 100, 100, 100, 100, 100, 100,
+   100, 100, 100, 100, 100, 100, 100, 100,
+   100, 100, 100, 100, 100, 100, 100, 100,
+   100, 100, 100, 100, 100, 100, 100, 100,
+   100, 100, 100, 100, 100, 100, 100, 100,};
 
 // Quantize the given vec into two blocks using the quantization table.
 void GrayscaleImage::quantize(const Transform::FourierTransform::vec &vec,
@@ -163,7 +163,7 @@ void GrayscaleImage::quantize(const Transform::FourierTransform::vec &vec,
   // For element in the block...
   for (int i = 0; i < 64; i++) {
     // Get the quantization table value.
-    unsigned char quantizationTableValue = GrayscaleImage::quantizationTable[i];
+    int quantizationTableValue = GrayscaleImage::quantizationTable[i];
 
     // Set the element value to the quantized value.
     realBlock[i] = vec[i].real() / quantizationTableValue;
@@ -177,7 +177,7 @@ void GrayscaleImage::unquantize(Transform::FourierTransform::vec &vec,
                                 std::vector<char> &imagBlock) {
   for (int i = 0; i < 64; i++) {
     // Get the quantization table value.
-    unsigned char quantizationTableValue = GrayscaleImage::quantizationTable[i];
+    int quantizationTableValue = GrayscaleImage::quantizationTable[i];
 
     // Unquantize the element value.
     Transform::real unquantizedRealValue =
@@ -240,9 +240,6 @@ void GrayscaleImage::decode() {
   this->entropyDecode();
   //size_t randomIndex = rand() % this->blocks.size();
   
-  size_t randomIndex = rand() % this->blocks.size();
-
-
   // For each block...
   for (size_t i = 0; i < this->blocks.size(); i++) {
     // Get the block.
@@ -250,7 +247,7 @@ void GrayscaleImage::decode() {
     std::vector<char> imagBlock = this->imagBlocks[i];
 
 
-    ////////////////////////////////////////////////////////////////
+    /* ////////////////////////////////////////////////////////////////
     if (i == randomIndex) {
       // Print the first block. Add a newline after group of 8 elements.
       for (size_t j = 0; j < realBlock.size(); j++) {
@@ -259,7 +256,7 @@ void GrayscaleImage::decode() {
           std::cout << std::endl;
         }
       }
-    }
+    } */
 
     // Unquantize the block.
     Transform::FourierTransform::vec vecBlock(64, 0);
@@ -334,6 +331,8 @@ void GrayscaleImage::entropyEncode() {
 
   // Initialize a char list for elements.
   std::vector<char> elements;
+  
+  size_t randomIndex = 200;
 
   // For each block...
   for (size_t i = 0; i < blockSet.size(); i++) {
@@ -354,6 +353,17 @@ void GrayscaleImage::entropyEncode() {
 
     // Traverse the zigZag vector.
     unsigned char zeroCounter = 0;
+
+    ////////////////////////////////////////////////////////////////
+    if (i == randomIndex) {
+      // Print the zigzag vector. Add a newline after group of 8 elements.
+      for (size_t j = 0; j < zigZagVector.size(); j++) {
+        std::cout << static_cast<int>(zigZagVector[j]) << " ";
+        if ((j + 1) % 8 == 0) {
+          std::cout << std::endl;
+        }
+      }
+    }
 
     // For each element in the zigZag vector...
     for (int j = 0; j < 64; j++) {
