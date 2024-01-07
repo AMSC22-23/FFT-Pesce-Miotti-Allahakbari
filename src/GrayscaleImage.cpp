@@ -238,25 +238,12 @@ void GrayscaleImage::decode() {
       fft;
 
   this->entropyDecode();
-  //size_t randomIndex = rand() % this->blocks.size();
   
   // For each block...
   for (size_t i = 0; i < this->blocks.size(); i++) {
     // Get the block.
     std::vector<char> realBlock = this->blocks[i];
     std::vector<char> imagBlock = this->imagBlocks[i];
-
-
-    /* ////////////////////////////////////////////////////////////////
-    if (i == randomIndex) {
-      // Print the first block. Add a newline after group of 8 elements.
-      for (size_t j = 0; j < realBlock.size(); j++) {
-        std::cout << static_cast<int>(realBlock[j]) << " ";
-        if ((j + 1) % 8 == 0) {
-          std::cout << std::endl;
-        }
-      }
-    } */
 
     // Unquantize the block.
     Transform::FourierTransform::vec vecBlock(64, 0);
@@ -331,8 +318,6 @@ void GrayscaleImage::entropyEncode() {
 
   // Initialize a char list for elements.
   std::vector<char> elements;
-  
-  size_t randomIndex = 200;
 
   // For each block...
   for (size_t i = 0; i < blockSet.size(); i++) {
@@ -353,17 +338,6 @@ void GrayscaleImage::entropyEncode() {
 
     // Traverse the zigZag vector.
     unsigned char zeroCounter = 0;
-
-    ////////////////////////////////////////////////////////////////
-    if (i == randomIndex) {
-      // Print the zigzag vector. Add a newline after group of 8 elements.
-      for (size_t j = 0; j < zigZagVector.size(); j++) {
-        std::cout << static_cast<int>(zigZagVector[j]) << " ";
-        if ((j + 1) % 8 == 0) {
-          std::cout << std::endl;
-        }
-      }
-    }
 
     // For each element in the zigZag vector...
     for (int j = 0; j < 64; j++) {
@@ -471,9 +445,6 @@ void GrayscaleImage::entropyDecode() {
     // Add the element to the reconstructed zigZag vector.
     reconstructedZigZagVector.push_back(elements[i]);
   }
-
-  // Print the length of the blocks vector.
-  std::cout << "BlocksSet vector length: " << blocksSet.size() << std::endl;
 
   // Add the first half of the blockSet to the blocks vector.
   for (size_t i = 0; i < blocksSet.size() / 2; i++) {

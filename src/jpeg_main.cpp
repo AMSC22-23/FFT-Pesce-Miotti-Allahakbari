@@ -41,25 +41,23 @@ int jpeg_main(int argc, char *argv[])
     return 1;
   }
 
-  // Get the bitsize of the image.
-  unsigned int bitsize = grayscaleImage.getStandardBitsize();
-
-  // Print the bitsize.
-  std::cout << "Bitsize: " << bitsize << std::endl;
-
   // Encode the image.
   std::cout << "Encoding image..." << std::endl;
   grayscaleImage.encode();
 
-  // Print the bitsize of the encoded image.
-  std::cout << "Encoded bitsize: " << grayscaleImage.getCompressedBitsize() << std::endl;
-  
+  // Get the bitsizes of the image.
+  unsigned int bitsize = grayscaleImage.getStandardBitsize();
+  unsigned int compressed_bitsize = grayscaleImage.getCompressedBitsize();
+
+  // Get the compression ratio.
+  double compression_ratio = (double)compressed_bitsize / (double)bitsize;
+  std::cout << "Compression ratio: " << compression_ratio << std::endl;
+
   // Decode the image.
   std::cout << "Decoding image..." << std::endl;
   grayscaleImage.decode();
 
   // Display the image.
-  std::cout << "Displaying image..." << std::endl;
   grayscaleImage.display();
 
   return 0;
