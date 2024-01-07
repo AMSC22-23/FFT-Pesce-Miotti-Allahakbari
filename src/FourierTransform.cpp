@@ -7,12 +7,16 @@
 #include <cassert>
 #include <chrono>
 #include <iostream>
+#include <numbers>
 
 #include "FFTGPU.hpp"
 #include "FourierTransform.hpp"
 #include "Utility.hpp"
 
+namespace Transform {
 namespace FourierTransform {
+
+constexpr real pi = std::numbers::pi_v<real>;
 
 void ClassicalFourierTransformAlgorithm::operator()(
     const vec &input_sequence, vec &output_sequence) const {
@@ -111,6 +115,106 @@ void IterativeFourierTransformAlgorithm::operator()(
   }
 }
 
+void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
+    const vec &input_sequence, vec &output_sequence) const {
+  // Getting the input size.
+  const size_t n = input_sequence.size();
+
+  // Get the square root of the input size.
+  const size_t sqrt_n = static_cast<size_t>(sqrt(n));
+
+  // Check that the size of the sequence is a power of 2.
+  const size_t log_sqrt_n = static_cast<size_t>(log2(sqrt_n));
+  assert(1UL << log_sqrt_n == sqrt_n);
+
+  // Use the ClassicalFourierTransformAlgorithm to compute the 1D FFT.
+  std::unique_ptr<FourierTransformAlgorithm> fft_algorithm =
+      std::make_unique<ClassicalFourierTransformAlgorithm>();
+
+  // Set the base angle to -pi.
+  constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
+  fft_algorithm->setBaseAngle(-pi);
+
+  // Use the 1D FFT algotithm to compute the 2D FFT.
+  for (size_t i = 0; i < sqrt_n; i++) {
+    // Get the i-th row of the input matrix.
+    vec row(sqrt_n, 0);
+    for (size_t j = 0; j < sqrt_n; j++) row[j] = input_sequence[i * sqrt_n + j];
+
+    // Compute the i-th row of the output matrix.
+    vec output_row(sqrt_n, 0);
+    (*fft_algorithm)(row, output_row);
+
+    // Store the i-th row of the output matrix.
+    for (size_t j = 0; j < sqrt_n; j++)
+      output_sequence[i * sqrt_n + j] = output_row[j];
+  }
+
+  // Do the same for the columns.
+  for (size_t j = 0; j < sqrt_n; j++) {
+    // Get the j-th column of the input matrix.
+    vec column(sqrt_n, 0);
+    for (size_t i = 0; i < sqrt_n; i++) column[i] = output_sequence[i * sqrt_n + j];
+
+    // Compute the j-th column of the output matrix.
+    vec output_column(sqrt_n, 0);
+    (*fft_algorithm)(column, output_column);
+
+    // Store the j-th column of the output matrix.
+    for (size_t i = 0; i < sqrt_n; i++)
+      output_sequence[i * sqrt_n + j] = output_column[i];
+  }
+}
+
+void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
+    const vec &input_sequence, vec &output_sequence) const {
+  // Getting the input size.
+  const size_t n = input_sequence.size();
+
+  // Get the square root of the input size.
+  const size_t sqrt_n = static_cast<size_t>(sqrt(n));
+
+  // Check that the size of the sequence is a power of 2.
+  const size_t log_sqrt_n = static_cast<size_t>(log2(sqrt_n));
+  assert(1UL << log_sqrt_n == sqrt_n);
+
+  // Use the ClassicalFourierTransformAlgorithm to compute the 1D FFT.
+  std::unique_ptr<FourierTransformAlgorithm> fft_algorithm =
+      std::make_unique<ClassicalFourierTransformAlgorithm>();
+
+  // Set the base angle to +pi.
+  constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
+  fft_algorithm->setBaseAngle(+pi);
+
+  for (size_t j = 0; j < sqrt_n; j++) {
+    // Get the j-th column of the input matrix.
+    vec column(sqrt_n, 0);
+    for (size_t i = 0; i < sqrt_n; i++) column[i] = input_sequence[i * sqrt_n + j];
+
+    // Compute the j-th column of the output matrix.
+    vec output_column(sqrt_n, 0);
+    (*fft_algorithm)(column, output_column);
+
+    // Store the j-th column of the output matrix.
+    for (size_t i = 0; i < sqrt_n; i++)
+      output_sequence[i * sqrt_n + j] = output_column[i];
+  }
+
+  for (size_t i = 0; i < sqrt_n; i++) {
+    // Get the i-th row of the input matrix.
+    vec row(sqrt_n, 0);
+    for (size_t j = 0; j < sqrt_n; j++) row[j] = output_sequence[i * sqrt_n + j];
+
+    // Compute the i-th row of the output matrix.
+    vec output_row(sqrt_n, 0);
+    (*fft_algorithm)(row, output_row);
+
+    // Store the i-th row of the output matrix.
+    for (size_t j = 0; j < sqrt_n; j++)
+      output_sequence[i * sqrt_n + j] = output_row[j];
+  }
+}
+
 void IterativeFFTGPU::operator()(const vec &input_sequence,
                                  vec &output_sequence) const {
   // Getting the input size.
@@ -168,7 +272,7 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
   cudaMalloc(&transposed_sequence_dev, size * sizeof(cuda::std::complex<real>));
 
   // Loop over all the rows
-  for (auto i = 0; i < n; i++) {
+  for (size_t i = 0; i < n; i++) {
     cudaStream_t stream;
     cudaStreamCreate(&stream);
 
@@ -191,7 +295,7 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
   // transpose_gpu(output_sequence_dev, transposed_sequence_dev, n);
   cudaDeviceSynchronize();
   /// Loop over all the columns
-  for (auto i = 0; i < n; i++) {
+  for (size_t i = 0; i < n; i++) {
     cudaStream_t stream;
     cudaStreamCreate(&stream);
 
@@ -223,123 +327,6 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
   cudaFree(&output_sequence_dev);
   cudaFree(&transposed_sequence_dev);
 }
-
-/*
-// A version of FastFourierTransformIterative that allows for fusion of the two
-// inner looops. Experimental.
-void IterativeFourierTransformAlgorithm::operator()(
-    const vec &input_sequence, vec &output_sequence) const {
-  // Defining some useful aliases.
-  const size_t n = input_sequence.size();
-  const size_t half_n = n >> 1;
-  const unsigned int num_threads = omp_get_num_threads();
-
-  // Check that the size of the sequence is a power of 2.
-  const size_t log_n = static_cast<size_t>(log2(n));
-  assert(1UL << log_n == n);
-
-  // Perform bit reversal of the input sequence and store it into the output
-  // sequence.
-  (*bit_reversal_algorithm)(input_sequence, output_sequence);
-
-  // Creation of a support vector to store values of omega.
-  vec omegas(half_n, 0);
-
-  // Main loop: looping over the binary tree layers.
-  for (size_t s = 1; s <= log_n; s++) {
-    const size_t m = 1UL << s;
-    const size_t half_m = m >> 1UL;
-
-    const std::complex<real> omega_d =
-        std::exp(std::complex<real>{0, base_angle / half_m});
-
-    const size_t iterations = half_m / num_threads;
-#pragma omp parallel for default(none) shared(omegas) firstprivate( \
-        num_threads, iterations, half_m, base_angle, omega_d) schedule(static)
-    for (unsigned int thread = 0; thread < num_threads; thread++) {
-      const size_t base_index = iterations * thread;
-      omegas[base_index] =
-          std::exp(std::complex<real>{0, base_index * base_angle / half_m});
-      size_t end_index = base_index + iterations;
-      for (size_t i = base_index + 1; i < end_index; i++) {
-        omegas[i] = omegas[i - 1] * omega_d;
-      }
-    }
-
-#pragma omp parallel for default(none) firstprivate(m, half_m, n) \
-    shared(output_sequence, omegas) schedule(static) collapse(2)
-    for (size_t k = 0; k < n; k += m) {
-      for (size_t j = 0; j < half_m; j++) {
-        const size_t k_plus_j = k + j;
-        const std::complex<real> t =
-            omegas[j] * output_sequence[k_plus_j + half_m];
-        const std::complex<real> u = output_sequence[k_plus_j];
-        output_sequence[k_plus_j] = u + t;
-        output_sequence[k_plus_j + half_m] = u - t;
-      }
-    }
-  }
-}
-*/
-
-/*
-// A version of the previous algorithm that manually fuses the two
-// inner looops. Experimental.
-void IterativeFourierTransformAlgorithm::operator()(
-    const vec &input_sequence, vec &output_sequence) const {
-  // Defining some useful aliases.
-  const size_t n = input_sequence.size();
-  const size_t half_n = n >> 1;
-  const unsigned int num_threads = omp_get_num_threads();
-
-  // Check that the size of the sequence is a power of 2.
-  const size_t log_n = static_cast<size_t>(log2(n));
-  assert(1UL << log_n == n);
-
-  // Perform bit reversal of the input sequence and store it into the output
-  // sequence.
-  (*bit_reversal_algorithm)(input_sequence, output_sequence);
-
-  // Creation of a support vector to store values of omega.
-  vec omegas(half_n, 0);
-
-  // Main loop: looping over the binary tree layers.
-  for (size_t s = 1; s <= log_n; s++) {
-    const size_t m = 1UL << s;
-    const size_t half_m = m >> 1UL;
-    const size_t s_minus_1 = s - 1UL;
-
-    const std::complex<real> omega_d =
-        std::exp(std::complex<real>{0, base_angle / half_m});
-
-#pragma omp parallel for default(none) shared(omegas) \
-    firstprivate(num_threads, half_m, base_angle, omega_d)
-    for (unsigned int thread = 0; thread < num_threads; thread++) {
-      const size_t iterations = half_m / num_threads;
-      const size_t base_index = iterations * thread;
-      omegas[base_index] =
-          std::exp(std::complex<real>{0, base_index * base_angle / half_m});
-      for (size_t i = base_index + 1; i < base_index + iterations; i++) {
-        omegas[i] = omegas[i - 1] * omega_d;
-      }
-    }
-
-#pragma omp parallel for default(none)            \
-    firstprivate(half_m, half_n, s_minus_1, s, m) \
-    shared(output_sequence, omegas) schedule(static)
-    for (size_t index = 0; index < half_n; index++) {
-      const size_t k = (index >> s_minus_1) << s;
-      const size_t j = index % half_m;
-      const size_t k_plus_j = k + j;
-      const std::complex<real> t =
-          omegas[j] * output_sequence[k_plus_j + half_m];
-      const std::complex<real> u = output_sequence[k_plus_j];
-      output_sequence[k_plus_j] = u + t;
-      output_sequence[k_plus_j + half_m] = u - t;
-    }
-  }
-}
-*/
 
 // Calculate time for execution using chrono.
 unsigned long FourierTransformAlgorithm::calculateTime(
@@ -383,3 +370,4 @@ void TimeEstimateFFT(std::unique_ptr<FourierTransformAlgorithm> &ft_algorithm,
 }
 
 }  // namespace FourierTransform
+}  // namespace Transform

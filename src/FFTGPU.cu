@@ -6,7 +6,8 @@
 
 #define BLOCK_SIZE 32
 
-using namespace FourierTransform;
+namespace Transform {
+namespace FourierTransform {
 
 // CUDA kernel for transposing a 2D array efficiently using shared memory
 __global__ void swap_row_col(cuda::std::complex<real>* input,
@@ -90,26 +91,23 @@ __global__ void fft1d(cuda::std::complex<real>* data, int size, int m,
   }
 }
 
-void FourierTransform::run_fft_gpu(
-    cuda::std::complex<FourierTransform::real>* data, int n, int m,
-    FourierTransform::real base, cudaStream_t stream_id) {
+void run_fft_gpu(cuda::std::complex<real>* data, int n, int m, real base,
+                 cudaStream_t stream_id) {
   int block_dim = TILE_SIZE;
   int grid_dim = (n + TILE_SIZE - 1) / (TILE_SIZE);
   fft1d<<<grid_dim, block_dim, 0, stream_id>>>(data, n, m, base);
 }
 
-void FourierTransform::bitreverse_gpu(cuda::std::complex<real>* in,
-                                      cuda::std::complex<real>* out, int size,
-                                      int s, cudaStream_t stream_id) {
+void bitreverse_gpu(cuda::std::complex<real>* in, cuda::std::complex<real>* out,
+                    int size, int s, cudaStream_t stream_id) {
   int block_dim = TILE_SIZE;
   int grid_dim = (size + TILE_SIZE - 1) / (TILE_SIZE);
 
   bitrev_reorder<<<grid_dim, block_dim, 0, stream_id>>>(in, out, s);
 }
 
-void FourierTransform::transpose_gpu(cuda::std::complex<real>* in,
-                                     cuda::std::complex<real>* out, int n,
-                                     cudaStream_t stream_id) {
+void transpose_gpu(cuda::std::complex<real>* in, cuda::std::complex<real>* out,
+                   int n, cudaStream_t stream_id) {
   dim3 block_dim(BLOCK_SIZE, BLOCK_SIZE);
   dim3 grid_dim((n + BLOCK_SIZE - 1) / BLOCK_SIZE,
                 (n + BLOCK_SIZE - 1) / BLOCK_SIZE);
@@ -126,3 +124,5 @@ void FourierTransform::swap_row_col_gpu(cuda::std::complex<real>* in,
 
   swap_row_col<<<grid_dim, block_dim, 0, stream_id>>>(in, out, row, col, n);
 }
+}  // namespace FourierTransform
+}  // namespace Transform

@@ -5,6 +5,7 @@
 
 #include "BitReversalPermutation.hpp"
 
+namespace Transform {
 namespace FourierTransform {
 
 // A class that represents a generic direct or inverse Fourier transform
@@ -61,6 +62,28 @@ class IterativeFourierTransformAlgorithm : public FourierTransformAlgorithm {
   std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm;
 };
 
+// A 2D FFT algorithm. We assume that the input matrix is square and its size
+// is a power of 2. The algorithm is based on the 1D FFT algorithm.
+// This algorithm is very slow and is only used to test the correctness of
+// other algorithms, in a machine without CUDA support. This class does not
+// inherit from FourierTransformAlgorithm since it is not the same as its
+// inverse.
+class TrivialTwoDimensionalFourierTransformAlgorithm {
+ public:
+  void operator()(const vec &input_sequence, vec &output_sequence) const;
+  ~TrivialTwoDimensionalFourierTransformAlgorithm() = default;
+};
+
+// A 2D IFFT algorithm. We assume that the input matrix is square and its size
+// is a power of 2. The algorithm is based on the 1D FFT algorithm.
+// This algorithm is very slow and is only used to test the correctness of
+// other algorithms, in a machine without CUDA support.
+class TrivialTwoDimensionalInverseFourierTransformAlgorithm {
+ public:
+  void operator()(const vec &input_sequence, vec &output_sequence) const;
+  ~TrivialTwoDimensionalInverseFourierTransformAlgorithm() = default;
+};
+
 class IterativeFFTGPU : public FourierTransformAlgorithm {
  public:
   void operator()(const vec &input_sequence,
@@ -84,5 +107,6 @@ void TimeEstimateFFT(std::unique_ptr<FourierTransformAlgorithm> &ft_algorithm,
                      const vec &sequence, unsigned int max_num_threads);
 
 }  // namespace FourierTransform
+}  // namespace Transform
 
 #endif  // FOURIER_TRANSFORM_HPP

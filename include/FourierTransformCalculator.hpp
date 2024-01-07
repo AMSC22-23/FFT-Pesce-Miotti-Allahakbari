@@ -3,7 +3,9 @@
 
 #include "FourierTransform.hpp"
 
+namespace Transform {
 namespace FourierTransform {
+
 // A class that represents a Fourier transform calculator, which can set an
 // algorithm for both the direct and the inverse transform computation. In the
 // future, more methods will be added for intermedia computations between the
@@ -24,8 +26,12 @@ class FourierTransformCalculator {
  private:
   std::unique_ptr<FourierTransformAlgorithm> direct_algorithm;
   std::unique_ptr<FourierTransformAlgorithm> inverse_algorithm;
+
+  // Multiply all elements of "sequence" by "scalar".
+  void scaleVector(vec &sequence, real scalar);
 };
 
 }  // namespace FourierTransform
+}  // namespace Transform
 
 #endif  // FOURIER_TRANSFORM_CALCULATOR_HPP
