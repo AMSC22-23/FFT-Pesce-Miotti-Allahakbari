@@ -204,10 +204,6 @@ void GrayscaleImage::encode() {
   Transform::FourierTransform::TrivialTwoDimensionalFourierTransformAlgorithm
       fft;
 
-  // Initialize a TrivialTwoDimensionalInverseFourierTransform object.
-  Transform::FourierTransform::
-      TrivialTwoDimensionalInverseFourierTransformAlgorithm ifft;
-
   // For each block...
   this->imagBlocks.clear();
   for (size_t i = 0; i < this->blocks.size(); i++) {
@@ -225,30 +221,22 @@ void GrayscaleImage::encode() {
     // Apply the Fourier transform to the block.
     fft(vecBlock, outputVecBlock);
 
-    // Apply the Inverse Fourier transform to the block.
-    ifft(outputVecBlock, vecBlock);
+    // Quantize the block.
+    std::vector<unsigned char> realBlock(64, 0);
+    std::vector<unsigned char> imagBlock(64, 0);
 
-    // Add 128 to each element in the block.
-    for (size_t j = 0; j < vecBlock.size(); j++) {
-      vecBlock[j] += 128.0;
-    }
+    this->quantize(outputVecBlock, realBlock, imagBlock);
 
-    // Turn the vec object into a block.
-    std::vector<unsigned char> finalBlock(64, 0);
-    for (size_t j = 0; j < vecBlock.size(); j++) {
-      finalBlock[j] = vecBlock[j].real();
-    }
-
-    this->blocks[i] = finalBlock;
+    // Add the quantized block to the blocks vector.
+    this->blocks[i] = realBlock;
+    this->imagBlocks.push_back(imagBlock);
   }
-
-  this->mergeBlocks();
 }
 
 // Decode the last loaded or encoded image.
 void GrayscaleImage::decode() {
   // Initialize a TrivialTwoDimensionalDiscreteFourierTransform object.
-  Transform::FourierTransform::TrivialTwoDimensionalFourierTransformAlgorithm
+  Transform::FourierTransform::TrivialTwoDimensionalInverseFourierTransformAlgorithm
       fft;
 
   // For each block...
@@ -262,7 +250,7 @@ void GrayscaleImage::decode() {
     Transform::FourierTransform::vec outputVecBlock(64, 0);
     this->unquantize(vecBlock, realBlock, imagBlock);
 
-    // Apply the Fourier transform to the block.
+    // Apply the Inverse Fourier transform to the block.
     fft(vecBlock, outputVecBlock);
 
     // Turn the output vec object into a block.

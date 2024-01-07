@@ -127,9 +127,9 @@ void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
   const size_t log_sqrt_n = static_cast<size_t>(log2(sqrt_n));
   assert(1UL << log_sqrt_n == sqrt_n);
 
-  // Use the ClassicalFourierTransformAlgorithm to compute the 1D FFT.
+  // Use the RecursiveFourierTransformAlgorithm to compute the 1D FFT.
   std::unique_ptr<FourierTransformAlgorithm> fft_algorithm =
-      std::make_unique<ClassicalFourierTransformAlgorithm>();
+      std::make_unique<RecursiveFourierTransformAlgorithm>();
 
   // Set the base angle to -pi.
   constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
@@ -178,13 +178,13 @@ void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
   const size_t log_sqrt_n = static_cast<size_t>(log2(sqrt_n));
   assert(1UL << log_sqrt_n == sqrt_n);
 
-  // Use the ClassicalFourierTransformAlgorithm to compute the 1D FFT.
+  // Use the RecursiveFourierTransformAlgorithm to compute the 1D FFT.
   std::unique_ptr<FourierTransformAlgorithm> fft_algorithm =
       std::make_unique<ClassicalFourierTransformAlgorithm>();
 
-  // Set the base angle to +pi.
+  // Set the base angle to pi.
   constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
-  fft_algorithm->setBaseAngle(+pi);
+  fft_algorithm->setBaseAngle(pi);
 
   for (size_t j = 0; j < sqrt_n; j++) {
     // Get the j-th column of the input matrix.
@@ -213,6 +213,9 @@ void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
     for (size_t j = 0; j < sqrt_n; j++)
       output_sequence[i * sqrt_n + j] = output_row[j];
   }
+
+  // Divide the output matrix by n.
+  for (size_t i = 0; i < n; i++) output_sequence[i] /= n;
 }
 
 void IterativeFFTGPU::operator()(const vec &input_sequence,
