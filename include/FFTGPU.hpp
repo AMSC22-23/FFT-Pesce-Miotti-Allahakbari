@@ -33,6 +33,10 @@ void bitreverse_gpu(cuda::std::complex<real>* in, cuda::std::complex<real>* out,
 void transpose_gpu(cuda::std::complex<real>* in, cuda::std::complex<real>* out,
                    int n, cudaStream_t stream_id = 0);
 
+void swap_row_col_gpu(cuda::std::complex<real>* in,
+                      cuda::std::complex<real>* out, const int row,
+                      const int col, int n, cudaStream_t stream_id = 0);
+
 }  // namespace FourierTransform
 
 #endif  // REAL_HPP

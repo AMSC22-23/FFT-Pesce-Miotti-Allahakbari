@@ -9,6 +9,29 @@
 using namespace FourierTransform;
 
 // CUDA kernel for transposing a 2D array efficiently using shared memory
+__global__ void swap_row_col(cuda::std::complex<real>* input,
+                             cuda::std::complex<real>* output, const int row,
+                             const int col, const int n) {
+  // Use shared memory to reduce global memory transactions
+  __shared__ cuda::std::complex<real> tile[TILE_SIZE];
+  int x = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (x < n) {
+    int in_index = row * n + x;
+
+    // Load data from global memory to shared memory
+    tile[threadIdx.x] = input[in_index];
+
+    __syncthreads();
+
+    // Write transposed data to the output
+
+    int out_index = x * n + col;
+    output[out_index] = tile[threadIdx.x];
+  }
+}
+
+// CUDA kernel for transposing a 2D array efficiently using shared memory
 __global__ void transpose(cuda::std::complex<real>* input,
                           cuda::std::complex<real>* output, const int n) {
   // Use shared memory to reduce global memory transactions
@@ -92,4 +115,14 @@ void FourierTransform::transpose_gpu(cuda::std::complex<real>* in,
                 (n + BLOCK_SIZE - 1) / BLOCK_SIZE);
 
   transpose<<<grid_dim, block_dim, 0, stream_id>>>(in, out, n);
+}
+
+void FourierTransform::swap_row_col_gpu(cuda::std::complex<real>* in,
+                                        cuda::std::complex<real>* out,
+                                        const int row, const int col, int n,
+                                        cudaStream_t stream_id) {
+  int block_dim = TILE_SIZE;
+  int grid_dim = (n + TILE_SIZE - 1) / TILE_SIZE;
+
+  swap_row_col<<<grid_dim, block_dim, 0, stream_id>>>(in, out, row, col, n);
 }
