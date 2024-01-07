@@ -290,12 +290,13 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
       const size_t m = 1UL << s;
       run_fft_gpu(&output_sequence_dev[i * n], n, m, base_angle, stream);
     }
-
+    swap_row_col_gpu(output_sequence_dev, transposed_sequence_dev, i, i, n,
+                     stream);
     cudaStreamDestroy(stream);
   }
 
-  transpose_gpu(output_sequence_dev, transposed_sequence_dev, n);
-
+  // transpose_gpu(output_sequence_dev, transposed_sequence_dev, n);
+  cudaDeviceSynchronize();
   /// Loop over all the columns
   for (size_t i = 0; i < n; i++) {
     cudaStream_t stream;
@@ -308,15 +309,21 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
       const size_t m = 1UL << s;
       run_fft_gpu(&output_sequence_dev[i * n], n, m, base_angle, stream);
     }
+    swap_row_col_gpu(output_sequence_dev, input_sequence_dev, i, i, n, stream);
+
+    // cudaMemcpyAsync(&output_sequence.data()[i * n], &input_sequence_dev[i *
+    // n],
+    //                 n * sizeof(cuda::std::complex<real>),
+    //                 cudaMemcpyDeviceToHost, stream);
 
     cudaStreamDestroy(stream);
   }
 
-  transpose_gpu(output_sequence_dev, transposed_sequence_dev, n);
+  // transpose_gpu(output_sequence_dev, transposed_sequence_dev, n);
 
   cudaDeviceSynchronize();
 
-  cudaMemcpy(output_sequence.data(), transposed_sequence_dev,
+  cudaMemcpy(output_sequence.data(), input_sequence_dev,
              size * sizeof(cuda::std::complex<real>), cudaMemcpyDeviceToHost);
 
   cudaFree(&input_sequence_dev);
