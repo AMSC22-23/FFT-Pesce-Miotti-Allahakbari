@@ -448,129 +448,129 @@ void GrayscaleImage::entropyDecode() {
   // Set a marker to the current bit position we're reading from.
   int bitPosition = 0;
 
-  // Initialize a reconstructed zigZag vector.
-  std::vector<char> reconstructedZigZagVector;
-
   // Use an index to denote the current byte we're reading from.
   size_t i = 0;
 
-  // Begin the entropy decoding by iterating over the encoded vector.
-  while (true) {
-    // Initialize the first byte.
+  // This loop will run ultil we run out of bytes to read.
+  while (i < this->encoded.size()) {
+    // Initialize a reconstructed zigZag vector.
+    std::vector<char> reconstructedZigZagVector;
+
+    // Use a boolean to denote whether we're reading the first byte of a pair.
+    bool firstByteFlag = true;  
     unsigned char firstByte = 0;
+    unsigned char bitSize;
 
-    // Get the first byte.
-    if (bitPosition == 0) {
-      firstByte = this->encoded[i];
-    } else {
-      firstByte = this->encoded[i] << bitPosition |
-                  this->encoded[i + 1] >> (8 - bitPosition);
-    }
+    // This loop will run until we reach the EOB code for a block.
+    while (true) {
+      // If we're reading the first byte of a pair...
+      if (firstByteFlag) {
+        // Load the first byte
+        firstByte = 0;
+        if (bitPosition == 0) {
+          firstByte = this->encoded[i];
+        } else {
+          firstByte = this->encoded[i] << bitPosition;
+          firstByte |= this->encoded[i] >> (8 - bitPosition);
+        }
 
-    // Check if the first byte is an EOB code.
-    if (firstByte == 0x00) {
-      // If so, keep adding zeros to the reconstructed zigZag vector until it
-      // has 64 elements.
-      while (reconstructedZigZagVector.size() < 64) {
-        reconstructedZigZagVector.push_back(0);
+        i++;
+
+        // Check if the first byte is the EOB code.
+        if (firstByte == 0x00) {
+          // Keep adding zeros to the reconstructed zigZag vector until it has
+          // 64 elements.
+          while (reconstructedZigZagVector.size() < 64) {
+            reconstructedZigZagVector.push_back(0);
+          }
+          
+          break;
+        }
+
+        // Check if the first byte is the special code.
+        if (firstByte == 0xF0) {
+          // Add 16 zeros to the reconstructed zigZag vector.
+          for (int j = 0; j < 16; j++) {
+            reconstructedZigZagVector.push_back(0);
+          }
+
+          i++;
+          continue;
+        }
+
+        // Get the zero counter from the first byte.
+        unsigned char zeroCounter = firstByte >> 4;
+
+        // Get the bit size from the first byte.
+        bitSize = firstByte & 0x0F;
+
+        // Add the zero counter number of zeros to the reconstructed zigZag
+        // vector.
+        for (int j = 0; j < zeroCounter; j++) {
+          reconstructedZigZagVector.push_back(0);
+        }
+
+        // Set the first byte flag to false.
+        firstByteFlag = false;
+        continue;
       }
 
-      // Create a new block.
-      std::vector<char> block(64, 0);
-
-      // For each element in the reconstructed zigZag vector...
-      for (size_t j = 0; j < 64; j++) {
-        // Get the zigZag map coordinates.
-        int x = GrayscaleImage::zigZagMap[j].first;
-        int y = GrayscaleImage::zigZagMap[j].second;
-
-        // Put the element at the right position in the block.
-        block[y * 8 + x] = reconstructedZigZagVector[j];
-
-        // Add the block to the blocks vector.
-        this->blocks.push_back(block);
+      // If we're reading the second byte of a pair...
+      // Get the second byte.
+      char secondByte = 0;
+      if (bitPosition == 0) {
+        secondByte = this->encoded[i];
+      } else {
+        secondByte = this->encoded[i] << bitPosition;
+        secondByte |= this->encoded[i] >> (8 - bitPosition);
       }
 
-      // Clear the reconstructed zigZag vector.
-      reconstructedZigZagVector.clear();
-      i += 1;
-      continue;
-    }
+      // Assert that bitSize is between 1 and 8.
+      assert(bitSize >= 1);
+      assert(bitSize <= 8);
 
-    // If the first byte is a special code...
-    if (firstByte == 0xF0) {
-      // Add 16 zeros to the reconstructed zigZag vector.
-      for (int j = 0; j < 16; j++) {
-        reconstructedZigZagVector.push_back(0);
+      // Count the "used" bits using bitsize and bitPosition.
+      int usedBits = 0;
+      if (bitPosition == 0) {
+        usedBits = bitSize;
+      } else {
+        usedBits = 8 - bitPosition + bitSize;
       }
 
-      i += 1;
-      continue;
-    }
-
-    // Get the zero counter.
-    unsigned char zeroCounter = firstByte >> 4;
-
-    // Get the bit size.
-    unsigned char bitSize = firstByte & 0x0F;
-
-    // Get the second byte.
-    char secondByte = 0;
-
-    if (bitPosition == 0) {
-      secondByte = this->encoded[i + 1];
-    } else {
-      secondByte = this->encoded[i + 1] << bitPosition |
-                   this->encoded[i + 2] >> (8 - bitPosition);
-    }
-
-    // Get the element value.
-    char element = secondByte >> (8 - bitSize);
-
-    // At this points, we have advanced one byte to read the first byte, and
-    // some bits 1 < bitSize < 8 to read the second byte. Therefore, we need to
-    // advance the index i by 1 or 2, depending on the sum of bitPosition and
-    // bitSize.
-    if (bitPosition + bitSize <= 8) {
-      i += 2;
-    } else {
-      i += 3;
-    }
-
-    // Update the bit position.
-    bitPosition = (bitPosition + bitSize) % 8;
-
-    // Add the zero counter number of zeros to the reconstructed zigZag vector.
-    for (int j = 0; j < zeroCounter; j++) {
-      reconstructedZigZagVector.push_back(0);
-    }
-
-    // Add the element value to the reconstructed zigZag vector.
-    reconstructedZigZagVector.push_back(element);
-
-    // If the reconstructed zigZag vector has 64 elements...
-    if (reconstructedZigZagVector.size() == 64) {
-      // Create a new block.
-      std::vector<char> block(64, 0);
-
-      // For each element in the reconstructed zigZag vector...
-      for (size_t j = 0; j < 64; j++) {
-        // Get the zigZag map coordinates.
-        int x = GrayscaleImage::zigZagMap[j].first;
-        int y = GrayscaleImage::zigZagMap[j].second;
-
-        // Put the element at the right position in the block.
-        block[y * 8 + x] = reconstructedZigZagVector[j];
-
-        // Add the block to the blocks vector.
-        blocks.push_back(block);
+      // Keep subtracting 8 from usedBits until it is less than 8.
+      while (usedBits >= 8) {
+        usedBits -= 8;
+        i++;
       }
 
-      // Clear the reconstructed zigZag vector.
-      reconstructedZigZagVector.clear();
+      // Use the remaining bits to reconstruct the bitPosition.
+      bitPosition = usedBits;
+
+      // Get the element value.
+      char element = secondByte >> (8 - bitSize);
+
+      // Add the element value to the reconstructed zigZag vector.
+      reconstructedZigZagVector.push_back(element);
+
+      // Set the first byte flag to true.
+      firstByteFlag = true;
     }
 
-    i += 2;
+    // We can now turn the zigZag vector into a block.
+    std::vector<char> block(64, 0);
+
+    // For each step in zigzag path...
+    for (int j = 0; j < 64; j++) {
+      // Get the zigZag map coordinates.
+      int x = GrayscaleImage::zigZagMap[j].first;
+      int y = GrayscaleImage::zigZagMap[j].second;
+
+      // Set the block element value to the reconstructed zigZag vector value.
+      block[y * 8 + x] = reconstructedZigZagVector[j];
+    }
+
+    // Add the block to the blocks vector.
+    blocks.push_back(block);
   }
 
   // Get the size of the blocks vector.
