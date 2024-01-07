@@ -2,6 +2,7 @@
 
 #include "FFTGPU.hpp"
 
+// The algorithm only works if n >= TILE_SIZE
 #define TILE_SIZE 64
 
 #define BLOCK_SIZE 32
@@ -41,7 +42,7 @@ __global__ void transpose(cuda::std::complex<real>* input,
 __global__ void bitrev_reorder(cuda::std::complex<real>* in,
                                cuda::std::complex<real>* out, int s) {
   int id = blockIdx.x * blockDim.x + threadIdx.x;
-  if (sizeof(size_t) == 4)
+  if constexpr (sizeof(size_t) == 4)
     out[__brev(id) >> (32 - s)] = in[id];
   else
     out[__brevll(id) >> (64 - s)] = in[id];
