@@ -54,11 +54,11 @@ private:
 
   // Quantize the given vec using the quantization table.
   void quantize(const Transform::FourierTransform::vec &vec,
-                std::vector<unsigned char> &realBlock, std::vector<unsigned char> &imagBlock);
+                std::vector<char> &realBlock, std::vector<char> &imagBlock);
 
   // Unquantize the given vec using the quantization table.
   void unquantize(Transform::FourierTransform::vec &vec,
-                  std::vector<unsigned char> &realBlock, std::vector<unsigned char> &imagBlock);
+                  std::vector<char> &realBlock, std::vector<char> &imagBlock);
 
   // Use entropy coding to encode all blocks.
   void entropyEncode();
@@ -67,7 +67,7 @@ private:
   void entropyDecode();
 
   // Static member variable to store the quantization table.
-  static std::vector<unsigned char> quantizationTable;
+  static std::vector<int> quantizationTable;
 
   // Static member variable to store the zigZag map.
   static std::vector<std::pair<int, int>> zigZagMap;
@@ -79,8 +79,8 @@ private:
   std::vector<char> encoded;
 
   // An array of 8x8 blocks. Each block is a vector of 64 elements.
-  std::vector<std::vector<unsigned char>> blocks;
-  std::vector<std::vector<unsigned char>> imagBlocks;
+  std::vector<std::vector<char>> blocks;
+  std::vector<std::vector<char>> imagBlocks;
 
   // Block grid width.
   int blockGridWidth;
