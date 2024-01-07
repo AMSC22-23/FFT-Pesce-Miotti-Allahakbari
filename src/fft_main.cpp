@@ -45,7 +45,7 @@ int fft_main(int argc, char *argv[]) {
     char *error;
 
     const unsigned long long_size = strtoul(argv[2], &error, 10);
-    // Check for errors
+    // Check for errors.
     if (*error ||
         1UL << static_cast<unsigned long>(log2(long_size)) != long_size) {
       print_usage(default_size, default_mode, default_max_num_threads);
@@ -65,13 +65,13 @@ int fft_main(int argc, char *argv[]) {
     char *error;
 
     const unsigned long long_max_num_threads = strtoul(argv[4], &error, 10);
-    // Check for errors
+    // Check for errors.
     if (*error) {
       print_usage(default_size, default_mode, default_max_num_threads);
       return 1;
     }
 
-    max_num_threads = static_cast<size_t>(long_max_num_threads);
+    max_num_threads = static_cast<unsigned int>(long_max_num_threads);
   }
 
   // Generate a sequence of complex numbers.

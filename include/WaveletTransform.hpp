@@ -68,26 +68,32 @@ class DaubechiesInverseWaveletTransform97 : public WaveletTransformAlgorithm {
   ~DaubechiesInverseWaveletTransform97() = default;
 };
 
-// Perform a 2D wavelet direct or inverse transform. The direct transform is
-// performed transforming each row and then each column. The inverse transforms
-// each column and then each row.
+// Perform a 2D wavelet direct or inverse transform with "levels" levels, using
+// the provided algorithm. Each level, the direct transform is performed
+// transforming each row and then each column and the inverse transforms each
+// column and then each row. The direct transform starts with the entire picture
+// and then moves to the top left corner, halfing the side length each
+// iteration, for "levels" iterations. The inverse transform does the opposite.
 class TwoDimensionalWaveletTransformAlgorithm {
  public:
   void directTransform(
       const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
-      const std::shared_ptr<WaveletTransformAlgorithm> algorithm) const;
+      const std::shared_ptr<WaveletTransformAlgorithm> algorithm,
+      unsigned int levels) const;
   void inverseTransform(
       const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
-      const std::shared_ptr<WaveletTransformAlgorithm> algorithm) const;
+      const std::shared_ptr<WaveletTransformAlgorithm> algorithm,
+      unsigned int levels) const;
   ~TwoDimensionalWaveletTransformAlgorithm() = default;
 
  private:
-  void transformRows(
-      const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
-      const std::shared_ptr<WaveletTransformAlgorithm> algorithm) const;
+  void transformRows(std::vector<real> &matrix,
+                     const std::shared_ptr<WaveletTransformAlgorithm> algorithm,
+                     size_t n) const;
   void transformColumns(
-      const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
-      const std::shared_ptr<WaveletTransformAlgorithm> algorithm) const;
+      std::vector<real> &matrix,
+      const std::shared_ptr<WaveletTransformAlgorithm> algorithm,
+      size_t n) const;
 };
 
 }  // namespace WaveletTransform

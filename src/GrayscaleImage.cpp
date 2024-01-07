@@ -119,8 +119,7 @@ void GrayscaleImage::mergeBlocks() {
     // For each block column...
     for (int j = 0; j < this->blockGridWidth; j++) {
       // Get the block.
-      std::vector<char> block =
-          this->blocks[i * this->blockGridWidth + j];
+      std::vector<char> block = this->blocks[i * this->blockGridWidth + j];
 
       // For each row in the block...
       for (int k = 0; k < 8; k++) {
@@ -147,14 +146,12 @@ void GrayscaleImage::mergeBlocks() {
 
 // Static member variable to store the quantization table.
 std::vector<int> GrayscaleImage::quantizationTable = {
-   200, 100, 100, 100, 100, 100, 100, 100,
-   100, 100, 100, 100, 100, 100, 100, 100,
-   100, 100, 100, 100, 100, 100, 100, 100,
-   100, 100, 100, 100, 100, 100, 100, 100,
-   100, 100, 100, 100, 100, 100, 100, 100,
-   100, 100, 100, 100, 100, 100, 100, 100,
-   100, 100, 100, 100, 100, 100, 100, 100,
-   100, 100, 100, 100, 100, 100, 100, 100,};
+    200, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+};
 
 // Quantize the given vec into two blocks using the quantization table.
 void GrayscaleImage::quantize(const Transform::FourierTransform::vec &vec,
@@ -234,11 +231,11 @@ void GrayscaleImage::encode() {
 // Decode the last loaded or encoded image.
 void GrayscaleImage::decode() {
   // Initialize a TrivialTwoDimensionalDiscreteFourierTransform object.
-  Transform::FourierTransform::TrivialTwoDimensionalInverseFourierTransformAlgorithm
-      fft;
+  Transform::FourierTransform::
+      TrivialTwoDimensionalInverseFourierTransformAlgorithm fft;
 
   this->entropyDecode();
-  
+
   // For each block...
   for (size_t i = 0; i < this->blocks.size(); i++) {
     // Get the block.
@@ -466,7 +463,7 @@ void GrayscaleImage::waveletTransform(
     const std::shared_ptr<
         Transform::WaveletTransform::WaveletTransformAlgorithm>
         algorithm,
-    bool direct) {
+    unsigned int levels, bool direct) {
   using namespace Transform;
   using namespace WaveletTransform;
 
@@ -483,12 +480,11 @@ void GrayscaleImage::waveletTransform(
   // Perform the direct wavelet transform.
   TwoDimensionalWaveletTransformAlgorithm algorithm_2d;
   if (direct) {
-    algorithm_2d.directTransform(real_input, real_output, algorithm);
+    algorithm_2d.directTransform(real_input, real_output, algorithm, levels);
   } else {
-    algorithm_2d.inverseTransform(real_input, real_output, algorithm);
+    algorithm_2d.inverseTransform(real_input, real_output, algorithm, levels);
   }
 
-  /*
   // Calculate the maximum and minimum coefficients.
   real max_value = -std::numeric_limits<real>::max();
   real min_value = std::numeric_limits<real>::max();
@@ -500,11 +496,14 @@ void GrayscaleImage::waveletTransform(
       min_value = real_output[i];
     }
   }
-  std::cout << min_value << " " << max_value << std::endl;
-  */
+  real range = max_value - min_value;
+  if (range == 0) {
+    range = std::numeric_limits<real>::max();
+  }
 
   // Update the decoded image.
   for (size_t i = 0; i < this->decoded.size(); i++) {
-    this->decoded[i] = static_cast<char>(real_output[i]);
+    this->decoded[i] =
+        static_cast<char>((real_output[i] + min_value) / range * 256);
   }
 }
