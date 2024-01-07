@@ -3,9 +3,9 @@
 #include "FFTGPU.hpp"
 
 // The algorithm only works if n >= TILE_SIZE
-#define TILE_SIZE 64
+#define TILE_SIZE 8
 
-#define BLOCK_SIZE 32
+#define BLOCK_SIZE 8
 
 namespace Transform {
 namespace FourierTransform {
@@ -92,11 +92,42 @@ __global__ void fft1d(cuda::std::complex<real>* data, int size, int m,
   }
 }
 
+__global__ void block_fft1d(cuda::std::complex<real>* data, int size,
+                            int log_n_blk, real base) {
+  int tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+  for (size_t s = 1; s <= log_n_blk; s++) {
+    const size_t m = 1UL << s;
+    int half_m = m >> 1;
+    size_t k = (tid / half_m) * m;
+    size_t j = tid % half_m;
+    const size_t k_plus_j = k + j;
+
+    if ((k_plus_j + half_m) < size) {
+      const cuda::std::complex<real> omega =
+          cuda::std::exp(cuda::std::complex<real>{0, base / half_m * j});
+      const cuda::std::complex<real> t = omega * data[k_plus_j + half_m];
+      const cuda::std::complex<real> u = data[k_plus_j];
+      const cuda::std::complex<real> even = u + t;
+      const cuda::std::complex<real> odd = u - t;
+      data[k_plus_j] = even;
+      data[k_plus_j + half_m] = odd;
+    }
+  }
+}
+
 void run_fft_gpu(cuda::std::complex<real>* data, int n, int m, real base,
                  cudaStream_t stream_id) {
   int block_dim = TILE_SIZE;
   int grid_dim = (n + TILE_SIZE - 1) / (TILE_SIZE);
   fft1d<<<grid_dim, block_dim, 0, stream_id>>>(data, n, m, base);
+}
+
+void run_block_fft_gpu(cuda::std::complex<real>* data, int n, real base,
+                       cudaStream_t stream_id) {
+  int block_dim = TILE_SIZE;
+  int grid_dim = (n + TILE_SIZE - 1) / (TILE_SIZE);
+  block_fft1d<<<grid_dim, block_dim, 0, stream_id>>>(data, n, log2(n), base);
 }
 
 void bitreverse_gpu(cuda::std::complex<real>* in, cuda::std::complex<real>* out,

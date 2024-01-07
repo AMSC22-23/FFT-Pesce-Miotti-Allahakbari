@@ -154,7 +154,8 @@ void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
   for (size_t j = 0; j < sqrt_n; j++) {
     // Get the j-th column of the input matrix.
     vec column(sqrt_n, 0);
-    for (size_t i = 0; i < sqrt_n; i++) column[i] = output_sequence[i * sqrt_n + j];
+    for (size_t i = 0; i < sqrt_n; i++)
+      column[i] = output_sequence[i * sqrt_n + j];
 
     // Compute the j-th column of the output matrix.
     vec output_column(sqrt_n, 0);
@@ -189,7 +190,8 @@ void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
   for (size_t j = 0; j < sqrt_n; j++) {
     // Get the j-th column of the input matrix.
     vec column(sqrt_n, 0);
-    for (size_t i = 0; i < sqrt_n; i++) column[i] = input_sequence[i * sqrt_n + j];
+    for (size_t i = 0; i < sqrt_n; i++)
+      column[i] = input_sequence[i * sqrt_n + j];
 
     // Compute the j-th column of the output matrix.
     vec output_column(sqrt_n, 0);
@@ -203,7 +205,8 @@ void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
   for (size_t i = 0; i < sqrt_n; i++) {
     // Get the i-th row of the input matrix.
     vec row(sqrt_n, 0);
-    for (size_t j = 0; j < sqrt_n; j++) row[j] = output_sequence[i * sqrt_n + j];
+    for (size_t j = 0; j < sqrt_n; j++)
+      row[j] = output_sequence[i * sqrt_n + j];
 
     // Compute the i-th row of the output matrix.
     vec output_row(sqrt_n, 0);
@@ -329,6 +332,93 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
   cudaFree(&input_sequence_dev);
   cudaFree(&output_sequence_dev);
   cudaFree(&transposed_sequence_dev);
+}
+
+void BlockFFTGPU2D::operator()(const vec &input_sequence,
+                               vec &output_sequence) const {
+  // Getting the input size.
+  const size_t size = input_sequence.size();
+  const size_t n = sqrt(size);
+  const size_t n_blk = _block_size;
+
+  // Check that the size of the sequence is a power of 2.
+  const size_t log_n = static_cast<size_t>(log2(n));
+  assert(1UL << log_n == n);
+
+  const size_t log_n_blk = static_cast<size_t>(log2(n_blk));
+
+  // Perform bit reversal of the input sequence and store it into the output
+  // sequence.
+
+  // Loop over all the rows
+  for (int bi = 0; bi < n / _block_size; bi++) {
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+    for (int bj = 0; bj < n / _block_size; bj++) {
+      cuda::std::complex<real> *block_input_dev;
+      cuda::std::complex<real> *block_output_dev;
+      cuda::std::complex<real> *block_transposed_dev;
+
+      cudaMallocAsync(
+          &block_input_dev,
+          _block_size * _block_size * sizeof(cuda::std::complex<real>), stream);
+
+      cudaMallocAsync(
+          &block_output_dev,
+          _block_size * _block_size * sizeof(cuda::std::complex<real>), stream);
+
+      cudaMallocAsync(
+          &block_transposed_dev,
+          _block_size * _block_size * sizeof(cuda::std::complex<real>), stream);
+
+      for (size_t i = 0; i < _block_size; i++) {
+        cudaMemcpyAsync(
+            &block_input_dev[i * _block_size],
+            &input_sequence
+                 .data()[(bi * _block_size + i) * n + bj * _block_size],
+            _block_size * sizeof(cuda::std::complex<real>),
+            cudaMemcpyHostToDevice, stream);
+
+        bitreverse_gpu(&block_input_dev[i * n_blk],
+                       &block_output_dev[i * n_blk], n_blk, log_n_blk, stream);
+
+        run_block_fft_gpu(&block_output_dev[i * n_blk], n_blk, base_angle,
+                          stream);
+
+        swap_row_col_gpu(block_output_dev, block_transposed_dev, i, i, n_blk,
+                         stream);
+      }
+
+      /// Loop over all the columns
+      for (size_t i = 0; i < _block_size; i++) {
+        bitreverse_gpu(&block_transposed_dev[i * n_blk],
+                       &block_output_dev[i * n_blk], n_blk, log_n_blk, stream);
+
+        run_block_fft_gpu(&block_output_dev[i * n_blk], n_blk, base_angle,
+                          stream);
+
+        swap_row_col_gpu(block_output_dev, block_input_dev, i, i, n_blk,
+                         stream);
+      }
+
+      for (int i = 0; i < _block_size; i++) {
+        cudaMemcpyAsync(
+            &output_sequence
+                 .data()[(bi * _block_size + i) * n + bj * _block_size],
+            &block_input_dev[i * _block_size],
+            _block_size * sizeof(cuda::std::complex<real>),
+            cudaMemcpyDeviceToHost, stream);
+      }
+
+      cudaFreeAsync(block_input_dev, stream);
+      cudaFreeAsync(block_output_dev, stream);
+      cudaFreeAsync(block_transposed_dev, stream);
+    }
+    cudaStreamDestroy(stream);
+  }
+  // transpose_gpu(output_sequence_dev, transposed_sequence_dev, n);
+
+  cudaDeviceSynchronize();
 }
 
 // Calculate time for execution using chrono.
