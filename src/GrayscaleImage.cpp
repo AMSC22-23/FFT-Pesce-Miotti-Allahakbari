@@ -152,9 +152,9 @@ std::vector<int> GrayscaleImage::quantizationTable = {
     30, 30, 60, 60, 60, 60, 60, 60,
     30, 60, 60, 60, 60, 60, 60, 60,
     60, 60, 60, 60, 60, 60, 60, 60,
-    60, 60, 60, 60, 60, 60, 60, 60,
-    60, 60, 60, 60, 60, 60, 60, 60,
-    60, 60, 60, 60, 60, 60, 60, 60};
+    60, 60, 60, 60, 60, 60, 60, 120,
+    60, 60, 60, 60, 60, 60, 120, 120,
+    60, 60, 60, 60, 60, 120, 120, 120};
 
 // Quantize the given vec into two blocks using the quantization table.
 void GrayscaleImage::quantize(const Transform::FourierTransform::vec &vec,
@@ -240,6 +240,8 @@ void GrayscaleImage::decode() {
   this->entropyDecode();
   //size_t randomIndex = rand() % this->blocks.size();
   
+  size_t randomIndex = rand() % this->blocks.size();
+
 
   // For each block...
   for (size_t i = 0; i < this->blocks.size(); i++) {
@@ -247,8 +249,9 @@ void GrayscaleImage::decode() {
     std::vector<char> realBlock = this->blocks[i];
     std::vector<char> imagBlock = this->imagBlocks[i];
 
-    // If the block is the first block...
-    /* if (i == randomIndex) {
+
+    ////////////////////////////////////////////////////////////////
+    if (i == randomIndex) {
       // Print the first block. Add a newline after group of 8 elements.
       for (size_t j = 0; j < realBlock.size(); j++) {
         std::cout << static_cast<int>(realBlock[j]) << " ";
@@ -256,7 +259,7 @@ void GrayscaleImage::decode() {
           std::cout << std::endl;
         }
       }
-    } */
+    }
 
     // Unquantize the block.
     Transform::FourierTransform::vec vecBlock(64, 0);
@@ -314,22 +317,27 @@ void GrayscaleImage::entropyEncode() {
   this->encoded.clear();
 
   // Initialize a new blocks vector.
-  std::vector<std::vector<char>> blocks;
+  std::vector<std::vector<char>> blockSet;
 
   // Add all blocks to the blocks vector.
   for (size_t i = 0; i < this->blocks.size(); i++) {
-    blocks.push_back(this->blocks[i]);
+    blockSet.push_back(this->blocks[i]);
   }
 
   // Add all imaginary blocks to the blocks vector.
   for (size_t i = 0; i < this->imagBlocks.size(); i++) {
-    blocks.push_back(this->imagBlocks[i]);
+    blockSet.push_back(this->imagBlocks[i]);
   }
 
+  // Initialize a char list for zero counters.
+  std::vector<unsigned char> zeroCounters;
+
+  // Initialize a char list for elements.
+  std::vector<char> elements;
+
   // For each block...
-  for (size_t i = 0; i < this->blocks.size(); i++) {
-    // Get the block.
-    std::vector<char> block = blocks[i];
+  for (size_t i = 0; i < blockSet.size(); i++) {
+    std::vector<char> block = blockSet[i];
 
     // Initialize a zigZag vector.
     std::vector<char> zigZagVector(64, 0);
@@ -345,7 +353,7 @@ void GrayscaleImage::entropyEncode() {
     }
 
     // Traverse the zigZag vector.
-    char zeroCounter = 0;
+    unsigned char zeroCounter = 0;
 
     // For each element in the zigZag vector...
     for (int j = 0; j < 64; j++) {
@@ -360,12 +368,22 @@ void GrayscaleImage::entropyEncode() {
       }
 
       // If the element value is not zero...
-      this->encoded.push_back(zeroCounter);
-      this->encoded.push_back(element);
+      zeroCounters.push_back(zeroCounter);
+      elements.push_back(element);
+
+      // Reset the zero counter.
+      zeroCounter = 0;
     }
 
-    this->encoded.push_back(zeroCounter);
-    this->encoded.push_back(0x00);
+    // Add end of block marker.
+    zeroCounters.push_back(0xFF);
+    elements.push_back(0);
+  }
+
+  // Concatenate the zero counters and the elements.
+  for (size_t i = 0; i < zeroCounters.size(); i++) {
+    this->encoded.push_back(zeroCounters[i]);
+    this->encoded.push_back(elements[i]);
   }
 }
 
@@ -376,63 +394,85 @@ void GrayscaleImage::entropyDecode() {
   this->imagBlocks.clear();
 
   // Create a new blocks vector.
-  std::vector<std::vector<char>> blocks;
+  std::vector<std::vector<char>> blocksSet;
 
   // Create a new reconstrcuted zigZag vector.
   std::vector<char> reconstructedZigZagVector;
 
-  // For each byte in the encoded vector...
+  // Initialize a char list of zero counters.
+  std::vector<unsigned char> zeroCounters;
+
+  // Initialize a char list of elements.
+  std::vector<char> elements;
+
+  // Fill the zero counters with even elements of the encoded vector.
   for (size_t i = 0; i < this->encoded.size(); i++) {
-    // If the length of the reconstructed zigZag vector is 64...
-    if (reconstructedZigZagVector.size() == 64) {
-      // Initialize a new block.
+    if (i % 2 == 0) {
+      zeroCounters.push_back(this->encoded[i]);
+    }
+  }
+
+  // Fill the elements with odd elements of the encoded vector.
+  for (size_t i = 0; i < this->encoded.size(); i++) {
+    if (i % 2 == 1) {
+      elements.push_back(this->encoded[i]);
+    }
+  }
+
+  // For each byte in the zero counters list...
+  for (size_t i = 0; i < zeroCounters.size(); i++) {
+    // Check if the byte is the end of block marker.
+    if (zeroCounters[i] == 0xFF) {
+      // Keep adding zeros to the reconstructed zigZag vector until the
+      // reconstructed zigZag vector size is 64.
+      while (reconstructedZigZagVector.size() < 64) {
+        reconstructedZigZagVector.push_back(0);
+      }
+
+      // Create a new block.
       std::vector<char> block(64, 0);
 
-      // For each step in zigzag path...
-      for (int j = 0; j < 64; j++) {
+      // For each element in the reconstructed zigZag vector...
+      for (size_t j = 0; j < reconstructedZigZagVector.size(); j++) {
         // Get the zigZag map coordinates.
         int x = GrayscaleImage::zigZagMap[j].first;
         int y = GrayscaleImage::zigZagMap[j].second;
 
-        // Set the block value to the zigZag vector value.
+        // Set the block value to the reconstructed zigZag vector value.
         block[y * 8 + x] = reconstructedZigZagVector[j];
       }
 
       // Add the block to the blocks vector.
-      blocks.push_back(block);
+      blocksSet.push_back(block);
 
       // Clear the reconstructed zigZag vector.
       reconstructedZigZagVector.clear();
-    }
 
-    // Get the byte value.
-    char byte = this->encoded[i];
-
-    // Check zero counter.
-    if (i % 2 == 0) {
-      // Add as many zeros as the zero counter value.
-      for (int j = 0; j < byte; j++) {
-        reconstructedZigZagVector.push_back(0);
-      }
-
+      // Continue to the next byte.
       continue;
     }
 
-    // Add the byte value to the reconstructed zigZag vector.
-    reconstructedZigZagVector.push_back(byte);
+    // Add as many zeros to the reconstructed zigZag vector as the zero counter
+    // value.
+    for (int j = 0; j < zeroCounters[i]; j++) {
+      reconstructedZigZagVector.push_back(0);
+    }
+
+    // Add the element to the reconstructed zigZag vector.
+    reconstructedZigZagVector.push_back(elements[i]);
   }
 
   // Print the length of the blocks vector.
-  std::cout << "Blocks vector length: " << blocks.size() << std::endl;
+  std::cout << "BlocksSet vector length: " << blocksSet.size() << std::endl;
 
-  // Add the first half of the blocks vector to the blocks vector.
-  for (size_t i = 0; i < blocks.size() / 2; i++) {
-    this->blocks.push_back(blocks[i]);
+  // Add the first half of the blockSet to the blocks vector.
+  for (size_t i = 0; i < blocksSet.size() / 2; i++) {
+    this->blocks.push_back(blocksSet[i]);
   }
-  
-  // Add the second half of the blocks vector to the imaginary blocks vector.
-  for (size_t i = blocks.size() / 2; i < blocks.size(); i++) {
-    this->imagBlocks.push_back(blocks[i]);
+
+  // Add the second half of the blockSet to the imaginary blocks vector.
+  for (size_t i = blocksSet.size() / 2; i < blocksSet.size(); i++) {
+    this->imagBlocks.push_back(blocksSet[i]);
   }
 }
 
