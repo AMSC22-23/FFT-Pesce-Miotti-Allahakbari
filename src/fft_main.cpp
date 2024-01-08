@@ -89,6 +89,13 @@ int fft_main(int argc, char *argv[]) {
 
   // Run a demo of the hands-on code.
   if (mode == std::string("demo")) {
+    // Check the number of arguments.
+    if (argc > 5) {
+      print_usage(default_size, default_mode, default_max_num_threads);
+      return 1;
+    }
+
+    // Set the maximum number of threads.
     omp_set_num_threads(max_num_threads);
 
     // Save the sequence to a file.
@@ -116,16 +123,12 @@ int fft_main(int argc, char *argv[]) {
 
     // Compute the O(n log n) Fourier Transform of the sequence with the
     // iterative algorithm.
-    std::unique_ptr<IterativeFourierTransformAlgorithm>
-        iterative_dft_algorithm =
-            std::make_unique<IterativeFourierTransformAlgorithm>();
     std::unique_ptr<BitReversalPermutationAlgorithm>
         mask_bit_reversal_algorithm =
             std::make_unique<MaskBitReversalPermutationAlgorithm>();
-    iterative_dft_algorithm->setBitReversalPermutationAlgorithm(
-        mask_bit_reversal_algorithm);
     std::unique_ptr<FourierTransformAlgorithm> iterative_dft =
-        std::move(iterative_dft_algorithm);
+        std::make_unique<IterativeFourierTransformAlgorithm>(
+            mask_bit_reversal_algorithm);
     calculator.setDirectAlgorithm(iterative_dft);
     vec iterative_dft_result(size, 0);
     calculator.directTransform(input_sequence, iterative_dft_result);
@@ -158,16 +161,12 @@ int fft_main(int argc, char *argv[]) {
     WriteToFile(classical_ift_result, "classical_ift_result.csv");
 
     // Compute the iterative O(n log) Inverse Fourier Transform of the result.
-    std::unique_ptr<IterativeFourierTransformAlgorithm>
-        iterative_ift_algorithm =
-            std::make_unique<IterativeFourierTransformAlgorithm>();
     std::unique_ptr<BitReversalPermutationAlgorithm>
         fast_bit_reversal_algorithm =
             std::make_unique<FastBitReversalPermutationAlgorithm>();
-    iterative_ift_algorithm->setBitReversalPermutationAlgorithm(
-        fast_bit_reversal_algorithm);
     std::unique_ptr<FourierTransformAlgorithm> iterative_ift =
-        std::move(iterative_ift_algorithm);
+        std::make_unique<IterativeFourierTransformAlgorithm>(
+            fast_bit_reversal_algorithm);
     calculator.setInverseAlgorithm(iterative_ift);
     vec iterative_ift_result(size, 0);
     calculator.inverseTransform(classical_dft_result, iterative_ift_result);
@@ -204,22 +203,33 @@ int fft_main(int argc, char *argv[]) {
   // Run a performance comparison of different bit reversal permutation
   // techniques.
   else if (mode == std::string("bitReversalTest")) {
+    // Check the number of arguments.
+    if (argc > 5) {
+      print_usage(default_size, default_mode, default_max_num_threads);
+      return 1;
+    }
+
     // Run a comparison between mask and fast bit reversal permutations.
     CompareBitReversalPermutationTimes(input_sequence, max_num_threads);
   }
 
   // Run a scaling test with the best performing algorithm.
   else if (mode == std::string("scalingTest")) {
+    // Check the number of arguments.
+    if (argc > 5) {
+      print_usage(default_size, default_mode, default_max_num_threads);
+      return 1;
+    }
+
     // Calculate the times for up to max_num_threads threads for the iterative
     // fft.
-    std::unique_ptr<IterativeFourierTransformAlgorithm>
-        iterative_dft_algorithm =
-            std::make_unique<IterativeFourierTransformAlgorithm>();
-    iterative_dft_algorithm->setBaseAngle(-std::numbers::pi_v<real>);
     std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm =
         std::make_unique<MaskBitReversalPermutationAlgorithm>();
-    iterative_dft_algorithm->setBitReversalPermutationAlgorithm(
-        bit_reversal_algorithm);
+    std::unique_ptr<IterativeFourierTransformAlgorithm>
+        iterative_dft_algorithm =
+            std::make_unique<IterativeFourierTransformAlgorithm>(
+                bit_reversal_algorithm);
+    iterative_dft_algorithm->setBaseAngle(-std::numbers::pi_v<real>);
     std::unique_ptr<FourierTransformAlgorithm> iterative_dft =
         std::move(iterative_dft_algorithm);
     TimeEstimateFFT(iterative_dft, input_sequence, max_num_threads);
@@ -227,9 +237,8 @@ int fft_main(int argc, char *argv[]) {
 
   // Execute a single algorithm and calculate the elapsed time.
   else if (mode == std::string("timingTest")) {
-    std::string algorithm_name = "iterative";
-
     // Get which algorithm to choose.
+    std::string algorithm_name = "iterative";
     if (argc >= 6) algorithm_name = std::string(argv[5]);
 
     // Create the algorithm.
@@ -239,14 +248,10 @@ int fft_main(int argc, char *argv[]) {
     } else if (algorithm_name == std::string("recursive")) {
       algorithm = std::make_unique<RecursiveFourierTransformAlgorithm>();
     } else if (algorithm_name == std::string("iterative")) {
-      std::unique_ptr<IterativeFourierTransformAlgorithm>
-          iterative_dft_algorithm =
-              std::make_unique<IterativeFourierTransformAlgorithm>();
       std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm =
           std::make_unique<MaskBitReversalPermutationAlgorithm>();
-      iterative_dft_algorithm->setBitReversalPermutationAlgorithm(
+      algorithm = std::make_unique<IterativeFourierTransformAlgorithm>(
           bit_reversal_algorithm);
-      algorithm = std::move(iterative_dft_algorithm);
     } else if (algorithm_name == std::string("iterativeGPU")) {
       algorithm = std::make_unique<IterativeFFTGPU>();
     } else {

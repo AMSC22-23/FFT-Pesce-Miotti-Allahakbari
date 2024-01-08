@@ -1,6 +1,11 @@
 #ifndef FOURIER_TRANSFORM_CALCULATOR_HPP
 #define FOURIER_TRANSFORM_CALCULATOR_HPP
 
+/**
+ * @file FourierTransformCalculator.hpp.
+ * @brief Declares abstractions for Fourier Transform computations.
+ */
+
 #include "FourierTransform.hpp"
 
 namespace Transform {

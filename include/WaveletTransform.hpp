@@ -47,6 +47,7 @@ class WaveletTransformAlgorithm {
    */
   virtual void directTransform(const std::vector<real> &input_sequence,
                                std::vector<real> &output_sequence) const = 0;
+
   /**
    * @brief Perform the IWT of a sequence.
    *
@@ -58,6 +59,7 @@ class WaveletTransformAlgorithm {
    */
   virtual void inverseTransform(const std::vector<real> &input_sequence,
                                 std::vector<real> &output_sequence) const = 0;
+
   virtual ~WaveletTransformAlgorithm() = default;
 };
 
@@ -148,12 +150,13 @@ class TwoDimensionalWaveletTransformAlgorithm {
   void directTransform(const std::vector<real> &input_matrix,
                        std::vector<real> &output_matrix,
                        unsigned int levels) const;
+
   /**
    * @brief Perform the 2D IWT of a sequence.
    *
    * The method performs the reverse algorithm of directTransform.
    *
-   * @param input_matrix The sequence to use as an input to the IWT, interpred
+   * @param input_matrix The sequence to use as an input to the IWT, interpreted
    * as a square matrix.
    * @param output_sequence An output sequence containing the anti-transformed
    * input, to be interpreted as a matrix.
@@ -165,7 +168,9 @@ class TwoDimensionalWaveletTransformAlgorithm {
   void inverseTransform(const std::vector<real> &input_matrix,
                         std::vector<real> &output_matrix,
                         unsigned int levels) const;
+
   ~TwoDimensionalWaveletTransformAlgorithm() = default;
+
   TwoDimensionalWaveletTransformAlgorithm(
       std::unique_ptr<WaveletTransformAlgorithm> &algorithm_)
       : algorithm(std::move(algorithm_)){};
@@ -184,6 +189,7 @@ class TwoDimensionalWaveletTransformAlgorithm {
    */
   void transformRows(std::vector<real> &matrix, size_t n,
                      bool direct_algorithm) const;
+
   /**
    * @brief Apply the 1D algorithm to the first n elements of the first n
    * columns of the matrix.
