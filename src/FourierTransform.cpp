@@ -140,9 +140,12 @@ void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
   const size_t log_sqrt_n = static_cast<size_t>(log2(sqrt_n));
   assert(1UL << log_sqrt_n == sqrt_n);
 
-  // Use the RecursiveFourierTransformAlgorithm to compute the 1D FFT.
+  // Use the IterativeFourierTransformAlgorithm to compute the 1D FFT.
+  std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm =
+      std::make_unique<FastBitReversalPermutationAlgorithm>();
   std::unique_ptr<FourierTransformAlgorithm> fft_algorithm =
-      std::make_unique<RecursiveFourierTransformAlgorithm>();
+      std::make_unique<IterativeFourierTransformAlgorithm>(
+          bit_reversal_algorithm);
 
   // Set the base angle to -pi.
   constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
@@ -193,9 +196,12 @@ void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
   const size_t log_sqrt_n = static_cast<size_t>(log2(sqrt_n));
   assert(1UL << log_sqrt_n == sqrt_n);
 
-  // Use the RecursiveFourierTransformAlgorithm to compute the 1D FFT.
+  // Use the IterativeFourierTransformAlgorithm to compute the 1D FFT.
+  std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm =
+      std::make_unique<FastBitReversalPermutationAlgorithm>();
   std::unique_ptr<FourierTransformAlgorithm> fft_algorithm =
-      std::make_unique<ClassicalFourierTransformAlgorithm>();
+      std::make_unique<IterativeFourierTransformAlgorithm>(
+          bit_reversal_algorithm);
 
   // Set the base angle to pi.
   constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
