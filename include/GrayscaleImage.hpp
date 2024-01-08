@@ -1,9 +1,12 @@
 #ifndef GRAYSCALE_IMAGE_HPP
 #define GRAYSCALE_IMAGE_HPP
 
+/** @file GrayscaleImage.hpp.
+ *  @brief Declares a class for handling Grayscale images.
+ */
+
 #include <cstdint>
 
-#include "Real.hpp"
 #include "WaveletTransform.hpp"
 
 /**

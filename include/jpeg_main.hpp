@@ -1,6 +1,10 @@
 #ifndef JPEG_MAIN_HPP
 #define JPEG_MAIN_HPP
 
+/** @file fft_main.hpp.
+ *  @brief Declares the main function for JPEG-related tests.
+ */
+
 /**
  * @brief The main function for JPEG-related tests.
  *

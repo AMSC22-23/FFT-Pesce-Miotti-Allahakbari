@@ -1,6 +1,10 @@
 #ifndef WAVELET_MAIN_HPP
 #define WAVELET_MAIN_HPP
 
+/** @file fft_main.hpp.
+ *  @brief Declares the main function for wavelet-related tests.
+ */
+
 /**
  * @brief The main function for wavelet-related tests.
  *

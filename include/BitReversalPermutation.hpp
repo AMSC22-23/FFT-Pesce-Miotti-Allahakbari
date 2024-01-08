@@ -3,6 +3,10 @@
 
 #include "Real.hpp"
 
+/** @file BitReversalPermutation.hpp.
+ *  @brief Declares Bit Reversal Permutation algorithms.
+ */
+
 namespace Transform {
 namespace FourierTransform {
 

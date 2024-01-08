@@ -8,6 +8,8 @@
 namespace Transform {
 namespace WaveletTransform {
 
+/** @namespace */
+
 class WaveletTransformAlgorithm {
  public:
   virtual void directTransform(const std::vector<real> &input_sequence,

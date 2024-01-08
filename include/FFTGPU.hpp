@@ -1,6 +1,11 @@
 #ifndef REAL_HPP_GPU
 #define REAL_HPP_GPU
 
+/** @file FFTGPU.hpp.
+ *  @brief Declares functions to execute FFTs on a GPU using CUDA.
+ *  @todo Document the functions.
+ */
+
 #include <cuda_runtime.h>
 
 #include <cuda/std/complex>
