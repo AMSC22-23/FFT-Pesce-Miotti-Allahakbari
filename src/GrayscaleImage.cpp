@@ -31,7 +31,7 @@ bool GrayscaleImage::loadStandard(const std::string &filename) {
     // For each column...
     for (int j = 0; j < image.cols; j++) {
       // Get the pixel value.
-      char pixel = image.at<char>(i, j);
+      uint8_t pixel = image.at<uint8_t>(i, j);
 
       // Add the pixel value to the decoded image.
       this->decoded.push_back(pixel);
@@ -56,10 +56,10 @@ void GrayscaleImage::display() {
     // For each column...
     for (int j = 0; j < image.cols; j++) {
       // Get the pixel value.
-      char pixel = this->decoded[i * image.cols + j];
+      uint8_t pixel = this->decoded[i * image.cols + j];
 
       // Set the pixel value.
-      image.at<char>(i, j) = pixel;
+      image.at<uint8_t>(i, j) = pixel;
     }
   }
 
@@ -504,6 +504,6 @@ void GrayscaleImage::waveletTransform(
   // Update the decoded image.
   for (size_t i = 0; i < this->decoded.size(); i++) {
     this->decoded[i] =
-        static_cast<char>((real_output[i] + min_value) / range * 256);
+        static_cast<uint8_t>((real_output[i] - min_value) / range * 256);
   }
 }

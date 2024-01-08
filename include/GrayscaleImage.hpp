@@ -1,6 +1,8 @@
 #ifndef GRAYSCALE_IMAGE_HPP
 #define GRAYSCALE_IMAGE_HPP
 
+#include <cstdint>
+
 #include "Real.hpp"
 #include "WaveletTransform.hpp"
 
@@ -72,10 +74,10 @@ class GrayscaleImage {
   static std::vector<std::pair<int, int>> zigZagMap;
 
   // The image in uncompressed form.
-  std::vector<char> decoded;
+  std::vector<uint8_t> decoded;
 
   // The image in compressed form (expressed as a sequence of bytes).
-  std::vector<char> encoded;
+  std::vector<uint8_t> encoded;
 
   // An array of 8x8 blocks. Each block is a vector of 64 elements.
   std::vector<std::vector<char>> blocks;
