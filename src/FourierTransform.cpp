@@ -356,6 +356,7 @@ void BlockFFTGPU2D::operator()(const vec &input_sequence,
              size * sizeof(cuda::std::complex<real>), cudaMemcpyHostToDevice);
 
   run_block_fft_gpu(block_input_dev, n, base_angle);
+  run_block_fft_gpu(block_input_dev, n, base_angle);
 
   cudaMemcpy(output_sequence.data(), block_input_dev,
              size * sizeof(cuda::std::complex<real>), cudaMemcpyDeviceToHost);

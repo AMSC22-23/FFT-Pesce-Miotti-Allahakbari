@@ -82,7 +82,7 @@ int cuda_main(int argc, char *argv[]) {
   }
 
   // Perform Complex Double Precision DFT on each block
-  for (size_t bid = 0; bid < 1; ++bid) {
+  for (size_t bid = 0; bid < blocks.size(); ++bid) {
     cv::Mat dftInput;
     blocks[bid].convertTo(dftInput,
                           CV_64F);  // Convert block to double precision
@@ -97,29 +97,28 @@ int cuda_main(int argc, char *argv[]) {
     // Process the DFT result (you can do further operations here)
     double epsilon = 1e-4;
 
-    std::cout << "Calculations at block: (" << blockIndices[bid].first << ", "
-              << blockIndices[bid].second << ")" << std::endl;
+    // std::cout << "Calculations at block: (" << blockIndices[bid].first << ",
+    // "
+    //           << blockIndices[bid].second << ")" << std::endl;
     for (int i = 0; i < 8; i++)
       for (int j = 0; j < 8; j++) {
-        // if (std::fabs(
-        //         output_sequence[(blockIndices[bid].first * 8 + i) *
-        //         image.rows +
-        //                         blockIndices[bid].second * 8 + j]
-        //             .real() -
-        //         realPart.at<double>(i, j)) > epsilon ||
-        //     std::fabs(
-        //         output_sequence[(blockIndices[bid].first * 8 + i) *
-        //         image.rows +
-        //                         blockIndices[bid].second * 8 + j]
-        //             .imag() -
-        //         imagPart.at<double>(i, j)) > epsilon) {
-        std::cout
-            << "Calculations at: " << i << ", " << j << " GPU: "
-            << output_sequence[(blockIndices[bid].first * 8 + i) * image.rows +
-                               blockIndices[bid].second * 8 + j]
-            << ", CPU: (" << realPart.at<double>(i, j) << ", "
-            << imagPart.at<double>(i, j) << ")" << std::endl;
-        // }
+        if (std::fabs(
+                output_sequence[(blockIndices[bid].first * 8 + i) * image.rows +
+                                blockIndices[bid].second * 8 + j]
+                    .real() -
+                realPart.at<double>(i, j)) > epsilon ||
+            std::fabs(
+                output_sequence[(blockIndices[bid].first * 8 + i) * image.rows +
+                                blockIndices[bid].second * 8 + j]
+                    .imag() -
+                imagPart.at<double>(i, j)) > epsilon) {
+          std::cout << "Calculations at: " << i << ", " << j << " GPU: "
+                    << output_sequence[(blockIndices[bid].first * 8 + i) *
+                                           image.rows +
+                                       blockIndices[bid].second * 8 + j]
+                    << ", CPU: (" << realPart.at<double>(i, j) << ", "
+                    << imagPart.at<double>(i, j) << ")" << std::endl;
+        }
       }
   }
 
