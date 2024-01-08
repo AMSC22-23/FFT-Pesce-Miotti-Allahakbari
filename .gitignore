@@ -2,3 +2,5 @@
 build/
 tools/*.csv
 tools/*.txt
+html/*
+latex/*
