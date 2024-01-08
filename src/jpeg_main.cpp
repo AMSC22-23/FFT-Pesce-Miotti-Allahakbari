@@ -53,12 +53,48 @@ int jpeg_main(int argc, char *argv[])
   double compression_ratio = (double)compressed_bitsize / (double)bitsize;
   std::cout << "Compression ratio: " << compression_ratio << std::endl;
 
+  // Save the compressed image.
+  std::cout << "Saving compressed image..." << std::endl;
+  grayscaleImage.save("../img/compressed-image.data");
+
+  // Create a new GrayscaleImage object.
+  GrayscaleImage grayscaleImage2;
+
+  // Load the compressed image.
+  std::cout << "Loading compressed image..." << std::endl;
+  success = grayscaleImage2.loadCompressed("../img/compressed-image.data");
+
+  // Check if the image was loaded successfully.
+  if (!success)
+  {
+    std::cout << "Failed to load compressed image." << std::endl;
+    return 1;
+  }
+
+  // Get the encoded bytes of grayscaleImages with getEncoded().
+  std::vector<unsigned char> encoded_bytes = grayscaleImage.getEncoded();
+  std::vector<unsigned char> encoded_bytes2 = grayscaleImage2.getEncoded();
+
+  // Write first 30 bytes of the encoded image.
+  std::cout << "First 30 bytes of the encoded image:" << std::endl;
+  for (int i = 0; i < 30; i++)
+    std::cout << (int)encoded_bytes[i] << " ";
+  std::cout << std::endl;
+
+  // Write first 30 bytes of the encoded image.
+  std::cout << "First 30 bytes of the encoded image:" << std::endl;
+  for (int i = 0; i < 30; i++)
+    std::cout << (int)encoded_bytes2[i] << " ";
+  std::cout << std::endl;
+  
+  
+
   // Decode the image.
   std::cout << "Decoding image..." << std::endl;
-  grayscaleImage.decode();
+  grayscaleImage2.decode();
 
   // Display the image.
-  grayscaleImage.display();   
+  grayscaleImage2.display();   
 
   return 0;
 }

@@ -16,7 +16,7 @@
  * @code
  * GrayscaleImage grayscaleImage;
  * 
- * bool success = grayscaleImage.loadStandard(image_path);
+ * bool success = grayscaleImage.loadStandard("image.jpg");
  * if (!success) {
  *  ...
  * }
@@ -31,6 +31,9 @@
  */
 class GrayscaleImage {
  public:
+  // Get the encoded image.
+  std::vector<uint8_t> getEncoded();
+
   /**
    * @brief Load a grayscale image from file, using a standard format.
    * 

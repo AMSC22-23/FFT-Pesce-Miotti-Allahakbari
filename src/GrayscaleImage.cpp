@@ -517,3 +517,38 @@ void GrayscaleImage::denoise(
     this->decoded[i] = static_cast<uint8_t>(real_output[i]);
   }
 }
+
+// Load compressed image from file.
+bool GrayscaleImage::loadCompressed(const std::string &filename) {
+  std::ifstream file(filename);
+  assert(file.is_open());
+  
+  if (!file.eof() && !file.fail())
+  {
+      file.seekg(0, std::ios_base::end);
+      std::streampos fileSize = file.tellg();
+      this->encoded.resize(fileSize);
+
+      file.seekg(0, std::ios_base::beg);
+      file.read((char*) &this->encoded[0], fileSize);
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+// Save compressed image to file.
+bool GrayscaleImage::save(const std::string &filename) {
+  std::ofstream file(filename);
+  assert(file.is_open());
+
+  file.write((char*) &this->encoded[0], this->encoded.size());
+
+  return true;
+}
+
+// Get the encoded image.
+std::vector<uint8_t> GrayscaleImage::getEncoded() {
+  return this->encoded;
+}
