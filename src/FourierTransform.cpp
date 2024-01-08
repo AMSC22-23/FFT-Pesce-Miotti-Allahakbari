@@ -1,5 +1,13 @@
 #include "FourierTransform.hpp"
 
+/**
+ * @file FourierTransform.cpp.
+ * @brief Defines the methods and functions declared in
+ * FourierTransform.hpp.
+ */
+
+// TODO: Remove commented code in the GPU implementations.
+
 #include <cuda_runtime.h>
 #include <omp.h>
 #include <tgmath.h>
@@ -16,8 +24,10 @@
 namespace Transform {
 namespace FourierTransform {
 
+// An alias for pi.
 constexpr real pi = std::numbers::pi_v<real>;
 
+// The classical O(n^2) Fourier Transform.
 void ClassicalFourierTransformAlgorithm::operator()(
     const vec &input_sequence, vec &output_sequence) const {
   // Getting the input size.
@@ -38,6 +48,7 @@ void ClassicalFourierTransformAlgorithm::operator()(
   }
 }
 
+// A recursive implementation of the FFT.
 void RecursiveFourierTransformAlgorithm::operator()(
     const vec &input_sequence, vec &output_sequence) const {
   // Getting the input size.
@@ -77,6 +88,7 @@ void RecursiveFourierTransformAlgorithm::operator()(
   }
 }
 
+// An iterative implementation of the FFT using OpenMP.
 void IterativeFourierTransformAlgorithm::operator()(
     const vec &input_sequence, vec &output_sequence) const {
   // Getting the input size.
@@ -115,6 +127,7 @@ void IterativeFourierTransformAlgorithm::operator()(
   }
 }
 
+// A trivial implementation of the 2D Direct Fourier Transform.
 void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
     const vec &input_sequence, vec &output_sequence) const {
   // Getting the input size.
@@ -154,7 +167,8 @@ void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
   for (size_t j = 0; j < sqrt_n; j++) {
     // Get the j-th column of the input matrix.
     vec column(sqrt_n, 0);
-    for (size_t i = 0; i < sqrt_n; i++) column[i] = output_sequence[i * sqrt_n + j];
+    for (size_t i = 0; i < sqrt_n; i++)
+      column[i] = output_sequence[i * sqrt_n + j];
 
     // Compute the j-th column of the output matrix.
     vec output_column(sqrt_n, 0);
@@ -166,6 +180,7 @@ void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
   }
 }
 
+// A trivial implementation of the 2D Inverse Fourier Transform.
 void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
     const vec &input_sequence, vec &output_sequence) const {
   // Getting the input size.
@@ -189,7 +204,8 @@ void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
   for (size_t j = 0; j < sqrt_n; j++) {
     // Get the j-th column of the input matrix.
     vec column(sqrt_n, 0);
-    for (size_t i = 0; i < sqrt_n; i++) column[i] = input_sequence[i * sqrt_n + j];
+    for (size_t i = 0; i < sqrt_n; i++)
+      column[i] = input_sequence[i * sqrt_n + j];
 
     // Compute the j-th column of the output matrix.
     vec output_column(sqrt_n, 0);
@@ -203,7 +219,8 @@ void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
   for (size_t i = 0; i < sqrt_n; i++) {
     // Get the i-th row of the input matrix.
     vec row(sqrt_n, 0);
-    for (size_t j = 0; j < sqrt_n; j++) row[j] = output_sequence[i * sqrt_n + j];
+    for (size_t j = 0; j < sqrt_n; j++)
+      row[j] = output_sequence[i * sqrt_n + j];
 
     // Compute the i-th row of the output matrix.
     vec output_row(sqrt_n, 0);
@@ -218,6 +235,8 @@ void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
   for (size_t i = 0; i < n; i++) output_sequence[i] /= n;
 }
 
+// A GPU implementation of the 1D iterative FFT, handling memory transfer and
+// calling CUDA kernels.
 void IterativeFFTGPU::operator()(const vec &input_sequence,
                                  vec &output_sequence) const {
   // Getting the input size.
@@ -253,6 +272,8 @@ void IterativeFFTGPU::operator()(const vec &input_sequence,
   cudaFree(output_sequence_dev);
 }
 
+// A GPU implementation of the 2D iterative FFT, handling memory transfer and
+// calling CUDA kernels.
 void IterativeFFTGPU2D::operator()(const vec &input_sequence,
                                    vec &output_sequence) const {
   // Getting the input size.
@@ -331,7 +352,7 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
   cudaFree(&transposed_sequence_dev);
 }
 
-// Calculate time for execution using chrono.
+// Calculate time for execution of a Fourier Transform using chrono.
 unsigned long FourierTransformAlgorithm::calculateTime(
     const vec &input_sequence, vec &output_sequence) const {
   auto t0 = std::chrono::high_resolution_clock::now();
@@ -342,6 +363,8 @@ unsigned long FourierTransformAlgorithm::calculateTime(
   return time;
 }
 
+// Calculate time for execution of a Fourier Transform using chrono for multiple
+// numbers of threads.
 void TimeEstimateFFT(std::unique_ptr<FourierTransformAlgorithm> &ft_algorithm,
                      const vec &sequence, unsigned int max_num_threads) {
   // Calculate sequence size.

@@ -1,5 +1,10 @@
 #include "fft_main.hpp"
 
+/**
+ * @file fft_main.cpp.
+ * @brief Defines the main function for CPU FFT-related tests.
+ */
+
 #include <omp.h>
 
 #include <numbers>

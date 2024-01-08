@@ -4,8 +4,9 @@
 #include <complex>
 #include <vector>
 
-/** @file Real.hpp.
- *  @brief Defines a type for real numbers using a trait and aliases for complex
+/**
+ * @file Real.hpp.
+ * @brief Defines a type for real numbers with a trait and aliases for complex
  * numbers and vector of complex numbers.
  */
 

@@ -1,5 +1,11 @@
 #include "WaveletTransform.hpp"
 
+/**
+ * @file WaveletTransform.cpp.
+ * @brief Defines the methods and functions declared in
+ * WaveletTransform.hpp.
+ */
+
 #include <tgmath.h>
 
 #include <cassert>
@@ -16,6 +22,7 @@ constexpr real gamma = 0.8829110762;
 constexpr real delta = 0.4435068522;
 constexpr real xi = 1.0 / 1.149604398;
 
+// Perform the DWT with the algorithm by Gregoire Pau.
 void GPWaveletTransform97::directTransform(
     const std::vector<real> &input_sequence,
     std::vector<real> &output_sequence) const {
@@ -73,6 +80,7 @@ void GPWaveletTransform97::directTransform(
   }
 }
 
+// Perform the IWT with the algorithm by Gregoire Pau.
 void GPWaveletTransform97::inverseTransform(
     const std::vector<real> &input_sequence,
     std::vector<real> &output_sequence) const {
@@ -133,11 +141,13 @@ void GPWaveletTransform97::inverseTransform(
   output_sequence[n - 1] -= 2 * alpha * output_sequence[n - 2];
 }
 
+// Perform the DWT with the algorithm by Daubechies.
 void DaubechiesWaveletTransform97::directTransform(
     const std::vector<real> &input_sequence,
     std::vector<real> &output_sequence) const {
-  // Get the input size.
+  // Get the input size and check that it is even and larger than 1.
   const size_t n = input_sequence.size();
+  assert(n % 2 == 0 && n > 1);
 
   // Allocate two temporary vectors.
   std::vector<real> low_sequence;
@@ -190,11 +200,13 @@ void DaubechiesWaveletTransform97::directTransform(
   }
 }
 
+// Perform the IWT with the algorithm by Daubechies.
 void DaubechiesWaveletTransform97::inverseTransform(
     const std::vector<real> &input_sequence,
     std::vector<real> &output_sequence) const {
-  // Get the input size.
+  // Get the input size and check that it is even and larger than 1.
   const size_t n = input_sequence.size();
+  assert(n % 2 == 0 && n > 1);
 
   // Allocate two temporary vectors.
   std::vector<real> low_sequence;
@@ -247,6 +259,7 @@ void DaubechiesWaveletTransform97::inverseTransform(
   }
 }
 
+// Perform the row transformation step in a 2D wavelet transform.
 void TwoDimensionalWaveletTransformAlgorithm::transformRows(
     std::vector<real> &matrix, size_t n, bool direct) const {
   // Get the length of the input.
@@ -286,6 +299,7 @@ void TwoDimensionalWaveletTransformAlgorithm::transformRows(
   }
 }
 
+// Perform the column transformation step in a 2D wavelet transform.
 void TwoDimensionalWaveletTransformAlgorithm::transformColumns(
     std::vector<real> &matrix, size_t n, bool direct) const {
   // Get the length of the input.
@@ -325,6 +339,7 @@ void TwoDimensionalWaveletTransformAlgorithm::transformColumns(
   }
 }
 
+// Perform a multi level 2D DWT.
 void TwoDimensionalWaveletTransformAlgorithm::directTransform(
     const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
     unsigned int levels) const {
@@ -353,6 +368,7 @@ void TwoDimensionalWaveletTransformAlgorithm::directTransform(
   }
 }
 
+// Perform a multi level 2D IWT.
 void TwoDimensionalWaveletTransformAlgorithm::inverseTransform(
     const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
     unsigned int levels) const {
@@ -380,11 +396,6 @@ void TwoDimensionalWaveletTransformAlgorithm::inverseTransform(
                                                            false);
     n = n << 1UL;
   }
-}
-
-void TwoDimensionalWaveletTransformAlgorithm::setAlgorithm(
-    std::unique_ptr<WaveletTransformAlgorithm> &algorithm) {
-  this->algorithm = std::move(algorithm);
 }
 
 }  // namespace WaveletTransform

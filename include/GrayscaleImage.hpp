@@ -1,8 +1,9 @@
 #ifndef GRAYSCALE_IMAGE_HPP
 #define GRAYSCALE_IMAGE_HPP
 
-/** @file GrayscaleImage.hpp.
- *  @brief Declares a class for handling Grayscale images.
+/**
+ * @file GrayscaleImage.hpp.
+ * @brief Declares a class for handling Grayscale images.
  */
 
 #include <cstdint>

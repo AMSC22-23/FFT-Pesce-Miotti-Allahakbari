@@ -1,5 +1,11 @@
 #include "BitReversalPermutation.hpp"
 
+/**
+ * @file BitReversalPermutation.cpp.
+ * @brief Defines the methods and functions declared in
+ * BitReversalPermutation.hpp.
+ */
+
 #include <omp.h>
 #include <tgmath.h>
 
@@ -27,7 +33,6 @@ size_t NaiveBitReverse(const size_t index, const size_t bitsize) {
 
 // Compute the reverse bit order of "index", given a bitsize.
 // More efficient implementation.
-// Source: https://rosettacode.org/wiki/Fast_Fourier_transform#C.2B.2B
 #pragma omp declare simd linear(index) uniform(bitsize) notinbranch
 size_t MaskBitReverse(const size_t index, const size_t bitsize) {
   // Initialize the result.
@@ -148,6 +153,8 @@ unsigned long BitReversalPermutationAlgorithm::calculateTime(
   return time;
 }
 
+// Compare execution times for MaskBitReversalPermutationAlgorithm and
+// FastBitReversalPermutationAlgorithm.
 void CompareBitReversalPermutationTimes(const vec &sequence,
                                         unsigned int max_num_threads) {
   // Calculate sequence size.

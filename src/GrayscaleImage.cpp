@@ -1,5 +1,11 @@
 #include "GrayscaleImage.hpp"
 
+/**
+ * @file GrayscaleImage.cpp.
+ * @brief Defines the methods and functions declared in
+ * GrayscaleImage.hpp.
+ */
+
 #include <opencv2/opencv.hpp>
 
 #include "FourierTransform.hpp"
@@ -461,8 +467,7 @@ void GrayscaleImage::waveletTransform(
   std::vector<real> real_output(this->decoded.size(), 0);
 
   // Perform the direct wavelet transform.
-  TwoDimensionalWaveletTransformAlgorithm algorithm_2d;
-  algorithm_2d.setAlgorithm(algorithm);
+  TwoDimensionalWaveletTransformAlgorithm algorithm_2d(algorithm);
   algorithm_2d.directTransform(real_input, real_output, levels);
 
   // Map the values to [0, 256].
@@ -494,8 +499,7 @@ void GrayscaleImage::denoise(
   std::vector<real> real_output(this->decoded.size(), 0);
 
   // Perform the direct wavelet transform.
-  TwoDimensionalWaveletTransformAlgorithm algorithm_2d;
-  algorithm_2d.setAlgorithm(algorithm);
+  TwoDimensionalWaveletTransformAlgorithm algorithm_2d(algorithm);
   algorithm_2d.directTransform(real_input, real_output, levels);
 
   // Use thresholding to denoise the image.

@@ -1,5 +1,12 @@
 #include "cuda_main.hpp"
 
+/**
+ * @file cuda_main.cpp.
+ * @brief Defines the main function for CUDA-related tests.
+ */
+
+// TODO: Remove commented code and improve comments.
+
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <string>
@@ -31,11 +38,11 @@ int cuda_main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  // Check image properties
+  // Check image properties.
   std::cout << "Image size: " << image.size() << std::endl;
   std::cout << "Image type: " << image.type() << std::endl;
 
-  // convert image to complex vector
+  // Convert the image to a vector of complex numbers.
   vec input_sequence;
   vec output_sequence;
 

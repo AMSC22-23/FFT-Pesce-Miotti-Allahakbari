@@ -1,18 +1,27 @@
 #include "FourierTransformCalculator.hpp"
 
+/**
+ * @file FourierTransformCalculator.cpp.
+ * @brief Defines the methods and functions declared in
+ * FourierTransformCalculator.hpp.
+ */
+
 #include <numbers>
 
 namespace Transform {
 namespace FourierTransform {
 
+// An alias for pi.
 constexpr real pi = std::numbers::pi_v<real>;
 
+// Set the direct algorithm and its angle.
 void FourierTransformCalculator::setDirectAlgorithm(
     std::unique_ptr<FourierTransformAlgorithm> &algorithm) {
   direct_algorithm = std::move(algorithm);
   direct_algorithm->setBaseAngle(-pi);
 }
 
+// Set the inverse algorithm and its angle.
 void FourierTransformCalculator::setInverseAlgorithm(
     std::unique_ptr<FourierTransformAlgorithm> &algorithm) {
   inverse_algorithm = std::move(algorithm);
@@ -37,10 +46,12 @@ void FourierTransformCalculator::inverseTransform(const vec &input_sequence,
                                           real(1.0) / output_sequence.size());
 }
 
+// Multiply all elements in "sequence" by "scalar".
 void FourierTransformCalculator::scaleVector(vec &sequence, real scalar) {
-  // Get the size of the sequence
+  // Get the size of the sequence.
   const size_t n = sequence.size();
 
+  // Multiply all elements.
 #pragma omp parallel for default(none) shared(sequence) firstprivate(n, scalar)
   for (size_t i = 0; i < n; i++) {
     sequence[i] *= scalar;

@@ -1,5 +1,10 @@
 #include "wavelet_main.hpp"
 
+/**
+ * @file cuda_main.cpp.
+ * @brief Defines the main function for wavelet-related tests.
+ */
+
 #include <string>
 
 #include "GrayscaleImage.hpp"
@@ -222,12 +227,11 @@ int wavelet_main(int argc, char *argv[]) {
       std::vector<real> iwt_matrix(size * size, 0);
 
       // Test the algorithm by Gregoire Pau.
-      TwoDimensionalWaveletTransformAlgorithm algorithm_2d;
       std::unique_ptr<WaveletTransformAlgorithm> gp_algorithm =
           std::make_unique<GPWaveletTransform97>();
-      algorithm_2d.setAlgorithm(gp_algorithm);
-      algorithm_2d.directTransform(input_matrix, dwt_matrix, levels);
-      algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, levels);
+      TwoDimensionalWaveletTransformAlgorithm gp_algorithm_2d(gp_algorithm);
+      gp_algorithm_2d.directTransform(input_matrix, dwt_matrix, levels);
+      gp_algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, levels);
       if (!CompareVectors(input_matrix, iwt_matrix, precision, false))
         std::cerr << "Errors detected in 2D GP wavelet transforms with "
                   << levels << " levels." << std::endl;
@@ -235,9 +239,9 @@ int wavelet_main(int argc, char *argv[]) {
       // Test the algorithm by Daubechies.
       std::unique_ptr<WaveletTransformAlgorithm> db_algorithm =
           std::make_unique<DaubechiesWaveletTransform97>();
-      algorithm_2d.setAlgorithm(db_algorithm);
-      algorithm_2d.directTransform(input_matrix, dwt_matrix, levels);
-      algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, levels);
+      TwoDimensionalWaveletTransformAlgorithm db_algorithm_2d(db_algorithm);
+      db_algorithm_2d.directTransform(input_matrix, dwt_matrix, levels);
+      db_algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, levels);
       if (!CompareVectors(input_matrix, iwt_matrix, precision, false))
         std::cerr << "Errors detected in 2D DB wavelet transforms with "
                   << levels << " levels." << std::endl;
