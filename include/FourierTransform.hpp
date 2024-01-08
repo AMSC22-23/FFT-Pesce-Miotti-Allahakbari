@@ -97,7 +97,8 @@ class RecursiveFourierTransformAlgorithm : public FourierTransformAlgorithm {
  * @brief An iterative implementation of the FFT.
  *
  * An iterative implementation of the FFT using OpenMP. The algorithm will use
- * the bit reversal permutation algorithm provided to the constructor.
+ * the bit reversal permutation algorithm provided to the constructor, which
+ * will be moved.
  *
  * @note The algorithm has time complexity O(n log(n)).
  * @note Adapted from @cite

@@ -104,12 +104,6 @@ class DaubechiesWaveletTransform97 : public WaveletTransformAlgorithm {
   ~DaubechiesWaveletTransform97() = default;
 };
 
-// Perform a 2D wavelet direct or inverse transform with "levels" levels, using
-// the provided algorithm. Each level, the direct transform is performed
-// transforming each row and then each column and the inverse transforms each
-// column and then each row. The direct transform starts with the entire picture
-// and then moves to the top left corner, halfing the side length each
-// iteration, for "levels" iterations. The inverse transform does the opposite.
 /**
  * @brief Represents a 2D Wavelet Transform algorithm.
  *
@@ -136,7 +130,8 @@ class TwoDimensionalWaveletTransformAlgorithm {
    * The 1 level algorithm works by applying the 1D DWT to all rows of the input
    * matrix and then to all columns of the temporary result. Multi level 2D DWTs
    * apply the same algorithm iteratively to the upper left quadrant of the
-   * matrix.
+   * matrix. The algorithm will use the bit reversal permutation algorithm
+   * provided to the constructor, which will be moved.
    *
    * @param input_matrix The sequence to use as an input to the DWT, interpred
    * as a square matrix.
