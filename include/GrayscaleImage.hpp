@@ -6,25 +6,81 @@
 #include "Real.hpp"
 #include "WaveletTransform.hpp"
 
-// A class that represents a grayscale image.
-// This class may be used to load, save, encode, decode and display grayscale
-// images. Please note that the image's width and height must be a multiple
-// of 8.
+/**
+ * @brief Represents a Grayscale Image.
+ *
+ * The GrayscaleImage class is designed to handle and manipulate grayscale images.
+ * It provides functionalities for loading, encoding, decoding, and saving grayscale images.
+ * 
+ * Example usage:
+ * @code
+ * GrayscaleImage grayscaleImage;
+ * 
+ * bool success = grayscaleImage.loadStandard(image_path);
+ * if (!success) {
+ *  ...
+ * }
+ * 
+ * grayscaleImage.encode();
+ * grayscaleImage.decode();
+ * grayscaleImage.display();
+ * @endcode
+ *
+ * @note This class automatically converts common image formats to grayscale.
+ * @note The image's width and height must be a multiple of 8.
+ */
 class GrayscaleImage {
  public:
-  // Load regular image from file.
+  /**
+   * @brief Load a grayscale image from file, using a standard format.
+   * 
+   * @param filename The path to the image file.
+   * @return true If the image was loaded successfully.
+   * @return false If the image could not be loaded.
+   */
   bool loadStandard(const std::string &filename);
 
-  // Load compressed image from file.
+  /**
+   * @brief Load a grayscale image from file, using a compressed format.
+   * 
+   * @param filename The path to the image file.
+   * @return true If the image was loaded successfully.
+   * @return false If the image could not be loaded.
+   */
   bool loadCompressed(const std::string &filename);
 
-  // Save compressed image to file.
+  /**
+   * @brief Save the image (in compressed format) to file.
+   * 
+   * @param filename The path to the image file to be saved.
+   * @return true If the image was saved successfully.
+   * @return false If the image could not be saved.
+   */
   bool save(const std::string &filename);
 
-  // Encode the last loaded or decoded image.
+  /**
+   * @brief Encode the last loaded image.
+   * 
+   * Image encoding is done in 5 steps:
+   * 1. Split the image in 8x8 blocks.
+   * 2. Shift the block values to the range [-128, 127].
+   * 3. Perform the 2D FFT on each block.
+   * 4. Quantize the real and imaginary parts of each block.
+   * 5. Store the quantized values in a sequence of bytes using entropy coding.
+   */
   void encode();
 
-  // Decode the last loaded or encoded image.
+  /**
+   * @brief Decode the last loaded image.
+   * 
+   * Image decoding is done in 5 steps:
+   * 1. Use entropy decoding to get the quantized values of each block.
+   * 2. Unquantize the real and imaginary parts of each block.
+   * 3. Perform the 2D inverse FFT on each block.
+   * 4. Shift the block values back to the range [0, 255].
+   * 5. Merge the blocks into a single image.
+   * 
+   */
   void decode();
 
   // Display the last loaded or decoded image.
