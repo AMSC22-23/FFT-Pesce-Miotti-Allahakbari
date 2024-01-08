@@ -442,10 +442,10 @@ unsigned int GrayscaleImage::getCompressedBitsize() const {
   return this->encoded.size() * 8;
 }
 
+// Apply a DWT on an image.
 void GrayscaleImage::waveletTransform(
-    const std::shared_ptr<
-        Transform::WaveletTransform::WaveletTransformAlgorithm>
-        algorithm,
+    std::unique_ptr<Transform::WaveletTransform::WaveletTransformAlgorithm>
+        &algorithm,
     unsigned int levels) {
   using namespace Transform;
   using namespace WaveletTransform;
@@ -462,7 +462,8 @@ void GrayscaleImage::waveletTransform(
 
   // Perform the direct wavelet transform.
   TwoDimensionalWaveletTransformAlgorithm algorithm_2d;
-  algorithm_2d.directTransform(real_input, real_output, algorithm, levels);
+  algorithm_2d.setAlgorithm(algorithm);
+  algorithm_2d.directTransform(real_input, real_output, levels);
 
   // Map the values to [0, 256].
   affineMap(real_output, real(0), real(256));
@@ -473,14 +474,12 @@ void GrayscaleImage::waveletTransform(
   }
 }
 
+// Denoise an image with a DWT, IWT and thresholding.
 void GrayscaleImage::denoise(
-    const std::shared_ptr<
-        Transform::WaveletTransform::WaveletTransformAlgorithm>
-        direct_algorithm,
-    const std::shared_ptr<
-        Transform::WaveletTransform::WaveletTransformAlgorithm>
-        inverse_algorithm,
-    unsigned int levels, Transform::real threshold, bool hard_thresholding) {
+    std::unique_ptr<Transform::WaveletTransform::WaveletTransformAlgorithm>
+        &algorithm,
+    unsigned int levels, Transform::real threshold,
+    bool use_hard_thresholding) {
   using namespace Transform;
   using namespace WaveletTransform;
 
@@ -496,12 +495,12 @@ void GrayscaleImage::denoise(
 
   // Perform the direct wavelet transform.
   TwoDimensionalWaveletTransformAlgorithm algorithm_2d;
-  algorithm_2d.directTransform(real_input, real_output, direct_algorithm,
-                               levels);
+  algorithm_2d.setAlgorithm(algorithm);
+  algorithm_2d.directTransform(real_input, real_output, levels);
 
   // Use thresholding to denoise the image.
   for (size_t i = 0; i < real_output.size(); i++) {
-    if (hard_thresholding) {
+    if (use_hard_thresholding) {
       if (std::abs(real_output[i]) < threshold) {
         real_output[i] = 0;
       }
@@ -517,8 +516,7 @@ void GrayscaleImage::denoise(
   }
 
   // Perform the inverse wavelet transform.
-  algorithm_2d.inverseTransform(real_output, real_output, inverse_algorithm,
-                                levels);
+  algorithm_2d.inverseTransform(real_output, real_output, levels);
 
   // Map the values to [0, 256].
   affineMap(real_output, real(0), real(256));
@@ -533,15 +531,14 @@ void GrayscaleImage::denoise(
 bool GrayscaleImage::loadCompressed(const std::string &filename) {
   std::ifstream file(filename);
   assert(file.is_open());
-  
-  if (!file.eof() && !file.fail())
-  {
-      file.seekg(0, std::ios_base::end);
-      std::streampos fileSize = file.tellg();
-      this->encoded.resize(fileSize);
 
-      file.seekg(0, std::ios_base::beg);
-      file.read((char*) &this->encoded[0], fileSize);
+  if (!file.eof() && !file.fail()) {
+    file.seekg(0, std::ios_base::end);
+    std::streampos fileSize = file.tellg();
+    this->encoded.resize(fileSize);
+
+    file.seekg(0, std::ios_base::beg);
+    file.read((char *)&this->encoded[0], fileSize);
   } else {
     return false;
   }
@@ -554,12 +551,10 @@ bool GrayscaleImage::save(const std::string &filename) {
   std::ofstream file(filename);
   assert(file.is_open());
 
-  file.write((char*) &this->encoded[0], this->encoded.size());
+  file.write((char *)&this->encoded[0], this->encoded.size());
 
   return true;
 }
 
 // Get the encoded image.
-std::vector<uint8_t> GrayscaleImage::getEncoded() {
-  return this->encoded;
-}
+std::vector<uint8_t> GrayscaleImage::getEncoded() { return this->encoded; }

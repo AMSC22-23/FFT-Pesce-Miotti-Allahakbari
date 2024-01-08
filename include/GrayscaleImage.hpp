@@ -122,17 +122,15 @@ class GrayscaleImage {
    * @brief Perform a direct wavelet transform on the last loaded image and
    * replace it with an image representing its DWT.
    *
-   * @param algorithm The algorithm to use for the DWT. It must be a 1D direct
-   * wavelet transform algorithm.
+   * @param algorithm The algorithm to use for the DWT.
    * @param levels The number of levels for the DWT.
    *
    * @note The image must be square and the number of pixels in a row must be a
    * power of 2 and greater than 1.
    */
   void waveletTransform(
-      const std::shared_ptr<
-          Transform::WaveletTransform::WaveletTransformAlgorithm>
-          algorithm,
+      std::unique_ptr<Transform::WaveletTransform::WaveletTransformAlgorithm>
+          &algorithm,
       unsigned int levels);
 
   /**
@@ -142,23 +140,17 @@ class GrayscaleImage {
    * specified parameter and then applies the IWT on the result and updates the
    * image.
    *
-   * @param direct_algorithm The algorithm to use for the DWT. It must be a 1D
-   * direct wavelet transform algorithm.
-   * @param inverse_algorithm The algorithm to use for the IWT. It must be a 1D
-   * inverse wavelet transform algorithm.
+   * @param algorithm The algorithm to use for the DWT and IWT.
    * @param levels The number of levels for the DWT and IWT.
    * @param threshold The threshold for the thresholding step.
-   * @param hard_thresholding If true, hard thresholding is used, otherwise soft
-   * thresholding is used instead.
+   * @param use_hard_thresholding If true, hard thresholding is used, otherwise
+   * soft thresholding is used instead.
    */
-  void denoise(const std::shared_ptr<
-                   Transform::WaveletTransform::WaveletTransformAlgorithm>
-                   direct_algorithm,
-               const std::shared_ptr<
-                   Transform::WaveletTransform::WaveletTransformAlgorithm>
-                   inverse_algorithm,
-               unsigned int levels, Transform::real threshold,
-               bool hard_thresholding);
+  void denoise(
+      std::unique_ptr<Transform::WaveletTransform::WaveletTransformAlgorithm>
+          &algorithm,
+      unsigned int levels, Transform::real threshold,
+      bool use_hard_thresholding);
 
  private:
   /**

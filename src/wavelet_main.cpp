@@ -85,14 +85,14 @@ int wavelet_main(int argc, char *argv[]) {
       // Display the image.
       image.display();
 
-      // Create the two direct wavelet transform algorithms.
-      std::shared_ptr<WaveletTransformAlgorithm> gp_direct_algorithm =
-          std::make_shared<GPDirectWaveletTransform97>();
-      std::shared_ptr<WaveletTransformAlgorithm> db_direct_algorithm =
-          std::make_shared<DaubechiesDirectWaveletTransform97>();
+      // Create the two wavelet transform algorithms.
+      std::unique_ptr<WaveletTransformAlgorithm> gp_algorithm =
+          std::make_unique<GPWaveletTransform97>();
+      std::unique_ptr<WaveletTransformAlgorithm> db_algorithm =
+          std::make_unique<DaubechiesWaveletTransform97>();
 
       // Perform the transform with the algorithm by Gregoire Pau.
-      image.waveletTransform(gp_direct_algorithm, levels);
+      image.waveletTransform(gp_algorithm, levels);
       image.display();
 
       // Load a second copy of the image.
@@ -106,7 +106,7 @@ int wavelet_main(int argc, char *argv[]) {
       }
 
       // Perform the transform with the algorithm by Daubechies.
-      image2.waveletTransform(db_direct_algorithm, levels);
+      image2.waveletTransform(db_algorithm, levels);
       image2.display();
 
       // Perform a denoising test.
@@ -135,15 +135,12 @@ int wavelet_main(int argc, char *argv[]) {
         return 1;
       }
 
-      // Create a direct and an inverse algorithm.
-      std::shared_ptr<WaveletTransformAlgorithm> gp_direct_algorithm =
-          std::make_shared<GPDirectWaveletTransform97>();
-      std::shared_ptr<WaveletTransformAlgorithm> gp_inverse_algorithm =
-          std::make_shared<GPInverseWaveletTransform97>();
+      // Create a wavelet algorithm.
+      std::unique_ptr<WaveletTransformAlgorithm> gp_algorithm =
+          std::make_unique<GPWaveletTransform97>();
 
       // Denoise the image with the algorithm by Gregoire Pau.
-      image.denoise(gp_direct_algorithm, gp_inverse_algorithm, levels,
-                    threshold, false);
+      image.denoise(gp_algorithm, levels, threshold, false);
       image.display();
     }
 
@@ -184,31 +181,29 @@ int wavelet_main(int argc, char *argv[]) {
 
     // Do the forward 9/7 transform with the algorithm by Gregoire Pau.
     std::vector<real> fwt_result(input_sequence);
-    GPDirectWaveletTransform97 gp_direct;
-    gp_direct(input_sequence, fwt_result);
+    GPWaveletTransform97 gp_algorithm;
+    gp_algorithm.directTransform(input_sequence, fwt_result);
 
     // Save the sequence to a file.
     WriteToFile(fwt_result, "gp_fwt_result.csv");
 
     // Do the inverse 9/7 transform with the algorithm by Gregoire Pau.
     std::vector<real> iwt_result(fwt_result);
-    GPInverseWaveletTransform97 gp_inverse;
-    gp_inverse(fwt_result, iwt_result);
+    gp_algorithm.inverseTransform(fwt_result, iwt_result);
 
     // Check if the result is the same as the input sequence.
     if (!CompareVectors(input_sequence, iwt_result, precision, false))
       std::cerr << "Errors detected in GP wavelet transforms." << std::endl;
 
     // Do the forward 9/7 transform with the algorithm by Daubechies.
-    DaubechiesDirectWaveletTransform97 db_direct;
-    db_direct(input_sequence, fwt_result);
+    DaubechiesWaveletTransform97 db_algorithm;
+    db_algorithm.directTransform(input_sequence, fwt_result);
 
     // Save the sequences to a file.
     WriteToFile(fwt_result, "daubechies_fwt_result.csv");
 
     // Do the inverse 9/7 transform with the algorithm by Daubechies.
-    DaubechiesInverseWaveletTransform97 db_inverse;
-    db_inverse(fwt_result, iwt_result);
+    db_algorithm.inverseTransform(fwt_result, iwt_result);
 
     // Check if the result is the same as the input sequence.
     if (!CompareVectors(input_sequence, iwt_result, precision, false))
@@ -228,27 +223,21 @@ int wavelet_main(int argc, char *argv[]) {
 
       // Test the algorithm by Gregoire Pau.
       TwoDimensionalWaveletTransformAlgorithm algorithm_2d;
-      std::shared_ptr<WaveletTransformAlgorithm> gp_direct_algorithm =
-          std::make_shared<GPDirectWaveletTransform97>();
-      algorithm_2d.directTransform(input_matrix, dwt_matrix,
-                                   gp_direct_algorithm, levels);
-      std::shared_ptr<WaveletTransformAlgorithm> gp_inverse_algorithm =
-          std::make_shared<GPInverseWaveletTransform97>();
-      algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix,
-                                    gp_inverse_algorithm, levels);
+      std::unique_ptr<WaveletTransformAlgorithm> gp_algorithm =
+          std::make_unique<GPWaveletTransform97>();
+      algorithm_2d.setAlgorithm(gp_algorithm);
+      algorithm_2d.directTransform(input_matrix, dwt_matrix, levels);
+      algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, levels);
       if (!CompareVectors(input_matrix, iwt_matrix, precision, false))
         std::cerr << "Errors detected in 2D GP wavelet transforms with "
                   << levels << " levels." << std::endl;
 
       // Test the algorithm by Daubechies.
-      std::shared_ptr<WaveletTransformAlgorithm> db_direct_algorithm =
-          std::make_shared<DaubechiesDirectWaveletTransform97>();
-      algorithm_2d.directTransform(input_matrix, dwt_matrix,
-                                   db_direct_algorithm, levels);
-      std::shared_ptr<WaveletTransformAlgorithm> db_inverse_algorithm =
-          std::make_shared<DaubechiesInverseWaveletTransform97>();
-      algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix,
-                                    db_inverse_algorithm, levels);
+      std::unique_ptr<WaveletTransformAlgorithm> db_algorithm =
+          std::make_unique<DaubechiesWaveletTransform97>();
+      algorithm_2d.setAlgorithm(db_algorithm);
+      algorithm_2d.directTransform(input_matrix, dwt_matrix, levels);
+      algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, levels);
       if (!CompareVectors(input_matrix, iwt_matrix, precision, false))
         std::cerr << "Errors detected in 2D DB wavelet transforms with "
                   << levels << " levels." << std::endl;
