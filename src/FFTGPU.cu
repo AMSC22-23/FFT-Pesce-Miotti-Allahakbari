@@ -96,24 +96,30 @@ __global__ void block_fft1d(cuda::std::complex<real>* data, int size,
                             int log_n_blk, real base) {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
+  __shared__ cuda::std::complex<real> tile[TILE_SIZE];
+  tile[threadIdx.x] = data[tid];
+  __syncthreads();
+
   for (size_t s = 1; s <= log_n_blk; s++) {
     const size_t m = 1UL << s;
     int half_m = m >> 1;
-    size_t k = (tid / half_m) * m;
-    size_t j = tid % half_m;
+    size_t k = (threadIdx.x / half_m) * m;
+    size_t j = threadIdx.x % half_m;
     const size_t k_plus_j = k + j;
 
     if ((k_plus_j + half_m) < size) {
       const cuda::std::complex<real> omega =
           cuda::std::exp(cuda::std::complex<real>{0, base / half_m * j});
-      const cuda::std::complex<real> t = omega * data[k_plus_j + half_m];
-      const cuda::std::complex<real> u = data[k_plus_j];
+      const cuda::std::complex<real> t = omega * tile[k_plus_j + half_m];
+      const cuda::std::complex<real> u = tile[k_plus_j];
       const cuda::std::complex<real> even = u + t;
       const cuda::std::complex<real> odd = u - t;
-      data[k_plus_j] = even;
-      data[k_plus_j + half_m] = odd;
+      tile[k_plus_j] = even;
+      tile[k_plus_j + half_m] = odd;
     }
   }
+  data[tid] = tile[threadIdx.x];
+  __syncthreads();
 }
 
 void run_fft_gpu(cuda::std::complex<real>* data, int n, int m, real base,
