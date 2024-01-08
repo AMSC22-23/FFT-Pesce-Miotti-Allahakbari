@@ -36,13 +36,24 @@ class GrayscaleImage {
   // Get the bitsize of the last loaded or encoded image.
   unsigned int getCompressedBitsize() const;
 
-  // Perform a wavelet transform on the decoded image. It is direct is "direct"
-  // is true and inverse otherwise.
+  // Perform a direct wavelet transform on the decoded image and store the
+  // result into decoded.
   void waveletTransform(
       const std::shared_ptr<
           Transform::WaveletTransform::WaveletTransformAlgorithm>
           algorithm,
-      unsigned int levels, bool direct);
+      unsigned int levels);
+
+  // Perform a direct wavelet transform on the decoded image, use thresholding,
+  // perform the inverse transform and store the result into decoded.
+  void denoise(const std::shared_ptr<
+                   Transform::WaveletTransform::WaveletTransformAlgorithm>
+                   direct_algorithm,
+               const std::shared_ptr<
+                   Transform::WaveletTransform::WaveletTransformAlgorithm>
+                   inverse_algorithm,
+               unsigned int levels, Transform::real threshold,
+               bool hard_thresholding);
 
  private:
   // Split the image in blocks of size 8x8, and save the result in variable

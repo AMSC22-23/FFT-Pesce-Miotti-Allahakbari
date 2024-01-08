@@ -7,13 +7,16 @@
 #include "WaveletTransform.hpp"
 
 void print_usage(size_t size, const std::string &mode, const std::string &path,
-                 unsigned int levels) {
+                 unsigned int levels, Transform::real threshold) {
   std::cerr << "Incorrect arguments!\n"
             << "Argument 1: wavelet\n"
-            << "Argument 2: mode (demo / image (default: " << mode << "))\n"
+            << "Argument 2: mode (demo / image / denoise (default: " << mode
+            << "))\n"
             << "Argument 3: demo: size of the sequence (default: " << size
-            << "), image: image path (default: " << path << ")\n"
-            << "Argument 4: image: number of 2D DWT levels (default: " << levels
+            << "), image/denoise: image path (default: " << path << ")\n"
+            << "Argument 4: image/denoise: number of 2D DWT levels (default: "
+            << levels << ")\n"
+            << "Argument 5: denoise: denoise threshold (default: " << threshold
             << ")" << std::endl;
 }
 
@@ -26,9 +29,11 @@ int wavelet_main(int argc, char *argv[]) {
   const std::string default_mode = "demo";
   constexpr real precision = 1e-4;
   constexpr unsigned int default_levels = 1;
+  constexpr real default_threshold = 50;
 
-  if (argc > 5) {
-    print_usage(default_size, default_mode, default_image, default_levels);
+  if (argc > 6) {
+    print_usage(default_size, default_mode, default_image, default_levels,
+                default_threshold);
     return 1;
   }
 
@@ -36,8 +41,9 @@ int wavelet_main(int argc, char *argv[]) {
   std::string mode = default_mode;
   if (argc >= 3) mode = std::string(argv[2]);
 
-  // Perform a test on an image.
-  if (mode == std::string("image")) {
+  // Perform a test on an image, either displaying wavelet transforms or
+  // denoising.
+  if (mode == std::string("image") || mode == std::string("denoise")) {
     // Get the image path.
     std::string path = default_image;
     if (argc >= 4) path = std::string(argv[3]);
@@ -50,69 +56,103 @@ int wavelet_main(int argc, char *argv[]) {
       unsigned long long_levels = strtoul(argv[4], &error, 10);
       // Check for errors.
       if (*error) {
-        print_usage(default_size, default_mode, default_image, default_levels);
+        print_usage(default_size, default_mode, default_image, default_levels,
+                    default_threshold);
         return 1;
       }
 
       levels = static_cast<unsigned int>(long_levels);
     }
 
-    // Load the image.
-    GrayscaleImage image;
-    bool success = image.loadStandard(path);
+    // Perform a test displaying wavelet transforms.
+    if (mode == std::string("image")) {
+      if (argc > 5) {
+        print_usage(default_size, default_mode, default_image, default_levels,
+                    default_threshold);
+        return 1;
+      }
 
-    // Check if the image was loaded successfully.
-    if (!success) {
-      std::cout << "Failed to load image." << std::endl;
-      return 1;
+      // Load the image.
+      GrayscaleImage image;
+      bool success = image.loadStandard(path);
+
+      // Check if the image was loaded successfully.
+      if (!success) {
+        std::cout << "Failed to load image." << std::endl;
+        return 1;
+      }
+
+      // Display the image.
+      image.display();
+
+      // Create the two direct wavelet transform algorithms.
+      std::shared_ptr<WaveletTransformAlgorithm> gp_direct_algorithm =
+          std::make_shared<GPDirectWaveletTransform97>();
+      std::shared_ptr<WaveletTransformAlgorithm> db_direct_algorithm =
+          std::make_shared<DaubechiesDirectWaveletTransform97>();
+
+      // Perform the transform with the algorithm by Gregoire Pau.
+      image.waveletTransform(gp_direct_algorithm, levels);
+      image.display();
+
+      // Load a second copy of the image.
+      GrayscaleImage image2;
+      success = image2.loadStandard(path);
+
+      // Check if the image was loaded successfully.
+      if (!success) {
+        std::cout << "Failed to load image." << std::endl;
+        return 1;
+      }
+
+      // Perform the transform with the algorithm by Daubechies.
+      image2.waveletTransform(db_direct_algorithm, levels);
+      image2.display();
+
+      // Perform a denoising test.
+    } else {
+      // Get the threshold.
+      real threshold = default_threshold;
+      if (argc >= 6) {
+        char *error;
+
+        threshold = strtod(argv[5], &error);
+        // Check for errors.
+        if (*error) {
+          print_usage(default_size, default_mode, default_image, default_levels,
+                      default_threshold);
+          return 1;
+        }
+      }
+
+      // Load the image.
+      GrayscaleImage image;
+      bool success = image.loadStandard(path);
+
+      // Check if the image was loaded successfully.
+      if (!success) {
+        std::cout << "Failed to load image." << std::endl;
+        return 1;
+      }
+
+      // Create a direct and an inverse algorithm.
+      std::shared_ptr<WaveletTransformAlgorithm> gp_direct_algorithm =
+          std::make_shared<GPDirectWaveletTransform97>();
+      std::shared_ptr<WaveletTransformAlgorithm> gp_inverse_algorithm =
+          std::make_shared<GPInverseWaveletTransform97>();
+
+      // Denoise the image with the algorithm by Gregoire Pau.
+      image.denoise(gp_direct_algorithm, gp_inverse_algorithm, levels,
+                    threshold, false);
+      image.display();
     }
-
-    // Display the image.
-    image.display();
-
-    // Create the two direct wavelet transform algorithms.
-    std::shared_ptr<WaveletTransformAlgorithm> gp_direct_algorithm =
-        std::make_shared<GPDirectWaveletTransform97>();
-    std::shared_ptr<WaveletTransformAlgorithm> db_direct_algorithm =
-        std::make_shared<DaubechiesDirectWaveletTransform97>();
-
-    // Perform the transform with the algorithm by Gregoire Pau.
-    image.waveletTransform(gp_direct_algorithm, levels, true);
-    image.display();
-
-    // Load a second copy of the image.
-    GrayscaleImage image2;
-    success = image2.loadStandard(path);
-
-    // Check if the image was loaded successfully.
-    if (!success) {
-      std::cout << "Failed to load image." << std::endl;
-      return 1;
-    }
-
-    // Perform the transform with the algorithm by Daubechies.
-    image2.waveletTransform(db_direct_algorithm, levels, true);
-    image2.display();
-
-    // Create the two inverse wavelet transform algorithms.
-    std::shared_ptr<WaveletTransformAlgorithm> gp_inverse_algorithm =
-        std::make_shared<GPInverseWaveletTransform97>();
-    std::shared_ptr<WaveletTransformAlgorithm> db_inverse_algorithm =
-        std::make_shared<DaubechiesInverseWaveletTransform97>();
-
-    // Perform the inverse transform with the algorithm by Gregoire Pau.
-    image.waveletTransform(gp_inverse_algorithm, levels, false);
-    image.display();
-
-    // Perform the inverse transform with the algorithm by Daubechies.
-    image2.waveletTransform(db_inverse_algorithm, levels, false);
-    image2.display();
 
     // Perform a demo of the wavelet transforms.
   } else if (mode == std::string("demo")) {
     // Check the number of arguments.
     if (argc > 4) {
-      print_usage(default_size, default_mode, default_image, default_levels);
+      print_usage(default_size, default_mode, default_image, default_levels,
+                  default_threshold);
       return 1;
     }
 
@@ -124,7 +164,8 @@ int wavelet_main(int argc, char *argv[]) {
       const unsigned long long_size = strtoul(argv[3], &error, 10);
       // Check for errors.
       if (*error) {
-        print_usage(default_size, default_mode, default_image, default_levels);
+        print_usage(default_size, default_mode, default_image, default_levels,
+                    default_threshold);
         return 1;
       }
 
@@ -214,7 +255,8 @@ int wavelet_main(int argc, char *argv[]) {
     }
 
   } else {
-    print_usage(default_size, default_mode, default_image, default_levels);
+    print_usage(default_size, default_mode, default_image, default_levels,
+                default_threshold);
     return 1;
   }
 

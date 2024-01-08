@@ -3,6 +3,7 @@
 #include <tgmath.h>
 
 #include <cassert>
+#include <iostream>
 
 namespace Transform {
 namespace WaveletTransform {
@@ -254,10 +255,10 @@ void TwoDimensionalWaveletTransformAlgorithm::transformRows(
   const size_t N_squared = matrix.size();
   const size_t N = static_cast<size_t>(sqrt(N_squared));
 
-  // Check that the sizes are a power of 2, that the vector is large enough and
-  // that the matrix is square.
+  // Check that the sizes are a power of 2 and at least 2, that the vector is
+  // large enough and that the matrix is square.
   assert(n <= N);
-  assert(n > 0 && (1UL << static_cast<size_t>(log2(n))) == n);
+  assert(n >= 2 && (1UL << static_cast<size_t>(log2(n))) == n);
   assert(1UL << static_cast<size_t>(log2(N)) == N);
   assert(N * N == N_squared);
 
@@ -291,10 +292,10 @@ void TwoDimensionalWaveletTransformAlgorithm::transformColumns(
   const size_t N_squared = matrix.size();
   const size_t N = static_cast<size_t>(sqrt(N_squared));
 
-  // Check that the sizes are a power of 2, that the vector is large enough and
-  // that the matrix is square.
+  // Check that the sizes are a power of 2 and at least 2, that the vector is
+  // large enough and that the matrix is square.
   assert(n <= N);
-  assert(n > 0 && (1UL << static_cast<size_t>(log2(n))) == n);
+  assert(n >= 2 && (1UL << static_cast<size_t>(log2(n))) == n);
   assert(1UL << static_cast<size_t>(log2(N)) == N);
   assert(N * N == N_squared);
 

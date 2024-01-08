@@ -1,7 +1,5 @@
 #include "GrayscaleImage.hpp"
 
-#include <limits>
-#include <numbers>
 #include <opencv2/opencv.hpp>
 
 #include "FourierTransform.hpp"
@@ -463,11 +461,11 @@ void GrayscaleImage::waveletTransform(
     const std::shared_ptr<
         Transform::WaveletTransform::WaveletTransformAlgorithm>
         algorithm,
-    unsigned int levels, bool direct) {
+    unsigned int levels) {
   using namespace Transform;
   using namespace WaveletTransform;
 
-  // Convert the decoded image's values from char to real.
+  // Convert the decoded image's values from uint8_t to real.
   std::vector<real> real_input;
   real_input.reserve(this->decoded.size());
   for (size_t i = 0; i < this->decoded.size(); i++) {
@@ -479,31 +477,69 @@ void GrayscaleImage::waveletTransform(
 
   // Perform the direct wavelet transform.
   TwoDimensionalWaveletTransformAlgorithm algorithm_2d;
-  if (direct) {
-    algorithm_2d.directTransform(real_input, real_output, algorithm, levels);
-  } else {
-    algorithm_2d.inverseTransform(real_input, real_output, algorithm, levels);
-  }
+  algorithm_2d.directTransform(real_input, real_output, algorithm, levels);
 
-  // Calculate the maximum and minimum coefficients.
-  real max_value = -std::numeric_limits<real>::max();
-  real min_value = std::numeric_limits<real>::max();
-  for (size_t i = 0; i < this->decoded.size(); i++) {
-    if (real_output[i] > max_value) {
-      max_value = real_output[i];
-    }
-    if (real_output[i] < min_value) {
-      min_value = real_output[i];
-    }
-  }
-  real range = max_value - min_value;
-  if (range == 0) {
-    range = std::numeric_limits<real>::max();
-  }
+  // Map the values to [0, 256].
+  affineMap(real_output, real(0), real(256));
 
   // Update the decoded image.
   for (size_t i = 0; i < this->decoded.size(); i++) {
-    this->decoded[i] =
-        static_cast<uint8_t>((real_output[i] - min_value) / range * 256);
+    this->decoded[i] = static_cast<uint8_t>(real_output[i]);
+  }
+}
+
+void GrayscaleImage::denoise(
+    const std::shared_ptr<
+        Transform::WaveletTransform::WaveletTransformAlgorithm>
+        direct_algorithm,
+    const std::shared_ptr<
+        Transform::WaveletTransform::WaveletTransformAlgorithm>
+        inverse_algorithm,
+    unsigned int levels, Transform::real threshold, bool hard_thresholding) {
+  using namespace Transform;
+  using namespace WaveletTransform;
+
+  // Convert the decoded image's values from uint8_t to real.
+  std::vector<real> real_input;
+  real_input.reserve(this->decoded.size());
+  for (size_t i = 0; i < this->decoded.size(); i++) {
+    real_input.emplace_back(static_cast<real>(this->decoded[i]));
+  }
+
+  // Allocate an output vector.
+  std::vector<real> real_output(this->decoded.size(), 0);
+
+  // Perform the direct wavelet transform.
+  TwoDimensionalWaveletTransformAlgorithm algorithm_2d;
+  algorithm_2d.directTransform(real_input, real_output, direct_algorithm,
+                               levels);
+
+  // Use thresholding to denoise the image.
+  for (size_t i = 0; i < real_output.size(); i++) {
+    if (hard_thresholding) {
+      if (std::abs(real_output[i]) < threshold) {
+        real_output[i] = 0;
+      }
+    } else {
+      if (std::abs(real_output[i]) < threshold) {
+        real_output[i] = 0;
+      } else if (real_output[i] > 0) {
+        real_output[i] -= threshold;
+      } else {
+        real_output[i] += threshold;
+      }
+    }
+  }
+
+  // Perform the inverse wavelet transform.
+  algorithm_2d.inverseTransform(real_output, real_output, inverse_algorithm,
+                                levels);
+
+  // Map the values to [0, 256].
+  affineMap(real_output, real(0), real(256));
+
+  // Update the decoded image.
+  for (size_t i = 0; i < this->decoded.size(); i++) {
+    this->decoded[i] = static_cast<uint8_t>(real_output[i]);
   }
 }

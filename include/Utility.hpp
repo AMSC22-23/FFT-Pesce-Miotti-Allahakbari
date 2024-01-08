@@ -85,4 +85,24 @@ inline void WriteToFile(const Transform::FourierTransform::vec &sequence,
   std::cout << "Written data to [" << filename << "]." << std::endl;
 }
 
+// Map values to the range [min_value, max_value] with an affine map, mapping
+// the lowest element in values to min_value and the highest to max_value. If
+// all elements in values are the same, they are all mapped into the the average
+// of min_value and max_value.
+template <typename T>
+void affineMap(std::vector<T> &values, T min_value, T max_value) {
+  T range_start = *std::min_element(values.begin(), values.end());
+  T range_end = *std::max_element(values.begin(), values.end());
+  T range = range_end - range_start;
+
+  for (size_t i = 0; i < values.size(); i++) {
+    if (range != 0) {
+      values[i] = (values[i] - range_start) / range * (max_value - min_value) +
+                  min_value;
+    } else {
+      values[i] = (min_value + max_value) / 2;
+    }
+  }
+}
+
 #endif  // UTILITY_HPP
