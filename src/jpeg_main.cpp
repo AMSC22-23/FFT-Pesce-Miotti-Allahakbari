@@ -58,7 +58,7 @@ int jpeg_main(int argc, char *argv[])
   grayscaleImage.decode();
 
   // Display the image.
-  grayscaleImage.display();
+  grayscaleImage.display();   
 
   return 0;
 }

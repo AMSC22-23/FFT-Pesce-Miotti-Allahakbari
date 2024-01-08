@@ -66,11 +66,11 @@ class GrayscaleImage {
 
   // Quantize the given vec using the quantization table.
   void quantize(const Transform::FourierTransform::vec &vec,
-                std::vector<char> &realBlock, std::vector<char> &imagBlock);
+                std::vector<int8_t> &realBlock, std::vector<int8_t> &imagBlock);
 
   // Unquantize the given vec using the quantization table.
   void unquantize(Transform::FourierTransform::vec &vec,
-                  std::vector<char> &realBlock, std::vector<char> &imagBlock);
+                  std::vector<int8_t> &realBlock, std::vector<int8_t> &imagBlock);
 
   // Use entropy coding to encode all blocks.
   void entropyEncode();
@@ -91,8 +91,8 @@ class GrayscaleImage {
   std::vector<uint8_t> encoded;
 
   // An array of 8x8 blocks. Each block is a vector of 64 elements.
-  std::vector<std::vector<char>> blocks;
-  std::vector<std::vector<char>> imagBlocks;
+  std::vector<std::vector<int8_t>> blocks;
+  std::vector<std::vector<int8_t>> imagBlocks;
 
   // Block grid width.
   int blockGridWidth;
