@@ -122,7 +122,8 @@ class GrayscaleImage {
    * @brief Perform a direct wavelet transform on the last loaded image and
    * replace it with an image representing its DWT.
    *
-   * @param algorithm The algorithm to use for the DWT.
+   * @param algorithm A unique pointer to the algorithm to use for the DWT, it
+   * will be moved when calling the function.
    * @param levels The number of levels for the DWT.
    *
    * @note The image must be square and the number of pixels in a row must be a
@@ -140,11 +141,15 @@ class GrayscaleImage {
    * specified parameter and then applies the IWT on the result and updates the
    * image.
    *
-   * @param algorithm The algorithm to use for the DWT and IWT.
+   * @param algorithm A unique pointer to the algorithm to use for the DWT and
+   * IWT, it will be moved when calling the function.
    * @param levels The number of levels for the DWT and IWT.
    * @param threshold The threshold for the thresholding step.
    * @param use_hard_thresholding If true, hard thresholding is used, otherwise
    * soft thresholding is used instead.
+   *
+   * @note The image must be square and the number of pixels in a row must be a
+   * power of 2 and greater than 1.
    */
   void denoise(
       std::unique_ptr<Transform::WaveletTransform::WaveletTransformAlgorithm>

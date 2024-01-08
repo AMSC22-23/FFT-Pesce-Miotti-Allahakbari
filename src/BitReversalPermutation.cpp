@@ -148,7 +148,7 @@ unsigned long BitReversalPermutationAlgorithm::calculateTime(
   return time;
 }
 
-void CompareTimesBitReversalPermutation(const vec &sequence,
+void CompareBitReversalPermutationTimes(const vec &sequence,
                                         unsigned int max_num_threads) {
   // Calculate sequence size.
   const size_t size = sequence.size();

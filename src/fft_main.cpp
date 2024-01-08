@@ -200,7 +200,7 @@ int fft_main(int argc, char *argv[]) {
   // techniques.
   else if (mode == std::string("bitReversalTest")) {
     // Run a comparison between mask and fast bit reversal permutations.
-    CompareTimesBitReversalPermutation(input_sequence, max_num_threads);
+    CompareBitReversalPermutationTimes(input_sequence, max_num_threads);
   }
 
   // Run a scaling test with the best performing algorithm.

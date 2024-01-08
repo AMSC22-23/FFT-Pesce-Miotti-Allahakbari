@@ -7,8 +7,6 @@
 
 #include "Real.hpp"
 
-// A simple way to make the code generic with respect to the real type.
-
 namespace Transform {
 namespace FourierTransform {
 
