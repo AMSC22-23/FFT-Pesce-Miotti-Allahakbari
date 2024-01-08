@@ -215,6 +215,26 @@ class GrayscaleImage {
    * 
    * This is a static member variable, which means that it is shared by all instances
    * of the GrayscaleImage class.
+   * 
+   * The quantization table is used to quantize and unquantize the real and imaginary
+   * parts of each block. The table is used to divide the real and imaginary parts
+   * of each block by the corresponding element of the table.
+   * 
+   * Very efficient quantization tables can be found online, to be used with the JPEG
+   * standard. These quantization tables are designed to be used with the cosine transform,
+   * which is not the same as the Fourier transform. In our case, we use a very simple
+   * quantization table, which is eyeballed to give good results, as quantization effectiveness
+   * is dependent on the relationship between human visual perception of image frequencies
+   * and the actual frequencies of the image, of which we have no precise knowledge.
+   * 
+   * 200 100 100 100 100 100 100 100 
+   * 100 100 100 100 100 100 100 100
+   * 100 100 100 100 100 100 100 100
+   * 100 100 100 100 100 100 100 100
+   * 100 100 100 100 100 100 100 100
+   * 100 100 100 100 100 100 100 100
+   * 100 100 100 100 100 100 100 100
+   * 100 100 100 100 100 100 100 100
    */
   static std::vector<int> quantizationTable;
 
@@ -225,6 +245,26 @@ class GrayscaleImage {
    * of the GrayscaleImage class. The zig-zag map is used to convert a block into a
    * linear sequence of values. The map associates each element of the block (expressed
    * as a pair of integer coordinates) with a position (their index) in the linear sequence.
+   * 
+   * In our case, the zig-zag map is not size-dependent, as we only use 8x8 blocks.
+   * Using this restriction to our advantage, we can store the whole map without
+   * having to compute it every time.
+   * 
+   * {0, 0},
+   * {0, 1}, {1, 0},
+   * {2, 0}, {1, 1}, {0, 2},
+   * {0, 3}, {1, 2}, {2, 1}, {3, 0},
+   * {4, 0}, {3, 1}, {2, 2}, {1, 3}, {0, 4},
+   * {0, 5}, {1, 4}, {2, 3}, {3, 2}, {4, 1}, {5, 0},
+   * {6, 0}, {5, 1}, {4, 2}, {3, 3}, {2, 4}, {1, 5}, {0, 6},
+   * {0, 7}, {1, 6}, {2, 5}, {3, 4}, {4, 3}, {5, 2}, {6, 1}, {7, 0},
+   * {7, 1}, {6, 2}, {5, 3}, {4, 4}, {3, 5}, {2, 6}, {1, 7},
+   * {2, 7}, {3, 6}, {4, 5}, {5, 4}, {6, 3}, {7, 2},
+   * {7, 3}, {6, 4}, {5, 5}, {4, 6}, {3, 7},
+   * {4, 7}, {5, 6}, {6, 5}, {7, 4},
+   * {7, 5}, {6, 6}, {5, 7},
+   * {6, 7}, {7, 6},
+   * {7, 7}
    */
   static std::vector<std::pair<int, int>> zigZagMap;
 

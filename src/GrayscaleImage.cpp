@@ -24,14 +24,11 @@ bool GrayscaleImage::loadStandard(const std::string &filename) {
   this->blockGridWidth = width / 8;
   this->blockGridHeight = height / 8;
 
-  // For each row...
+  // For each row and column...
   for (int i = 0; i < image.rows; i++) {
-    // For each column...
     for (int j = 0; j < image.cols; j++) {
-      // Get the pixel value.
-      uint8_t pixel = image.at<uint8_t>(i, j);
-
       // Add the pixel value to the decoded image.
+      uint8_t pixel = image.at<uint8_t>(i, j);
       this->decoded.push_back(pixel);
     }
   }
@@ -49,14 +46,11 @@ void GrayscaleImage::display() {
   // Create a new image.
   cv::Mat image(this->blockGridHeight * 8, this->blockGridWidth * 8, CV_8UC1);
 
-  // For each row...
+  // For each row and column...
   for (int i = 0; i < image.rows; i++) {
-    // For each column...
     for (int j = 0; j < image.cols; j++) {
-      // Get the pixel value.
-      uint8_t pixel = this->decoded[i * image.cols + j];
-
       // Set the pixel value.
+      uint8_t pixel = this->decoded[i * image.cols + j];
       image.at<uint8_t>(i, j) = pixel;
     }
   }
@@ -69,12 +63,10 @@ void GrayscaleImage::display() {
 // Split the image in blocks of size 8x8, and save the result in variable
 // 'blocks'.
 void GrayscaleImage::splitBlocks() {
-  // Clear the blocks vector.
   this->blocks.clear();
 
-  // For each block row...
+  // For each block row and column...
   for (int i = 0; i < this->blockGridHeight; i++) {
-    // For each block column...
     for (int j = 0; j < this->blockGridWidth; j++) {
       // Create a new block.
       std::vector<int8_t> block;
@@ -112,9 +104,8 @@ void GrayscaleImage::mergeBlocks() {
   // Clear the decoded vector.
   this->decoded.clear();
 
-  // For each block row...
+  // For each block row and column...
   for (int i = 0; i < this->blockGridHeight; i++) {
-    // For each block column...
     for (int j = 0; j < this->blockGridWidth; j++) {
       // Get the block.
       std::vector<int8_t> block = this->blocks[i * this->blockGridWidth + j];
@@ -272,23 +263,6 @@ std::vector<std::pair<int, int>> GrayscaleImage::zigZagMap = {
     {3, 5}, {2, 6}, {1, 7}, {2, 7}, {3, 6}, {4, 5}, {5, 4}, {6, 3},
     {7, 2}, {7, 3}, {6, 4}, {5, 5}, {4, 6}, {3, 7}, {4, 7}, {5, 6},
     {6, 5}, {7, 4}, {7, 5}, {6, 6}, {5, 7}, {6, 7}, {7, 6}, {7, 7}};
-/*************************************************
-{0, 0},
-{0, 1}, {1, 0},
-{2, 0}, {1, 1}, {0, 2},
-{0, 3}, {1, 2}, {2, 1}, {3, 0},
-{4, 0}, {3, 1}, {2, 2}, {1, 3}, {0, 4},
-{0, 5}, {1, 4}, {2, 3}, {3, 2}, {4, 1}, {5, 0},
-{6, 0}, {5, 1}, {4, 2}, {3, 3}, {2, 4}, {1, 5}, {0, 6},
-{0, 7}, {1, 6}, {2, 5}, {3, 4}, {4, 3}, {5, 2}, {6, 1}, {7, 0},
-{7, 1}, {6, 2}, {5, 3}, {4, 4}, {3, 5}, {2, 6}, {1, 7},
-{2, 7}, {3, 6}, {4, 5}, {5, 4}, {6, 3}, {7, 2},
-{7, 3}, {6, 4}, {5, 5}, {4, 6}, {3, 7},
-{4, 7}, {5, 6}, {6, 5}, {7, 4},
-{7, 5}, {6, 6}, {5, 7},
-{6, 7}, {7, 6},
-{7, 7}
-*************************************************/
 
 // Use entropy coding to encode all blocks.
 void GrayscaleImage::entropyEncode() {
