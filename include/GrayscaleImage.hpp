@@ -141,48 +141,138 @@ class GrayscaleImage {
                bool hard_thresholding);
 
  private:
-  // Split the image in blocks of size 8x8, and save the result in variable
-  // 'blocks'.
+  /**
+   * @brief Split the image in 8x8 blocks and store the result in variable 'blocks'.
+   * 
+   * @note This function assumes that the image's width and height are a multiple of 8.
+   */
   void splitBlocks();
 
-  // Merge the blocks in variable 'blocks' and save the result in variable
-  // 'decoded'.
+  /**
+   * @brief Merge the blocks into a single image and store the result in variable 'decoded'.
+   * 
+   * @note This function assumes that the image's width and height are a multiple of 8.
+   */
   void mergeBlocks();
 
-  // Quantize the given vec using the quantization table.
+  /**
+   * @brief Use a quantization table to quantize the given vec.
+   * 
+   * This function quantizes the given vec using the quantization table. Each element
+   * of the vec is divided by the corresponding element of the quantization table. Then,
+   * the result is split into a real and imaginary part, and each part is stored in a
+   * separate block.
+   * 
+   * @param vec The vec to be quantized.
+   * @param realBlock The resulting real part of the quantized vec.
+   * @param imagBlock The resulting imaginary part of the quantized vec.
+   */
   void quantize(const Transform::FourierTransform::vec &vec,
                 std::vector<int8_t> &realBlock, std::vector<int8_t> &imagBlock);
 
-  // Unquantize the given vec using the quantization table.
+  /**
+   * @brief Use a quantization table to unquantize the given vec.
+   * 
+   * This function unquantizes the given real and imaginary parts using the quantization
+   * table. The real and imaginary parts are combined into a single vec, which is multiplied
+   * by the corresponding element of the quantization table, and stored in variable 'vec'.
+   * 
+   * @param vec The resulting vec.
+   * @param realBlock The real part of the quantized vec.
+   * @param imagBlock The imaginary part of the quantized vec.
+   */
   void unquantize(Transform::FourierTransform::vec &vec,
                   std::vector<int8_t> &realBlock, std::vector<int8_t> &imagBlock);
 
-  // Use entropy coding to encode all blocks.
+  /**
+   * @brief Use a simplified version of entropy coding to encode all blocks.
+   * 
+   * This function uses a simplified version of entropy coding to encode all blocks.
+   * The encoding is done in 3 steps:
+   * 1. Use the zig-zag map to convert the block into a linear sequence of values.
+   * 2. Use run-length encoding to encode the sequence of values, by storing the
+   *    number of consecutive zeros and the next non-zero value, along with the
+   *    special end-of-block symbol.
+   * 3. Store the encoded sequence of values in the 'encoded' variable.
+   */
   void entropyEncode();
 
-  // Use entropy coding to decode all blocks.
+  /**
+   * @brief Use a simplified version of entropy coding to decode all blocks.
+   * 
+   * This function uses a simplified version of entropy coding to decode all blocks.
+   * The decoding is done in 3 steps:
+   * 1. Use run-length decoding to decode the sequence of values, by reading the
+   *    number of consecutive zeros and the next non-zero value, along with the
+   *    special end-of-block symbol.
+   * 2. Use the zig-zag map to convert the sequence of values into a block.
+   * 3. Store the decoded block in the 'blocks' variable.
+   */
   void entropyDecode();
 
-  // Static member variable to store the quantization table.
+  /**
+   * @brief The quantization table.
+   * 
+   * This is a static member variable, which means that it is shared by all instances
+   * of the GrayscaleImage class.
+   */
   static std::vector<int> quantizationTable;
 
-  // Static member variable to store the zigZag map.
+  /**
+   * @brief The zig-zag map.
+   * 
+   * This is a static member variable, which means that it is shared by all instances
+   * of the GrayscaleImage class. The zig-zag map is used to convert a block into a
+   * linear sequence of values. The map associates each element of the block (expressed
+   * as a pair of integer coordinates) with a position (their index) in the linear sequence.
+   */
   static std::vector<std::pair<int, int>> zigZagMap;
 
-  // The image in uncompressed form.
+  /**
+   * @brief The image in uncompressed form (expressed as a sequence of bytes).
+   * 
+   * This variable is used to store the image in uncompressed form, as a sequence of bytes.
+   * Each byte represents a value in the range [0, 255], assigned to a pixel.
+   */
   std::vector<uint8_t> decoded;
 
-  // The image in compressed form (expressed as a sequence of bytes).
+  /**
+   * @brief The image in compressed form (expressed as a sequence of bytes).
+   * 
+   * The first half of this variable is used to store the real parts of the quantized
+   * values of each block. The second half is used to store the imaginary parts.
+   */
   std::vector<uint8_t> encoded;
 
-  // An array of 8x8 blocks. Each block is a vector of 64 elements.
+  /**
+   * @brief An array of blocks.
+   * 
+   * This variable is used to store the image in the form of blocks. Each block is
+   * represented as a sequence of bytes, each byte representing a value. The contents
+   * of the blocks do not always correspond to the same image format, as this variable
+   * is used to store the image in different stages of the encoding/decoding process.
+   */
   std::vector<std::vector<int8_t>> blocks;
+
+  /**
+   * @brief An array of blocks, containing imaginary parts.
+   * 
+   * This variable is used to store the imaginary part of the result of the 2D FFT on 
+   * each block. This is used during the encoding process.
+   * 
+   * @see blocks
+   */
   std::vector<std::vector<int8_t>> imagBlocks;
 
-  // Block grid width.
+  /**
+   * @brief The image width, expressed in blocks.
+   */
   int blockGridWidth;
 
-  // Block grid height.
+  /**
+   * @brief The image height, expressed in blocks.
+   * 
+   */
   int blockGridHeight;
 };
 
