@@ -75,20 +75,6 @@ int jpeg_main(int argc, char *argv[])
   std::vector<unsigned char> encoded_bytes = grayscaleImage.getEncoded();
   std::vector<unsigned char> encoded_bytes2 = grayscaleImage2.getEncoded();
 
-  // Write first 30 bytes of the encoded image.
-  std::cout << "First 30 bytes of the encoded image:" << std::endl;
-  for (int i = 0; i < 30; i++)
-    std::cout << (int)encoded_bytes[i] << " ";
-  std::cout << std::endl;
-
-  // Write first 30 bytes of the encoded image.
-  std::cout << "First 30 bytes of the encoded image:" << std::endl;
-  for (int i = 0; i < 30; i++)
-    std::cout << (int)encoded_bytes2[i] << " ";
-  std::cout << std::endl;
-  
-  
-
   // Decode the image.
   std::cout << "Decoding image..." << std::endl;
   grayscaleImage2.decode();

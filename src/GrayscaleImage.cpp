@@ -104,6 +104,13 @@ void GrayscaleImage::mergeBlocks() {
   // Clear the decoded vector.
   this->decoded.clear();
 
+  // Fill the decoded vector with zeros.
+  for (int i = 0; i < this->blockGridHeight * 8; i++) {
+    for (int j = 0; j < this->blockGridWidth * 8; j++) {
+      this->decoded.push_back(0);
+    }
+  }
+
   // For each block row and column...
   for (int i = 0; i < this->blockGridHeight; i++) {
     for (int j = 0; j < this->blockGridWidth; j++) {
@@ -424,6 +431,10 @@ void GrayscaleImage::entropyDecode() {
   for (size_t i = blocksSet.size() / 2; i < blocksSet.size(); i++) {
     this->imagBlocks.push_back(blocksSet[i]);
   }
+
+  // Set the block grid size as sqrt of the blocks vector size.
+  this->blockGridWidth = sqrt(this->blocks.size());
+  this->blockGridHeight = sqrt(this->blocks.size());
 }
 
 // Get the bitsize of the last loaded or encoded image.
