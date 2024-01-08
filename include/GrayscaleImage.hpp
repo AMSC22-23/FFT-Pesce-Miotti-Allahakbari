@@ -79,29 +79,58 @@ class GrayscaleImage {
    * 3. Perform the 2D inverse FFT on each block.
    * 4. Shift the block values back to the range [0, 255].
    * 5. Merge the blocks into a single image.
-   * 
    */
   void decode();
 
-  // Display the last loaded or decoded image.
+  /**
+   * @brief Display the last loaded or decoded image.
+   * 
+   * A window will pop up displaying the image. Any key can be pressed to close the window.
+   * If multiple requests to display the image are made, the new image will be displayed 
+   * as soon as the previous window is closed.
+   * 
+   * @note This function uses OpenCV to display the image.
+   */
   void display();
 
-  // Get the bitsize of the last loaded or decoded image.
+  /**
+   * @brief Get the bitsize of the last uncompressed image in memory.
+   * 
+   * This function returns the bitsize of the last uncompressed image in memory,
+   * assuming that the image is represented as a sequence of bytes, each byte
+   * representing a value in the range [0, 255], assigned to a pixel.
+   * 
+   * @return unsigned int The bitsize of the last loaded or decoded image.
+   */
   unsigned int getStandardBitsize() const;
 
-  // Get the bitsize of the last loaded or encoded image.
+  /**
+   * @brief Get the bitsize of the last compressed image in memory.
+   * 
+   * The compressed image is represented as a sequence of bytes. This function
+   * counts the number of bytes in the sequence and returns 8 times that number.
+   * 
+   * @return unsigned int The bitsize of the last compressed image.
+   */
   unsigned int getCompressedBitsize() const;
 
-  // Perform a direct wavelet transform on the decoded image and store the
-  // result into decoded.
+  /**
+   * @brief Perform a direct wavelet transform on the decoded image and store the result into decoded.
+   *
+   * @todo Complete this documentation. 
+   */
   void waveletTransform(
       const std::shared_ptr<
           Transform::WaveletTransform::WaveletTransformAlgorithm>
           algorithm,
       unsigned int levels);
 
-  // Perform a direct wavelet transform on the decoded image, use thresholding,
-  // perform the inverse transform and store the result into decoded.
+  /**
+   * Perform a direct wavelet transform on the decoded image, use thresholding, 
+   * perform the inverse transform and store the result into decoded.
+   * 
+   * @todo Complete this documentation.
+   */
   void denoise(const std::shared_ptr<
                    Transform::WaveletTransform::WaveletTransformAlgorithm>
                    direct_algorithm,
