@@ -9,18 +9,19 @@
 /**
  * @brief Represents a Grayscale Image.
  *
- * The GrayscaleImage class is designed to handle and manipulate grayscale images.
- * It provides functionalities for loading, encoding, decoding, and saving grayscale images.
- * 
+ * The GrayscaleImage class is designed to handle and manipulate grayscale
+ * images. It provides functionalities for loading, encoding, decoding, and
+ * saving grayscale images.
+ *
  * Example usage:
  * @code
  * GrayscaleImage grayscaleImage;
- * 
+ *
  * bool success = grayscaleImage.loadStandard("image.jpg");
  * if (!success) {
  *  ...
  * }
- * 
+ *
  * grayscaleImage.encode();
  * grayscaleImage.decode();
  * grayscaleImage.display();
@@ -36,7 +37,7 @@ class GrayscaleImage {
 
   /**
    * @brief Load a grayscale image from file, using a standard format.
-   * 
+   *
    * @param filename The path to the image file.
    * @return true If the image was loaded successfully.
    * @return false If the image could not be loaded.
@@ -45,7 +46,7 @@ class GrayscaleImage {
 
   /**
    * @brief Load a grayscale image from file, using a compressed format.
-   * 
+   *
    * @param filename The path to the image file.
    * @return true If the image was loaded successfully.
    * @return false If the image could not be loaded.
@@ -54,7 +55,7 @@ class GrayscaleImage {
 
   /**
    * @brief Save the image (in compressed format) to file.
-   * 
+   *
    * @param filename The path to the image file to be saved.
    * @return true If the image was saved successfully.
    * @return false If the image could not be saved.
@@ -63,7 +64,7 @@ class GrayscaleImage {
 
   /**
    * @brief Encode the last loaded image.
-   * 
+   *
    * Image encoding is done in 5 steps:
    * 1. Split the image in 8x8 blocks.
    * 2. Shift the block values to the range [-128, 127].
@@ -75,7 +76,7 @@ class GrayscaleImage {
 
   /**
    * @brief Decode the last loaded image.
-   * 
+   *
    * Image decoding is done in 5 steps:
    * 1. Use entropy decoding to get the quantized values of each block.
    * 2. Unquantize the real and imaginary parts of each block.
@@ -87,40 +88,46 @@ class GrayscaleImage {
 
   /**
    * @brief Display the last loaded or decoded image.
-   * 
-   * A window will pop up displaying the image. Any key can be pressed to close the window.
-   * If multiple requests to display the image are made, the new image will be displayed 
-   * as soon as the previous window is closed.
-   * 
+   *
+   * A window will pop up displaying the image. Any key can be pressed to close
+   * the window. If multiple requests to display the image are made, the new
+   * image will be displayed as soon as the previous window is closed.
+   *
    * @note This function uses OpenCV to display the image.
    */
   void display();
 
   /**
    * @brief Get the bitsize of the last uncompressed image in memory.
-   * 
+   *
    * This function returns the bitsize of the last uncompressed image in memory,
    * assuming that the image is represented as a sequence of bytes, each byte
    * representing a value in the range [0, 255], assigned to a pixel.
-   * 
+   *
    * @return unsigned int The bitsize of the last loaded or decoded image.
    */
   unsigned int getStandardBitsize() const;
 
   /**
    * @brief Get the bitsize of the last compressed image in memory.
-   * 
+   *
    * The compressed image is represented as a sequence of bytes. This function
    * counts the number of bytes in the sequence and returns 8 times that number.
-   * 
+   *
    * @return unsigned int The bitsize of the last compressed image.
    */
   unsigned int getCompressedBitsize() const;
 
   /**
-   * @brief Perform a direct wavelet transform on the decoded image and store the result into decoded.
+   * @brief Perform a direct wavelet transform on the last loaded image and
+   * replace it with an image representing its DWT.
    *
-   * @todo Complete this documentation. 
+   * @param algorithm The algorithm to use for the DWT. It must be a 1D direct
+   * wavelet transform algorithm.
+   * @param levels The number of levels for the DWT.
+   *
+   * @note The image must be square and the number of pixels in a row must be a
+   * power of 2 and greater than 1.
    */
   void waveletTransform(
       const std::shared_ptr<
@@ -129,10 +136,20 @@ class GrayscaleImage {
       unsigned int levels);
 
   /**
-   * Perform a direct wavelet transform on the decoded image, use thresholding, 
-   * perform the inverse transform and store the result into decoded.
-   * 
-   * @todo Complete this documentation.
+   * @brief Denoise the last loaded image using thresholding.
+   *
+   * The method applies the DWT to the image, uses thresholding with the
+   * specified parameter and then applies the IWT on the result and updates the
+   * image.
+   *
+   * @param direct_algorithm The algorithm to use for the DWT. It must be a 1D
+   * direct wavelet transform algorithm.
+   * @param inverse_algorithm The algorithm to use for the IWT. It must be a 1D
+   * inverse wavelet transform algorithm.
+   * @param levels The number of levels for the DWT and IWT.
+   * @param threshold The threshold for the thresholding step.
+   * @param hard_thresholding If true, hard thresholding is used, otherwise soft
+   * thresholding is used instead.
    */
   void denoise(const std::shared_ptr<
                    Transform::WaveletTransform::WaveletTransformAlgorithm>
@@ -145,27 +162,31 @@ class GrayscaleImage {
 
  private:
   /**
-   * @brief Split the image in 8x8 blocks and store the result in variable 'blocks'.
-   * 
-   * @note This function assumes that the image's width and height are a multiple of 8.
+   * @brief Split the image in 8x8 blocks and store the result in variable
+   * 'blocks'.
+   *
+   * @note This function assumes that the image's width and height are a
+   * multiple of 8.
    */
   void splitBlocks();
 
   /**
-   * @brief Merge the blocks into a single image and store the result in variable 'decoded'.
-   * 
-   * @note This function assumes that the image's width and height are a multiple of 8.
+   * @brief Merge the blocks into a single image and store the result in
+   * variable 'decoded'.
+   *
+   * @note This function assumes that the image's width and height are a
+   * multiple of 8.
    */
   void mergeBlocks();
 
   /**
    * @brief Use a quantization table to quantize the given vec.
-   * 
-   * This function quantizes the given vec using the quantization table. Each element
-   * of the vec is divided by the corresponding element of the quantization table. Then,
-   * the result is split into a real and imaginary part, and each part is stored in a
-   * separate block.
-   * 
+   *
+   * This function quantizes the given vec using the quantization table. Each
+   * element of the vec is divided by the corresponding element of the
+   * quantization table. Then, the result is split into a real and imaginary
+   * part, and each part is stored in a separate block.
+   *
    * @param vec The vec to be quantized.
    * @param realBlock The resulting real part of the quantized vec.
    * @param imagBlock The resulting imaginary part of the quantized vec.
@@ -175,24 +196,27 @@ class GrayscaleImage {
 
   /**
    * @brief Use a quantization table to unquantize the given vec.
-   * 
-   * This function unquantizes the given real and imaginary parts using the quantization
-   * table. The real and imaginary parts are combined into a single vec, which is multiplied
-   * by the corresponding element of the quantization table, and stored in variable 'vec'.
-   * 
+   *
+   * This function unquantizes the given real and imaginary parts using the
+   * quantization table. The real and imaginary parts are combined into a single
+   * vec, which is multiplied by the corresponding element of the quantization
+   * table, and stored in variable 'vec'.
+   *
    * @param vec The resulting vec.
    * @param realBlock The real part of the quantized vec.
    * @param imagBlock The imaginary part of the quantized vec.
    */
   void unquantize(Transform::FourierTransform::vec &vec,
-                  std::vector<int8_t> &realBlock, std::vector<int8_t> &imagBlock);
+                  std::vector<int8_t> &realBlock,
+                  std::vector<int8_t> &imagBlock);
 
   /**
    * @brief Use a simplified version of entropy coding to encode all blocks.
-   * 
-   * This function uses a simplified version of entropy coding to encode all blocks.
-   * The encoding is done in 3 steps:
-   * 1. Use the zig-zag map to convert the block into a linear sequence of values.
+   *
+   * This function uses a simplified version of entropy coding to encode all
+   * blocks. The encoding is done in 3 steps:
+   * 1. Use the zig-zag map to convert the block into a linear sequence of
+   * values.
    * 2. Use run-length encoding to encode the sequence of values, by storing the
    *    number of consecutive zeros and the next non-zero value, along with the
    *    special end-of-block symbol.
@@ -202,9 +226,9 @@ class GrayscaleImage {
 
   /**
    * @brief Use a simplified version of entropy coding to decode all blocks.
-   * 
-   * This function uses a simplified version of entropy coding to decode all blocks.
-   * The decoding is done in 3 steps:
+   *
+   * This function uses a simplified version of entropy coding to decode all
+   * blocks. The decoding is done in 3 steps:
    * 1. Use run-length decoding to decode the sequence of values, by reading the
    *    number of consecutive zeros and the next non-zero value, along with the
    *    special end-of-block symbol.
@@ -215,22 +239,23 @@ class GrayscaleImage {
 
   /**
    * @brief The quantization table.
-   * 
-   * This is a static member variable, which means that it is shared by all instances
-   * of the GrayscaleImage class.
-   * 
-   * The quantization table is used to quantize and unquantize the real and imaginary
-   * parts of each block. The table is used to divide the real and imaginary parts
-   * of each block by the corresponding element of the table.
-   * 
-   * Very efficient quantization tables can be found online, to be used with the JPEG
-   * standard. These quantization tables are designed to be used with the cosine transform,
-   * which is not the same as the Fourier transform. In our case, we use a very simple
-   * quantization table, which is eyeballed to give good results, as quantization effectiveness
-   * is dependent on the relationship between human visual perception of image frequencies
-   * and the actual frequencies of the image, of which we have no precise knowledge.
-   * 
-   * 200 100 100 100 100 100 100 100 
+   *
+   * This is a static member variable, which means that it is shared by all
+   * instances of the GrayscaleImage class.
+   *
+   * The quantization table is used to quantize and unquantize the real and
+   * imaginary parts of each block. The table is used to divide the real and
+   * imaginary parts of each block by the corresponding element of the table.
+   *
+   * Very efficient quantization tables can be found online, to be used with the
+   * JPEG standard. These quantization tables are designed to be used with the
+   * cosine transform, which is not the same as the Fourier transform. In our
+   * case, we use a very simple quantization table, which is eyeballed to give
+   * good results, as quantization effectiveness is dependent on the
+   * relationship between human visual perception of image frequencies and the
+   * actual frequencies of the image, of which we have no precise knowledge.
+   *
+   * 200 100 100 100 100 100 100 100
    * 100 100 100 100 100 100 100 100
    * 100 100 100 100 100 100 100 100
    * 100 100 100 100 100 100 100 100
@@ -243,16 +268,17 @@ class GrayscaleImage {
 
   /**
    * @brief The zig-zag map.
-   * 
-   * This is a static member variable, which means that it is shared by all instances
-   * of the GrayscaleImage class. The zig-zag map is used to convert a block into a
-   * linear sequence of values. The map associates each element of the block (expressed
-   * as a pair of integer coordinates) with a position (their index) in the linear sequence.
-   * 
-   * In our case, the zig-zag map is not size-dependent, as we only use 8x8 blocks.
-   * Using this restriction to our advantage, we can store the whole map without
-   * having to compute it every time.
-   * 
+   *
+   * This is a static member variable, which means that it is shared by all
+   * instances of the GrayscaleImage class. The zig-zag map is used to convert a
+   * block into a linear sequence of values. The map associates each element of
+   * the block (expressed as a pair of integer coordinates) with a position
+   * (their index) in the linear sequence.
+   *
+   * In our case, the zig-zag map is not size-dependent, as we only use 8x8
+   * blocks. Using this restriction to our advantage, we can store the whole map
+   * without having to compute it every time.
+   *
    * {0, 0},
    * {0, 1}, {1, 0},
    * {2, 0}, {1, 1}, {0, 2},
@@ -273,36 +299,39 @@ class GrayscaleImage {
 
   /**
    * @brief The image in uncompressed form (expressed as a sequence of bytes).
-   * 
-   * This variable is used to store the image in uncompressed form, as a sequence of bytes.
-   * Each byte represents a value in the range [0, 255], assigned to a pixel.
+   *
+   * This variable is used to store the image in uncompressed form, as a
+   * sequence of bytes. Each byte represents a value in the range [0, 255],
+   * assigned to a pixel.
    */
   std::vector<uint8_t> decoded;
 
   /**
    * @brief The image in compressed form (expressed as a sequence of bytes).
-   * 
-   * The first half of this variable is used to store the real parts of the quantized
-   * values of each block. The second half is used to store the imaginary parts.
+   *
+   * The first half of this variable is used to store the real parts of the
+   * quantized values of each block. The second half is used to store the
+   * imaginary parts.
    */
   std::vector<uint8_t> encoded;
 
   /**
    * @brief An array of blocks.
-   * 
-   * This variable is used to store the image in the form of blocks. Each block is
-   * represented as a sequence of bytes, each byte representing a value. The contents
-   * of the blocks do not always correspond to the same image format, as this variable
-   * is used to store the image in different stages of the encoding/decoding process.
+   *
+   * This variable is used to store the image in the form of blocks. Each block
+   * is represented as a sequence of bytes, each byte representing a value. The
+   * contents of the blocks do not always correspond to the same image format,
+   * as this variable is used to store the image in different stages of the
+   * encoding/decoding process.
    */
   std::vector<std::vector<int8_t>> blocks;
 
   /**
    * @brief An array of blocks, containing imaginary parts.
-   * 
-   * This variable is used to store the imaginary part of the result of the 2D FFT on 
-   * each block. This is used during the encoding process.
-   * 
+   *
+   * This variable is used to store the imaginary part of the result of the 2D
+   * FFT on each block. This is used during the encoding process.
+   *
    * @see blocks
    */
   std::vector<std::vector<int8_t>> imagBlocks;
@@ -314,7 +343,7 @@ class GrayscaleImage {
 
   /**
    * @brief The image height, expressed in blocks.
-   * 
+   *
    */
   int blockGridHeight;
 };
