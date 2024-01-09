@@ -358,6 +358,52 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
   cudaFree(&transposed_sequence_dev);
 }
 
+void BlockFFTGPU2D::operator()(const vec &input_sequence,
+                               vec &output_sequence) const {
+  // Getting the input size.
+  const size_t size = input_sequence.size();
+  const size_t n = sqrt(size);
+  const size_t n_blk = _block_size;
+
+  // Check that the size of the sequence is a power of 2.
+  const size_t log_n = static_cast<size_t>(log2(n));
+  assert(1UL << log_n == n);
+
+  const size_t log_n_blk = static_cast<size_t>(log2(n_blk));
+
+  // Perform bit reversal of the input sequence and store it into the output
+  // sequence.
+  cuda::std::complex<real> *block_input_dev;
+
+  cudaMalloc(&block_input_dev, size * sizeof(cuda::std::complex<real>));
+
+  int num_streams = 8;
+  cudaStream_t stream[num_streams];
+  for (int i = 0; i < num_streams; i++) cudaStreamCreate(&stream[i]);
+
+  for (int i = 0; i < num_streams; i++) {
+    cudaMemcpyAsync(&block_input_dev[i * n / num_streams * n],
+                    &input_sequence.data()[i * n / num_streams * n],
+                    n / num_streams * n * sizeof(cuda::std::complex<real>),
+                    cudaMemcpyHostToDevice, stream[i]);
+    run_block_fft_gpu(&block_input_dev[i * n / num_streams * n], n, base_angle,
+                      num_streams, stream[i]);
+    run_block_fft_gpu(&block_input_dev[i * n / num_streams * n], n, base_angle,
+                      num_streams, stream[i]);
+  }
+  for (int i = 0; i < num_streams; i++) {
+    cudaMemcpyAsync(&output_sequence.data()[i * n / num_streams * n],
+                    &block_input_dev[i * n / num_streams * n],
+                    n / num_streams * n * sizeof(cuda::std::complex<real>),
+                    cudaMemcpyDeviceToHost, stream[i]);
+  }
+
+  cudaDeviceSynchronize();
+  for (int i = 0; i < num_streams; i++) cudaStreamDestroy(stream[i]);
+  cudaFree(block_input_dev);
+}
+
+
 // Calculate time for execution of a Fourier Transform using chrono.
 unsigned long FourierTransformAlgorithm::calculateTime(
     const vec &input_sequence, vec &output_sequence) const {

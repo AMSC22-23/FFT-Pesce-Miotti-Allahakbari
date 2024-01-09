@@ -206,14 +206,26 @@ class IterativeFFTGPU2D : public FourierTransformAlgorithm {
   ~IterativeFFTGPU2D() = default;
 };
 
+class BlockFFTGPU2D : public FourierTransformAlgorithm {
+ public:
+  void operator()(const vec &input_sequence,
+                  vec &output_sequence) const override;
+
+  BlockFFTGPU2D(unsigned int block_size = 8) { _block_size = block_size; }
+  ~BlockFFTGPU2D() = default;
+
+ private:
+  unsigned int _block_size;
+};
+
 /**
  * @brief Get a time estimate for the execution of a Fourier transform
  * algorithm in microseconds.
  *
- * This function calculates the time needed to compute the Fourier transform of
- * the given sequence using an instance of the provided algorithm, with power of
- * two threads ranging from 1 to max_num_threads. The results are printed
- * expressed in microseconds.
+ * This function calculates the time needed to compute the Fourier transform
+ * of the given sequence using an instance of the provided algorithm, with
+ * power of two threads ranging from 1 to max_num_threads. The results are
+ * printed expressed in microseconds.
  *
  * @param algorithm The Fourier transform algorithm.
  * @param sequence The input sequence.
