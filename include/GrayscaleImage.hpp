@@ -64,7 +64,16 @@ class GrayscaleImage {
    * @return true If the image was saved successfully.
    * @return false If the image could not be saved.
    */
-  bool save(const std::string &filename);
+  bool saveCompressed(const std::string &filename);
+
+  /**
+   * @brief Save the latest loaded or decoded image to file.
+   *
+   * @param filename The path to the image file to be saved.
+   * @return true If the image was saved successfully.
+   * @return false If the image could not be saved.
+   */
+  bool saveImage(const std::string &filename);
 
   /**
    * @brief Encode the last loaded image.

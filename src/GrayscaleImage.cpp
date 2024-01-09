@@ -551,13 +551,35 @@ bool GrayscaleImage::loadCompressed(const std::string &filename) {
 }
 
 // Save compressed image to file.
-bool GrayscaleImage::save(const std::string &filename) {
+bool GrayscaleImage::saveCompressed(const std::string &filename) {
+  // Open the file.
   std::ofstream file(filename);
-  assert(file.is_open());
+  if (!file.is_open()) {
+    return false;
+  }
 
+  // Write the image.
   file.write((char *)&this->encoded[0], this->encoded.size());
 
-  return true;
+  return !file.fail();
+}
+
+// Save image to file.
+bool GrayscaleImage::saveImage(const std::string &filename) {
+  // Create an OpenCV image.
+  cv::Mat image(this->blockGridHeight * 8, this->blockGridWidth * 8, CV_8UC1);
+
+  // For each row and column...
+  for (int i = 0; i < image.rows; i++) {
+    for (int j = 0; j < image.cols; j++) {
+      // Set the pixel value.
+      uint8_t pixel = this->decoded[i * image.cols + j];
+      image.at<uint8_t>(i, j) = pixel;
+    }
+  }
+
+  // Write the image.
+  return cv::imwrite(filename, image);
 }
 
 // Get the encoded image.

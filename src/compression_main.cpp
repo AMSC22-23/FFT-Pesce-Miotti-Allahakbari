@@ -56,7 +56,7 @@ int compression_main(int argc, char *argv[]) {
 
   // Save the compressed image.
   std::cout << "Saving compressed image..." << std::endl;
-  grayscaleImage.save("../img/compressed-image.data");
+  grayscaleImage.saveCompressed("../img/compressed-image.data");
 
   // Create a new GrayscaleImage object.
   GrayscaleImage grayscaleImage2;

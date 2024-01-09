@@ -100,6 +100,14 @@ int wavelet_main(int argc, char *argv[]) {
       image.waveletTransform(gp_algorithm, levels);
       image.display();
 
+      // Save the image.
+      success = image.saveImage("gp_transform.jpg");
+      // Check if the image was saved successfully.
+      if (!success) {
+        std::cout << "Failed to save image." << std::endl;
+        return 1;
+      }
+
       // Load a second copy of the image.
       GrayscaleImage image2;
       success = image2.loadStandard(path);
@@ -113,6 +121,14 @@ int wavelet_main(int argc, char *argv[]) {
       // Perform the transform with the algorithm by Daubechies.
       image2.waveletTransform(db_algorithm, levels);
       image2.display();
+
+      // Save the image.
+      success = image.saveImage("db_transform.jpg");
+      // Check if the image was saved successfully.
+      if (!success) {
+        std::cout << "Failed to save image." << std::endl;
+        return 1;
+      }
 
       // Perform a denoising test.
     } else {
