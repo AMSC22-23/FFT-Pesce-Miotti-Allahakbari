@@ -138,10 +138,10 @@ void run_fft_gpu(cuda::std::complex<real>* data, int n, int m, real base,
 }
 
 void run_block_fft_gpu(cuda::std::complex<real>* data, int n, real base,
-                       cudaStream_t stream_id) {
+                       int num_streams, cudaStream_t stream_id) {
   dim3 block_dim(TILE_SIZE, TILE_SIZE);
   dim3 grid_dim((n + TILE_SIZE - 1) / (TILE_SIZE),
-                (n + TILE_SIZE - 1) / TILE_SIZE);
+                (n / num_streams + TILE_SIZE - 1) / (TILE_SIZE));
   block_fft<<<grid_dim, block_dim, 0, stream_id>>>(data, n, log2(TILE_SIZE),
                                                    base);
 
