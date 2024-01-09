@@ -1,11 +1,22 @@
+#vscode
 .vscode
+
+#build directory
 build/
+
+#tempory files in the tools directory
 tools/*.csv
 tools/*.txt
+
+#doxygen documentation
 html/
 latex/
 lib/
+
+#temporary report files
 report/*.log
 report/*.out
 report/*.aux
 report/*.pdf
+report/*.bbl
+report/*.blg
