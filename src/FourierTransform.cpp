@@ -1,5 +1,13 @@
 #include "FourierTransform.hpp"
 
+/**
+ * @file FourierTransform.cpp.
+ * @brief Defines the methods and functions declared in
+ * FourierTransform.hpp.
+ */
+
+// TODO: Remove commented code in the GPU implementations.
+
 #include <cuda_runtime.h>
 #include <omp.h>
 #include <tgmath.h>
@@ -16,8 +24,10 @@
 namespace Transform {
 namespace FourierTransform {
 
+// An alias for pi.
 constexpr real pi = std::numbers::pi_v<real>;
 
+// The classical O(n^2) Fourier Transform.
 void ClassicalFourierTransformAlgorithm::operator()(
     const vec &input_sequence, vec &output_sequence) const {
   // Getting the input size.
@@ -38,6 +48,7 @@ void ClassicalFourierTransformAlgorithm::operator()(
   }
 }
 
+// A recursive implementation of the FFT.
 void RecursiveFourierTransformAlgorithm::operator()(
     const vec &input_sequence, vec &output_sequence) const {
   // Getting the input size.
@@ -77,6 +88,7 @@ void RecursiveFourierTransformAlgorithm::operator()(
   }
 }
 
+// An iterative implementation of the FFT using OpenMP.
 void IterativeFourierTransformAlgorithm::operator()(
     const vec &input_sequence, vec &output_sequence) const {
   // Getting the input size.
@@ -115,6 +127,7 @@ void IterativeFourierTransformAlgorithm::operator()(
   }
 }
 
+// A trivial implementation of the 2D Direct Fourier Transform.
 void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
     const vec &input_sequence, vec &output_sequence) const {
   // Getting the input size.
@@ -127,9 +140,12 @@ void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
   const size_t log_sqrt_n = static_cast<size_t>(log2(sqrt_n));
   assert(1UL << log_sqrt_n == sqrt_n);
 
-  // Use the RecursiveFourierTransformAlgorithm to compute the 1D FFT.
+  // Use the IterativeFourierTransformAlgorithm to compute the 1D FFT.
+  std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm =
+      std::make_unique<FastBitReversalPermutationAlgorithm>();
   std::unique_ptr<FourierTransformAlgorithm> fft_algorithm =
-      std::make_unique<RecursiveFourierTransformAlgorithm>();
+      std::make_unique<IterativeFourierTransformAlgorithm>(
+          bit_reversal_algorithm);
 
   // Set the base angle to -pi.
   constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
@@ -167,6 +183,7 @@ void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
   }
 }
 
+// A trivial implementation of the 2D Inverse Fourier Transform.
 void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
     const vec &input_sequence, vec &output_sequence) const {
   // Getting the input size.
@@ -179,9 +196,12 @@ void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
   const size_t log_sqrt_n = static_cast<size_t>(log2(sqrt_n));
   assert(1UL << log_sqrt_n == sqrt_n);
 
-  // Use the RecursiveFourierTransformAlgorithm to compute the 1D FFT.
+  // Use the IterativeFourierTransformAlgorithm to compute the 1D FFT.
+  std::unique_ptr<BitReversalPermutationAlgorithm> bit_reversal_algorithm =
+      std::make_unique<FastBitReversalPermutationAlgorithm>();
   std::unique_ptr<FourierTransformAlgorithm> fft_algorithm =
-      std::make_unique<ClassicalFourierTransformAlgorithm>();
+      std::make_unique<IterativeFourierTransformAlgorithm>(
+          bit_reversal_algorithm);
 
   // Set the base angle to pi.
   constexpr Transform::real pi = std::numbers::pi_v<Transform::real>;
@@ -221,6 +241,8 @@ void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
   for (size_t i = 0; i < n; i++) output_sequence[i] /= n;
 }
 
+// A GPU implementation of the 1D iterative FFT, handling memory transfer and
+// calling CUDA kernels.
 void IterativeFFTGPU::operator()(const vec &input_sequence,
                                  vec &output_sequence) const {
   // Getting the input size.
@@ -256,6 +278,8 @@ void IterativeFFTGPU::operator()(const vec &input_sequence,
   cudaFree(output_sequence_dev);
 }
 
+// A GPU implementation of the 2D iterative FFT, handling memory transfer and
+// calling CUDA kernels.
 void IterativeFFTGPU2D::operator()(const vec &input_sequence,
                                    vec &output_sequence) const {
   // Getting the input size.
@@ -379,7 +403,8 @@ void BlockFFTGPU2D::operator()(const vec &input_sequence,
   cudaFree(block_input_dev);
 }
 
-// Calculate time for execution using chrono.
+
+// Calculate time for execution of a Fourier Transform using chrono.
 unsigned long FourierTransformAlgorithm::calculateTime(
     const vec &input_sequence, vec &output_sequence) const {
   auto t0 = std::chrono::high_resolution_clock::now();
@@ -390,6 +415,8 @@ unsigned long FourierTransformAlgorithm::calculateTime(
   return time;
 }
 
+// Calculate time for execution of a Fourier Transform using chrono for multiple
+// numbers of threads.
 void TimeEstimateFFT(std::unique_ptr<FourierTransformAlgorithm> &ft_algorithm,
                      const vec &sequence, unsigned int max_num_threads) {
   // Calculate sequence size.

@@ -1,92 +1,352 @@
 #ifndef GRAYSCALE_IMAGE_HPP
 #define GRAYSCALE_IMAGE_HPP
 
-#include "Real.hpp"
+/**
+ * @file GrayscaleImage.hpp.
+ * @brief Declares a class for handling Grayscale images.
+ */
+
+#include <cstdint>
+
 #include "WaveletTransform.hpp"
 
-// A class that represents a grayscale image.
-// This class may be used to load, save, encode, decode and display grayscale
-// images. Please note that the image's width and height must be a multiple
-// of 8.
-class GrayscaleImage
-{
-public:
-  // Load regular image from file.
+/**
+ * @brief Represents a Grayscale Image.
+ *
+ * The GrayscaleImage class is designed to handle and manipulate grayscale
+ * images. It provides functionalities for loading, encoding, decoding, and
+ * saving grayscale images.
+ *
+ * Example usage:
+ * @code
+ * GrayscaleImage grayscaleImage;
+ *
+ * bool success = grayscaleImage.loadStandard("image.jpg");
+ * if (!success) {
+ *  ...
+ * }
+ *
+ * grayscaleImage.encode();
+ * grayscaleImage.decode();
+ * grayscaleImage.display();
+ * @endcode
+ *
+ * @note This class automatically converts common image formats to grayscale.
+ * @note The image's width and height must be a multiple of 8.
+ */
+class GrayscaleImage {
+ public:
+  // Get the encoded image.
+  std::vector<uint8_t> getEncoded();
+
+  /**
+   * @brief Load a grayscale image from file, using a standard format.
+   *
+   * @param filename The path to the image file.
+   * @return true If the image was loaded successfully.
+   * @return false If the image could not be loaded.
+   */
   bool loadStandard(const std::string &filename);
 
-  // Load compressed image from file.
+  /**
+   * @brief Load a grayscale image from file, using a compressed format.
+   *
+   * @param filename The path to the image file.
+   * @return true If the image was loaded successfully.
+   * @return false If the image could not be loaded.
+   */
   bool loadCompressed(const std::string &filename);
 
-  // Save compressed image to file.
+  /**
+   * @brief Save the image (in compressed format) to file.
+   *
+   * @param filename The path to the image file to be saved.
+   * @return true If the image was saved successfully.
+   * @return false If the image could not be saved.
+   */
   bool save(const std::string &filename);
 
-  // Encode the last loaded or decoded image.
+  /**
+   * @brief Encode the last loaded image.
+   *
+   * Image encoding is done in 5 steps:
+   * 1. Split the image in 8x8 blocks.
+   * 2. Shift the block values to the range [-128, 127].
+   * 3. Perform the 2D FFT on each block.
+   * 4. Quantize the real and imaginary parts of each block.
+   * 5. Store the quantized values in a sequence of bytes using entropy coding.
+   */
   void encode();
 
-  // Decode the last loaded or encoded image.
+  /**
+   * @brief Decode the last loaded image.
+   *
+   * Image decoding is done in 5 steps:
+   * 1. Use entropy decoding to get the quantized values of each block.
+   * 2. Unquantize the real and imaginary parts of each block.
+   * 3. Perform the 2D inverse FFT on each block.
+   * 4. Shift the block values back to the range [0, 255].
+   * 5. Merge the blocks into a single image.
+   */
   void decode();
 
-  // Display the last loaded or decoded image.
+  /**
+   * @brief Display the last loaded or decoded image.
+   *
+   * A window will pop up displaying the image. Any key can be pressed to close
+   * the window. If multiple requests to display the image are made, the new
+   * image will be displayed as soon as the previous window is closed.
+   *
+   * @note This function uses OpenCV to display the image.
+   */
   void display();
 
-  // Get the bitsize of the last loaded or decoded image.
+  /**
+   * @brief Get the bitsize of the last uncompressed image in memory.
+   *
+   * This function returns the bitsize of the last uncompressed image in memory,
+   * assuming that the image is represented as a sequence of bytes, each byte
+   * representing a value in the range [0, 255], assigned to a pixel.
+   *
+   * @return unsigned int The bitsize of the last loaded or decoded image.
+   */
   unsigned int getStandardBitsize() const;
 
-  // Get the bitsize of the last loaded or encoded image.
+  /**
+   * @brief Get the bitsize of the last compressed image in memory.
+   *
+   * The compressed image is represented as a sequence of bytes. This function
+   * counts the number of bytes in the sequence and returns 8 times that number.
+   *
+   * @return unsigned int The bitsize of the last compressed image.
+   */
   unsigned int getCompressedBitsize() const;
 
-  // Perform a wavelet transform on the decoded image. It is direct is "direct"
-  // is true and inverse otherwise.
+  /**
+   * @brief Perform a direct wavelet transform on the last loaded image and
+   * replace it with an image representing its DWT.
+   *
+   * @param algorithm A unique pointer to the algorithm to use for the DWT, it
+   * will be moved when calling the function.
+   * @param levels The number of levels for the DWT.
+   *
+   * @note The image must be square and the number of pixels in a row must be a
+   * power of 2 and greater than 1.
+   */
   void waveletTransform(
-      const std::shared_ptr<
-          Transform::WaveletTransform::WaveletTransformAlgorithm>
-          algorithm,
-      bool direct);
+      std::unique_ptr<Transform::WaveletTransform::WaveletTransformAlgorithm>
+          &algorithm,
+      unsigned int levels);
 
-private:
-  // Split the image in blocks of size 8x8, and save the result in variable
-  // 'blocks'.
+  /**
+   * @brief Denoise the last loaded image using thresholding.
+   *
+   * The method applies the DWT to the image, uses thresholding with the
+   * specified parameter and then applies the IWT on the result and updates the
+   * image.
+   *
+   * @param algorithm A unique pointer to the algorithm to use for the DWT and
+   * IWT, it will be moved when calling the function.
+   * @param levels The number of levels for the DWT and IWT.
+   * @param threshold The threshold for the thresholding step.
+   * @param use_hard_thresholding If true, hard thresholding is used, otherwise
+   * soft thresholding is used instead.
+   *
+   * @note The image must be square and the number of pixels in a row must be a
+   * power of 2 and greater than 1.
+   */
+  void denoise(
+      std::unique_ptr<Transform::WaveletTransform::WaveletTransformAlgorithm>
+          &algorithm,
+      unsigned int levels, Transform::real threshold,
+      bool use_hard_thresholding);
+
+ private:
+  /**
+   * @brief Split the image in 8x8 blocks and store the result in variable
+   * 'blocks'.
+   *
+   * @note This function assumes that the image's width and height are a
+   * multiple of 8.
+   */
   void splitBlocks();
 
-  // Merge the blocks in variable 'blocks' and save the result in variable
-  // 'decoded'.
+  /**
+   * @brief Merge the blocks into a single image and store the result in
+   * variable 'decoded'.
+   *
+   * @note This function assumes that the image's width and height are a
+   * multiple of 8.
+   */
   void mergeBlocks();
 
-  // Quantize the given vec using the quantization table.
+  /**
+   * @brief Use a quantization table to quantize the given vec.
+   *
+   * This function quantizes the given vec using the quantization table. Each
+   * element of the vec is divided by the corresponding element of the
+   * quantization table. Then, the result is split into a real and imaginary
+   * part, and each part is stored in a separate block.
+   *
+   * @param vec The vec to be quantized.
+   * @param realBlock The resulting real part of the quantized vec.
+   * @param imagBlock The resulting imaginary part of the quantized vec.
+   */
   void quantize(const Transform::FourierTransform::vec &vec,
-                std::vector<char> &realBlock, std::vector<char> &imagBlock);
+                std::vector<int8_t> &realBlock, std::vector<int8_t> &imagBlock);
 
-  // Unquantize the given vec using the quantization table.
+  /**
+   * @brief Use a quantization table to unquantize the given vec.
+   *
+   * This function unquantizes the given real and imaginary parts using the
+   * quantization table. The real and imaginary parts are combined into a single
+   * vec, which is multiplied by the corresponding element of the quantization
+   * table, and stored in variable 'vec'.
+   *
+   * @param vec The resulting vec.
+   * @param realBlock The real part of the quantized vec.
+   * @param imagBlock The imaginary part of the quantized vec.
+   */
   void unquantize(Transform::FourierTransform::vec &vec,
-                  std::vector<char> &realBlock, std::vector<char> &imagBlock);
+                  std::vector<int8_t> &realBlock,
+                  std::vector<int8_t> &imagBlock);
 
-  // Use entropy coding to encode all blocks.
+  /**
+   * @brief Use a simplified version of entropy coding to encode all blocks.
+   *
+   * This function uses a simplified version of entropy coding to encode all
+   * blocks. The encoding is done in 3 steps:
+   * 1. Use the zig-zag map to convert the block into a linear sequence of
+   * values.
+   * 2. Use run-length encoding to encode the sequence of values, by storing the
+   *    number of consecutive zeros and the next non-zero value, along with the
+   *    special end-of-block symbol.
+   * 3. Store the encoded sequence of values in the 'encoded' variable.
+   */
   void entropyEncode();
 
-  // Use entropy coding to decode all blocks.
+  /**
+   * @brief Use a simplified version of entropy coding to decode all blocks.
+   *
+   * This function uses a simplified version of entropy coding to decode all
+   * blocks. The decoding is done in 3 steps:
+   * 1. Use run-length decoding to decode the sequence of values, by reading the
+   *    number of consecutive zeros and the next non-zero value, along with the
+   *    special end-of-block symbol.
+   * 2. Use the zig-zag map to convert the sequence of values into a block.
+   * 3. Store the decoded block in the 'blocks' variable.
+   */
   void entropyDecode();
 
-  // Static member variable to store the quantization table.
+  /**
+   * @brief The quantization table.
+   *
+   * This is a static member variable, which means that it is shared by all
+   * instances of the GrayscaleImage class.
+   *
+   * The quantization table is used to quantize and unquantize the real and
+   * imaginary parts of each block. The table is used to divide the real and
+   * imaginary parts of each block by the corresponding element of the table.
+   *
+   * Very efficient quantization tables can be found online, to be used with the
+   * JPEG standard. These quantization tables are designed to be used with the
+   * cosine transform, which is not the same as the Fourier transform. In our
+   * case, we use a very simple quantization table, which is eyeballed to give
+   * good results, as quantization effectiveness is dependent on the
+   * relationship between human visual perception of image frequencies and the
+   * actual frequencies of the image, of which we have no precise knowledge.
+   *
+   * 200 100 100 100 100 100 100 100
+   * 100 100 100 100 100 100 100 100
+   * 100 100 100 100 100 100 100 100
+   * 100 100 100 100 100 100 100 100
+   * 100 100 100 100 100 100 100 100
+   * 100 100 100 100 100 100 100 100
+   * 100 100 100 100 100 100 100 100
+   * 100 100 100 100 100 100 100 100
+   */
   static std::vector<int> quantizationTable;
 
-  // Static member variable to store the zigZag map.
+  /**
+   * @brief The zig-zag map.
+   *
+   * This is a static member variable, which means that it is shared by all
+   * instances of the GrayscaleImage class. The zig-zag map is used to convert a
+   * block into a linear sequence of values. The map associates each element of
+   * the block (expressed as a pair of integer coordinates) with a position
+   * (their index) in the linear sequence.
+   *
+   * In our case, the zig-zag map is not size-dependent, as we only use 8x8
+   * blocks. Using this restriction to our advantage, we can store the whole map
+   * without having to compute it every time.
+   *
+   * {0, 0},
+   * {0, 1}, {1, 0},
+   * {2, 0}, {1, 1}, {0, 2},
+   * {0, 3}, {1, 2}, {2, 1}, {3, 0},
+   * {4, 0}, {3, 1}, {2, 2}, {1, 3}, {0, 4},
+   * {0, 5}, {1, 4}, {2, 3}, {3, 2}, {4, 1}, {5, 0},
+   * {6, 0}, {5, 1}, {4, 2}, {3, 3}, {2, 4}, {1, 5}, {0, 6},
+   * {0, 7}, {1, 6}, {2, 5}, {3, 4}, {4, 3}, {5, 2}, {6, 1}, {7, 0},
+   * {7, 1}, {6, 2}, {5, 3}, {4, 4}, {3, 5}, {2, 6}, {1, 7},
+   * {2, 7}, {3, 6}, {4, 5}, {5, 4}, {6, 3}, {7, 2},
+   * {7, 3}, {6, 4}, {5, 5}, {4, 6}, {3, 7},
+   * {4, 7}, {5, 6}, {6, 5}, {7, 4},
+   * {7, 5}, {6, 6}, {5, 7},
+   * {6, 7}, {7, 6},
+   * {7, 7}
+   */
   static std::vector<std::pair<int, int>> zigZagMap;
 
-  // The image in uncompressed form.
-  std::vector<char> decoded;
+  /**
+   * @brief The image in uncompressed form (expressed as a sequence of bytes).
+   *
+   * This variable is used to store the image in uncompressed form, as a
+   * sequence of bytes. Each byte represents a value in the range [0, 255],
+   * assigned to a pixel.
+   */
+  std::vector<uint8_t> decoded;
 
-  // The image in compressed form (expressed as a sequence of bytes).
-  std::vector<char> encoded;
+  /**
+   * @brief The image in compressed form (expressed as a sequence of bytes).
+   *
+   * The first half of this variable is used to store the real parts of the
+   * quantized values of each block. The second half is used to store the
+   * imaginary parts.
+   */
+  std::vector<uint8_t> encoded;
 
-  // An array of 8x8 blocks. Each block is a vector of 64 elements.
-  std::vector<std::vector<char>> blocks;
-  std::vector<std::vector<char>> imagBlocks;
+  /**
+   * @brief An array of blocks.
+   *
+   * This variable is used to store the image in the form of blocks. Each block
+   * is represented as a sequence of bytes, each byte representing a value. The
+   * contents of the blocks do not always correspond to the same image format,
+   * as this variable is used to store the image in different stages of the
+   * encoding/decoding process.
+   */
+  std::vector<std::vector<int8_t>> blocks;
 
-  // Block grid width.
+  /**
+   * @brief An array of blocks, containing imaginary parts.
+   *
+   * This variable is used to store the imaginary part of the result of the 2D
+   * FFT on each block. This is used during the encoding process.
+   *
+   * @see blocks
+   */
+  std::vector<std::vector<int8_t>> imagBlocks;
+
+  /**
+   * @brief The image width, expressed in blocks.
+   */
   int blockGridWidth;
 
-  // Block grid height.
+  /**
+   * @brief The image height, expressed in blocks.
+   *
+   */
   int blockGridHeight;
 };
 
-#endif // GRAYSCALE_IMAGE_HPP
+#endif  // GRAYSCALE_IMAGE_HPP

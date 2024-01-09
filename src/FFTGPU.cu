@@ -1,16 +1,22 @@
 #include <cuda_runtime.h>
 
+/**
+ * @file FFTGPU.cu.
+ * @brief Defines the functions declared in FFTGPU.hpp.
+ */
+
 #include "FFTGPU.hpp"
 
 // The algorithm only works if n >= TILE_SIZE
 #define TILE_SIZE 8
+
 
 #define BLOCK_SIZE 8
 
 namespace Transform {
 namespace FourierTransform {
 
-// CUDA kernel for transposing a 2D array efficiently using shared memory
+// CUDA kernel for transposing a 2D array efficiently using shared memory.
 __global__ void swap_row_col(cuda::std::complex<real>* input,
                              cuda::std::complex<real>* output, const int row,
                              const int col, const int n) {
@@ -33,7 +39,7 @@ __global__ void swap_row_col(cuda::std::complex<real>* input,
   }
 }
 
-// CUDA kernel for transposing a 2D array efficiently using shared memory
+// CUDA kernel for transposing a 2D array efficiently using shared memory.
 __global__ void transpose(cuda::std::complex<real>* input,
                           cuda::std::complex<real>* output, const int n) {
   // Use shared memory to reduce global memory transactions

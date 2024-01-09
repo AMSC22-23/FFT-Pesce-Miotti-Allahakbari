@@ -1,5 +1,11 @@
 #include "WaveletTransform.hpp"
 
+/**
+ * @file WaveletTransform.cpp.
+ * @brief Defines the methods and functions declared in
+ * WaveletTransform.hpp.
+ */
+
 #include <tgmath.h>
 
 #include <cassert>
@@ -16,7 +22,8 @@ constexpr real gamma = 0.8829110762;
 constexpr real delta = 0.4435068522;
 constexpr real xi = 1.0 / 1.149604398;
 
-void GPDirectWaveletTransform97::operator()(
+// Perform the DWT with the algorithm by Gregoire Pau.
+void GPWaveletTransform97::directTransform(
     const std::vector<real> &input_sequence,
     std::vector<real> &output_sequence) const {
   // Copy the input.
@@ -73,7 +80,8 @@ void GPDirectWaveletTransform97::operator()(
   }
 }
 
-void GPInverseWaveletTransform97::operator()(
+// Perform the IWT with the algorithm by Gregoire Pau.
+void GPWaveletTransform97::inverseTransform(
     const std::vector<real> &input_sequence,
     std::vector<real> &output_sequence) const {
   // Copy the input.
@@ -133,11 +141,13 @@ void GPInverseWaveletTransform97::operator()(
   output_sequence[n - 1] -= 2 * alpha * output_sequence[n - 2];
 }
 
-void DaubechiesDirectWaveletTransform97::operator()(
+// Perform the DWT with the algorithm by Daubechies.
+void DaubechiesWaveletTransform97::directTransform(
     const std::vector<real> &input_sequence,
     std::vector<real> &output_sequence) const {
-  // Get the input size.
+  // Get the input size and check that it is even and larger than 1.
   const size_t n = input_sequence.size();
+  assert(n % 2 == 0 && n > 1);
 
   // Allocate two temporary vectors.
   std::vector<real> low_sequence;
@@ -190,11 +200,13 @@ void DaubechiesDirectWaveletTransform97::operator()(
   }
 }
 
-void DaubechiesInverseWaveletTransform97::operator()(
+// Perform the IWT with the algorithm by Daubechies.
+void DaubechiesWaveletTransform97::inverseTransform(
     const std::vector<real> &input_sequence,
     std::vector<real> &output_sequence) const {
-  // Get the input size.
+  // Get the input size and check that it is even and larger than 1.
   const size_t n = input_sequence.size();
+  assert(n % 2 == 0 && n > 1);
 
   // Allocate two temporary vectors.
   std::vector<real> low_sequence;
@@ -247,94 +259,143 @@ void DaubechiesInverseWaveletTransform97::operator()(
   }
 }
 
+// Perform the row transformation step in a 2D wavelet transform.
 void TwoDimensionalWaveletTransformAlgorithm::transformRows(
-    const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
-    const std::shared_ptr<WaveletTransformAlgorithm> algorithm) const {
-  // Get the matrix size.
-  const size_t n_squared = input_matrix.size();
+    std::vector<real> &matrix, size_t n, bool direct) const {
+  // Get the length of the input.
+  const size_t N_squared = matrix.size();
+  const size_t N = static_cast<size_t>(sqrt(N_squared));
 
-  // Get the length of a side.
-  const size_t n = static_cast<size_t>(sqrt(n_squared));
+  // Check that the sizes are a power of 2 and at least 2, that the vector is
+  // large enough and that the matrix is square.
+  assert(n <= N);
+  assert(n >= 2 && (1UL << static_cast<size_t>(log2(n))) == n);
+  assert(1UL << static_cast<size_t>(log2(N)) == N);
+  assert(N * N == N_squared);
 
-  // Check that the matrix is square and that the side length is a power of 2.
-  assert(n * n == n_squared);
-  assert((1UL << static_cast<size_t>(log2(n))) == n);
-
-  // Perform the transform on all rows
+  // Perform the transform on all rows.
   for (size_t i = 0; i < n; i++) {
     // Get a vector with the current row.
     std::vector<real> row;
     row.reserve(n);
     for (size_t j = 0; j < n; j++) {
-      row.emplace_back(input_matrix[n * i + j]);
+      row.emplace_back(matrix[N * i + j]);
     }
 
     // Allocate space for the result.
     std::vector<real> transformed_row(n, 0);
 
     // Transform the row.
-    algorithm->operator()(row, transformed_row);
+    if (direct) {
+      this->algorithm->directTransform(row, transformed_row);
+    } else {
+      this->algorithm->inverseTransform(row, transformed_row);
+    }
 
     // Write the result to the output matrix.
     for (size_t j = 0; j < n; j++) {
-      output_matrix[n * i + j] = transformed_row[j];
+      matrix[N * i + j] = transformed_row[j];
     }
   }
 }
 
+// Perform the column transformation step in a 2D wavelet transform.
 void TwoDimensionalWaveletTransformAlgorithm::transformColumns(
-    const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
-    const std::shared_ptr<WaveletTransformAlgorithm> algorithm) const {
-  // Get the matrix size.
-  const size_t n_squared = input_matrix.size();
+    std::vector<real> &matrix, size_t n, bool direct) const {
+  // Get the length of the input.
+  const size_t N_squared = matrix.size();
+  const size_t N = static_cast<size_t>(sqrt(N_squared));
 
-  // Get the length of a side.
-  const size_t n = static_cast<size_t>(sqrt(n_squared));
+  // Check that the sizes are a power of 2 and at least 2, that the vector is
+  // large enough and that the matrix is square.
+  assert(n <= N);
+  assert(n >= 2 && (1UL << static_cast<size_t>(log2(n))) == n);
+  assert(1UL << static_cast<size_t>(log2(N)) == N);
+  assert(N * N == N_squared);
 
-  // Check that the matrix is square and that the side length is a power of 2.
-  assert(n * n == n_squared);
-  assert((1UL << static_cast<size_t>(log2(n))) == n);
-
-  // Perform the transform on all columns
-  for (size_t i = 0; i < n; i++) {
+  // Perform the transform on all columns.
+  for (size_t i = 0UL; i < n; i++) {
     // Get a vector with the current columns.
     std::vector<real> column;
     column.reserve(n);
     for (size_t j = 0; j < n; j++) {
-      column.emplace_back(input_matrix[i + j * n]);
+      column.emplace_back(matrix[i + N * j]);
     }
 
     // Allocate space for the result.
     std::vector<real> transformed_column(n, 0);
 
     // Transform the column.
-    algorithm->operator()(column, transformed_column);
+    if (direct) {
+      this->algorithm->directTransform(column, transformed_column);
+    } else {
+      this->algorithm->inverseTransform(column, transformed_column);
+    }
 
     // Write the result to the output matrix.
     for (size_t j = 0; j < n; j++) {
-      output_matrix[i + j * n] = transformed_column[j];
+      matrix[i + N * j] = transformed_column[j];
     }
   }
 }
 
+// Perform a multi level 2D DWT.
 void TwoDimensionalWaveletTransformAlgorithm::directTransform(
     const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
-    const std::shared_ptr<WaveletTransformAlgorithm> algorithm) const {
-  std::vector<real> temporary_matrix(input_matrix);
-  TwoDimensionalWaveletTransformAlgorithm::transformRows(
-      input_matrix, temporary_matrix, algorithm);
-  TwoDimensionalWaveletTransformAlgorithm::transformColumns(
-      temporary_matrix, output_matrix, algorithm);
+    unsigned int levels) const {
+  // Check that the inputs have the same size.
+  assert(input_matrix.size() == output_matrix.size());
+
+  // Copy the input into the output.
+  for (size_t i = 0UL; i < input_matrix.size(); i++) {
+    output_matrix[i] = input_matrix[i];
+  }
+
+  // Get the initial size and assert that the input has a length that is a
+  // perfect square.
+  size_t n_squared = input_matrix.size();
+  size_t n = static_cast<size_t>(sqrt(n_squared));
+  assert(n * n == n_squared);
+
+  // Apply the algorithm to all rows and columns in the top left corner. Halve
+  // the length of a side each step.
+  for (unsigned int level = 0U; level < levels; level++) {
+    TwoDimensionalWaveletTransformAlgorithm::transformRows(output_matrix, n,
+                                                           true);
+    TwoDimensionalWaveletTransformAlgorithm::transformColumns(output_matrix, n,
+                                                              true);
+    n = n >> 1UL;
+  }
 }
 
+// Perform a multi level 2D IWT.
 void TwoDimensionalWaveletTransformAlgorithm::inverseTransform(
     const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
-    const std::shared_ptr<WaveletTransformAlgorithm> algorithm) const {
-  std::vector<real> temporary_matrix(input_matrix);
-  TwoDimensionalWaveletTransformAlgorithm::transformColumns(
-      input_matrix, temporary_matrix, algorithm);
-  TwoDimensionalWaveletTransformAlgorithm::transformRows(
-      temporary_matrix, output_matrix, algorithm);
+    unsigned int levels) const {
+  // Check that the inputs have the same size.
+  assert(input_matrix.size() == output_matrix.size());
+
+  // Copy the input into the output.
+  for (size_t i = 0UL; i < input_matrix.size(); i++) {
+    output_matrix[i] = input_matrix[i];
+  }
+
+  // Get the initial size and assert that the input has a length that is a
+  // perfect square.
+  size_t n_squared = input_matrix.size();
+  size_t n = static_cast<size_t>(sqrt(n_squared));
+  assert(n * n == n_squared);
+  n = n >> (levels - 1U);
+
+  // Apply the algorithm to all rows and columns in the top left corner.
+  // Double the length of a side each step.
+  for (unsigned int level = 0U; level < levels; level++) {
+    TwoDimensionalWaveletTransformAlgorithm::transformColumns(output_matrix, n,
+                                                              false);
+    TwoDimensionalWaveletTransformAlgorithm::transformRows(output_matrix, n,
+                                                           false);
+    n = n << 1UL;
+  }
 }
 
 }  // namespace WaveletTransform

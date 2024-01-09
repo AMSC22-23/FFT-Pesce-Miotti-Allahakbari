@@ -1,6 +1,12 @@
 #include <iostream>
 #include <string>
 
+/**
+ * @file main.cpp.
+ * @brief Defines the main function, which then calls one of other 4 functions
+ * based on the first argument.
+ */
+
 #include "cuda_main.hpp"
 #include "fft_main.hpp"
 #include "jpeg_main.hpp"

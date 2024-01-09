@@ -1,7 +1,11 @@
 #include "GrayscaleImage.hpp"
 
-#include <limits>
-#include <numbers>
+/**
+ * @file GrayscaleImage.cpp.
+ * @brief Defines the methods and functions declared in
+ * GrayscaleImage.hpp.
+ */
+
 #include <opencv2/opencv.hpp>
 
 #include "FourierTransform.hpp"
@@ -26,14 +30,11 @@ bool GrayscaleImage::loadStandard(const std::string &filename) {
   this->blockGridWidth = width / 8;
   this->blockGridHeight = height / 8;
 
-  // For each row...
+  // For each row and column...
   for (int i = 0; i < image.rows; i++) {
-    // For each column...
     for (int j = 0; j < image.cols; j++) {
-      // Get the pixel value.
-      char pixel = image.at<char>(i, j);
-
       // Add the pixel value to the decoded image.
+      uint8_t pixel = image.at<uint8_t>(i, j);
       this->decoded.push_back(pixel);
     }
   }
@@ -51,15 +52,12 @@ void GrayscaleImage::display() {
   // Create a new image.
   cv::Mat image(this->blockGridHeight * 8, this->blockGridWidth * 8, CV_8UC1);
 
-  // For each row...
+  // For each row and column...
   for (int i = 0; i < image.rows; i++) {
-    // For each column...
     for (int j = 0; j < image.cols; j++) {
-      // Get the pixel value.
-      char pixel = this->decoded[i * image.cols + j];
-
       // Set the pixel value.
-      image.at<char>(i, j) = pixel;
+      uint8_t pixel = this->decoded[i * image.cols + j];
+      image.at<uint8_t>(i, j) = pixel;
     }
   }
 
@@ -71,15 +69,13 @@ void GrayscaleImage::display() {
 // Split the image in blocks of size 8x8, and save the result in variable
 // 'blocks'.
 void GrayscaleImage::splitBlocks() {
-  // Clear the blocks vector.
   this->blocks.clear();
 
-  // For each block row...
+  // For each block row and column...
   for (int i = 0; i < this->blockGridHeight; i++) {
-    // For each block column...
     for (int j = 0; j < this->blockGridWidth; j++) {
       // Create a new block.
-      std::vector<char> block;
+      std::vector<int8_t> block;
 
       // For each row in the block...
       for (int k = 0; k < 8; k++) {
@@ -94,7 +90,7 @@ void GrayscaleImage::splitBlocks() {
           int pixelY = y + k;
 
           // Get the pixel value.
-          unsigned char pixel =
+          uint8_t pixel =
               this->decoded[pixelY * this->blockGridWidth * 8 + pixelX];
 
           // Add the pixel value to the block.
@@ -114,13 +110,18 @@ void GrayscaleImage::mergeBlocks() {
   // Clear the decoded vector.
   this->decoded.clear();
 
-  // For each block row...
+  // Fill the decoded vector with zeros.
+  for (int i = 0; i < this->blockGridHeight * 8; i++) {
+    for (int j = 0; j < this->blockGridWidth * 8; j++) {
+      this->decoded.push_back(0);
+    }
+  }
+
+  // For each block row and column...
   for (int i = 0; i < this->blockGridHeight; i++) {
-    // For each block column...
     for (int j = 0; j < this->blockGridWidth; j++) {
       // Get the block.
-      std::vector<char> block =
-          this->blocks[i * this->blockGridWidth + j];
+      std::vector<int8_t> block = this->blocks[i * this->blockGridWidth + j];
 
       // For each row in the block...
       for (int k = 0; k < 8; k++) {
@@ -135,7 +136,7 @@ void GrayscaleImage::mergeBlocks() {
           int pixelY = y + k;
 
           // Get the pixel value.
-          unsigned char pixel = block[k * 8 + l];
+          uint8_t pixel = block[k * 8 + l];
 
           // Add the pixel value to the decoded vector, at the right position.
           this->decoded[pixelY * this->blockGridWidth * 8 + pixelX] = pixel;
@@ -147,23 +148,21 @@ void GrayscaleImage::mergeBlocks() {
 
 // Static member variable to store the quantization table.
 std::vector<int> GrayscaleImage::quantizationTable = {
-   240, 60, 60, 60, 60, 60, 60, 60,
-    60, 60, 60, 60, 60, 60, 60, 60,
-    60, 60, 60, 60, 60, 60, 60, 60,
-    60, 60, 60, 60, 60, 60, 60, 60,
-    60, 60, 60, 60, 60, 60, 60, 60,
-    60, 60, 60, 60, 60, 60, 60, 60,
-    60, 60, 60, 60, 60, 60, 60, 60,
-    60, 60, 60, 60, 60, 60, 60, 60};
+    200, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+};
 
 // Quantize the given vec into two blocks using the quantization table.
 void GrayscaleImage::quantize(const Transform::FourierTransform::vec &vec,
-                              std::vector<char> &realBlock,
-                              std::vector<char> &imagBlock) {
+                              std::vector<int8_t> &realBlock,
+                              std::vector<int8_t> &imagBlock) {
   // For element in the block...
   for (int i = 0; i < 64; i++) {
     // Get the quantization table value.
-    unsigned char quantizationTableValue = GrayscaleImage::quantizationTable[i];
+    int quantizationTableValue = GrayscaleImage::quantizationTable[i];
 
     // Set the element value to the quantized value.
     realBlock[i] = vec[i].real() / quantizationTableValue;
@@ -173,11 +172,11 @@ void GrayscaleImage::quantize(const Transform::FourierTransform::vec &vec,
 
 // Unquantize the given block using the quantization table.
 void GrayscaleImage::unquantize(Transform::FourierTransform::vec &vec,
-                                std::vector<char> &realBlock,
-                                std::vector<char> &imagBlock) {
+                                std::vector<int8_t> &realBlock,
+                                std::vector<int8_t> &imagBlock) {
   for (int i = 0; i < 64; i++) {
     // Get the quantization table value.
-    unsigned char quantizationTableValue = GrayscaleImage::quantizationTable[i];
+    int quantizationTableValue = GrayscaleImage::quantizationTable[i];
 
     // Unquantize the element value.
     Transform::real unquantizedRealValue =
@@ -204,7 +203,7 @@ void GrayscaleImage::encode() {
   this->imagBlocks.clear();
   for (size_t i = 0; i < this->blocks.size(); i++) {
     // Get the block.
-    std::vector<char> block = this->blocks[i];
+    std::vector<int8_t> block = this->blocks[i];
 
     // Turn the block into a vec object.
     Transform::FourierTransform::vec vecBlock(64, 0.0);
@@ -218,8 +217,8 @@ void GrayscaleImage::encode() {
     fft(vecBlock, outputVecBlock);
 
     // Quantize the block.
-    std::vector<char> realBlock(64, 0);
-    std::vector<char> imagBlock(64, 0);
+    std::vector<int8_t> realBlock(64, 0);
+    std::vector<int8_t> imagBlock(64, 0);
 
     this->quantize(outputVecBlock, realBlock, imagBlock);
 
@@ -234,16 +233,16 @@ void GrayscaleImage::encode() {
 // Decode the last loaded or encoded image.
 void GrayscaleImage::decode() {
   // Initialize a TrivialTwoDimensionalDiscreteFourierTransform object.
-  Transform::FourierTransform::TrivialTwoDimensionalInverseFourierTransformAlgorithm
-      fft;
+  Transform::FourierTransform::
+      TrivialTwoDimensionalInverseFourierTransformAlgorithm fft;
 
   this->entropyDecode();
 
   // For each block...
   for (size_t i = 0; i < this->blocks.size(); i++) {
     // Get the block.
-    std::vector<char> realBlock = this->blocks[i];
-    std::vector<char> imagBlock = this->imagBlocks[i];
+    std::vector<int8_t> realBlock = this->blocks[i];
+    std::vector<int8_t> imagBlock = this->imagBlocks[i];
 
     // Unquantize the block.
     Transform::FourierTransform::vec vecBlock(64, 0);
@@ -254,7 +253,7 @@ void GrayscaleImage::decode() {
     fft(vecBlock, outputVecBlock);
 
     // Turn the output vec object into a block.
-    std::vector<char> block(64, 0);
+    std::vector<int8_t> block(64, 0);
     for (size_t j = 0; j < outputVecBlock.size(); j++) {
       block[j] = outputVecBlock[j].real();
       block[j] += 128;
@@ -277,60 +276,37 @@ std::vector<std::pair<int, int>> GrayscaleImage::zigZagMap = {
     {3, 5}, {2, 6}, {1, 7}, {2, 7}, {3, 6}, {4, 5}, {5, 4}, {6, 3},
     {7, 2}, {7, 3}, {6, 4}, {5, 5}, {4, 6}, {3, 7}, {4, 7}, {5, 6},
     {6, 5}, {7, 4}, {7, 5}, {6, 6}, {5, 7}, {6, 7}, {7, 6}, {7, 7}};
-/*************************************************
-{0, 0},
-{0, 1}, {1, 0},
-{2, 0}, {1, 1}, {0, 2},
-{0, 3}, {1, 2}, {2, 1}, {3, 0},
-{4, 0}, {3, 1}, {2, 2}, {1, 3}, {0, 4},
-{0, 5}, {1, 4}, {2, 3}, {3, 2}, {4, 1}, {5, 0},
-{6, 0}, {5, 1}, {4, 2}, {3, 3}, {2, 4}, {1, 5}, {0, 6},
-{0, 7}, {1, 6}, {2, 5}, {3, 4}, {4, 3}, {5, 2}, {6, 1}, {7, 0},
-{7, 1}, {6, 2}, {5, 3}, {4, 4}, {3, 5}, {2, 6}, {1, 7},
-{2, 7}, {3, 6}, {4, 5}, {5, 4}, {6, 3}, {7, 2},
-{7, 3}, {6, 4}, {5, 5}, {4, 6}, {3, 7},
-{4, 7}, {5, 6}, {6, 5}, {7, 4},
-{7, 5}, {6, 6}, {5, 7},
-{6, 7}, {7, 6},
-{7, 7}
-*************************************************/
 
 // Use entropy coding to encode all blocks.
 void GrayscaleImage::entropyEncode() {
   // Clear the encoded vector.
   this->encoded.clear();
 
-  // Note the unassigned bits in the last byte.
-  int unassignedBits = 0;
+  // Initialize a new blocks vector.
+  std::vector<std::vector<int8_t>> blockSet;
 
-  // Create a new block vector.
-  std::vector<std::vector<char>> blocks;
-
-  // Add all real blocks to the blocks vector.
+  // Add all blocks to the blocks vector.
   for (size_t i = 0; i < this->blocks.size(); i++) {
-    // Get the real block.
-    std::vector<char> realBlock = this->blocks[i];
-
-    // Add the real block to the blocks vector.
-    blocks.push_back(realBlock);
+    blockSet.push_back(this->blocks[i]);
   }
 
   // Add all imaginary blocks to the blocks vector.
   for (size_t i = 0; i < this->imagBlocks.size(); i++) {
-    // Get the imaginary block.
-    std::vector<char> imagBlock = this->imagBlocks[i];
-
-    // Add the imaginary block to the blocks vector.
-    blocks.push_back(imagBlock);
+    blockSet.push_back(this->imagBlocks[i]);
   }
 
-  // For each block...
-  for (size_t i = 0; i < blocks.size(); i++) {
-    // Create a linearized zigZag vector.
-    std::vector<char> zigZagVector;
+  // Initialize a unsigned int list for zero counters.
+  std::vector<uint8_t> zeroCounters;
 
-    // Get the already quantized block.
-    std::vector<char> block = blocks[i];
+  // Initialize an int list for elements.
+  std::vector<int8_t> elements;
+
+  // For each block...
+  for (size_t i = 0; i < blockSet.size(); i++) {
+    std::vector<int8_t> block = blockSet[i];
+
+    // Initialize a zigZag vector.
+    std::vector<int8_t> zigZagVector(64, 0);
 
     // For each step in zigzag path...
     for (int j = 0; j < 64; j++) {
@@ -338,20 +314,17 @@ void GrayscaleImage::entropyEncode() {
       int x = GrayscaleImage::zigZagMap[j].first;
       int y = GrayscaleImage::zigZagMap[j].second;
 
-      // Get the element value.
-      char element = block[y * 8 + x];
-
-      // Add the element value to the zigZag block.
-      zigZagVector.push_back(element);
+      // Set the zigZag vector value to the block value.
+      zigZagVector[j] = block[y * 8 + x];
     }
 
-    // Initialize a counter for the number of zeros.
-    unsigned char zeroCounter = 0;
+    // Traverse the zigZag vector.
+    uint8_t zeroCounter = 0;
 
-    // Begin the entropy encoding by iterating over the zigZag vector.
-    for (size_t j = 0; j < zigZagVector.size(); j++) {
+    // For each element in the zigZag vector...
+    for (int j = 0; j < 64; j++) {
       // Get the element value.
-      char element = zigZagVector[j];
+      int8_t element = zigZagVector[j];
 
       // If the element value is zero...
       if (element == 0) {
@@ -360,79 +333,23 @@ void GrayscaleImage::entropyEncode() {
         continue;
       }
 
-      // Else, if the zero counter is greater than 15...
-      while (zeroCounter > 15) {
-        // Add the special code to the encoded vector.
-        this->encoded.push_back(0xF0);
-
-        // Decrement the zero counter by 16.
-        zeroCounter -= 16;
-      }
-
-      // Get the bit size of the element value.
-      unsigned int bitSizeInt = 0;
-      char temp = element;
-      if (temp < 0) {
-        bitSizeInt = 8;
-      } else {
-        while (temp > 0) {
-          temp = temp << 1;
-          bitSizeInt++;
-        }
-      }
-
-      // Assert that bitSize is between 1 and 8.
-      assert(bitSizeInt >= 1);
-      assert(bitSizeInt <= 8);
-
-      // Transform bitSizeInt to a char.
-      char bitSize = static_cast<char>(bitSizeInt);
-
-      // Initialize the first byte.
-      char firstByte = 0;
-
-      // Set the first 4 bits of the first byte to the zero counter.
-      firstByte |= zeroCounter << 4;
-
-      // Set the last 4 bits of the first byte to the bit size.
-      firstByte |= bitSize;
-
-      // Add the first byte to the encoded vector, by filling the unassigned
-      // bits of the last byte first, and then adding the first byte.
-      // This operation does not change the number of unassigned bits, since
-      // we're adding a byte.
-      if (unassignedBits == 0) {
-        this->encoded.push_back(firstByte);
-      } else {
-        this->encoded[this->encoded.size() - 1] |=
-            firstByte >> (8 - unassignedBits);
-        this->encoded.push_back(firstByte << unassignedBits);
-      }
-
-      // Add the element value to the encoded vector, by filling the unassigned
-      // bits of the last byte first, and then adding the element value.
-      // This operation changes the number of unassigned bits, since we're
-      // adding a variable number of bits.
-      if (unassignedBits == 0) {
-        this->encoded.push_back(element << (8 - bitSize));
-      } else {
-        this->encoded[this->encoded.size() - 1] |=
-            element >> (8 - unassignedBits) << (8 - bitSize);
-        if (bitSize > unassignedBits) {
-          this->encoded.push_back(element << (8 - bitSize + unassignedBits));
-        }
-      }
-
-      // Update the number of unassigned bits.
-      unassignedBits = (unassignedBits - bitSize) % 8;
+      // If the element value is not zero...
+      zeroCounters.push_back(zeroCounter);
+      elements.push_back(element);
 
       // Reset the zero counter.
       zeroCounter = 0;
     }
-    
-    // Add an EOB code to the encoded vector.
-    // We're not dealing with unassigned bits here, since we're adding only zeros.
-    this->encoded.push_back(0x00);
+
+    // Add end of block marker.
+    zeroCounters.push_back(0xFF);
+    elements.push_back(0);
+  }
+
+  // Concatenate the zero counters and the elements.
+  for (size_t i = 0; i < zeroCounters.size(); i++) {
+    this->encoded.push_back(zeroCounters[i]);
+    this->encoded.push_back(elements[i]);
   }
 }
 
@@ -443,151 +360,87 @@ void GrayscaleImage::entropyDecode() {
   this->imagBlocks.clear();
 
   // Create a new blocks vector.
-  std::vector<std::vector<char>> blocks;
+  std::vector<std::vector<int8_t>> blocksSet;
 
-  // Set a marker to the current bit position we're reading from.
-  int bitPosition = 0;
+  // Create a new reconstrcuted zigZag vector.
+  std::vector<int8_t> reconstructedZigZagVector;
 
-  // Use an index to denote the current byte we're reading from.
-  size_t i = 0;
+  // Initialize an unsigned int list of zero counters.
+  std::vector<uint8_t> zeroCounters;
 
-  // This loop will run ultil we run out of bytes to read.
-  while (i < this->encoded.size()) {
-    // Initialize a reconstructed zigZag vector.
-    std::vector<char> reconstructedZigZagVector;
+  // Initialize a int list of elements.
+  std::vector<int8_t> elements;
 
-    // Use a boolean to denote whether we're reading the first byte of a pair.
-    bool firstByteFlag = true;  
-    unsigned char firstByte = 0;
-    unsigned char bitSize;
+  // Fill the zero counters with even elements of the encoded vector.
+  for (size_t i = 0; i < this->encoded.size(); i++) {
+    if (i % 2 == 0) {
+      zeroCounters.push_back(this->encoded[i]);
+    }
+  }
 
-    // This loop will run until we reach the EOB code for a block.
-    while (true) {
-      // If we're reading the first byte of a pair...
-      if (firstByteFlag) {
-        // Load the first byte
-        firstByte = 0;
-        if (bitPosition == 0) {
-          firstByte = this->encoded[i];
-        } else {
-          firstByte = this->encoded[i] << bitPosition;
-          firstByte |= this->encoded[i] >> (8 - bitPosition);
-        }
+  // Fill the elements with odd elements of the encoded vector.
+  for (size_t i = 0; i < this->encoded.size(); i++) {
+    if (i % 2 == 1) {
+      elements.push_back(this->encoded[i]);
+    }
+  }
 
-        i++;
-
-        // Check if the first byte is the EOB code.
-        if (firstByte == 0x00) {
-          // Keep adding zeros to the reconstructed zigZag vector until it has
-          // 64 elements.
-          while (reconstructedZigZagVector.size() < 64) {
-            reconstructedZigZagVector.push_back(0);
-          }
-          
-          break;
-        }
-
-        // Check if the first byte is the special code.
-        if (firstByte == 0xF0) {
-          // Add 16 zeros to the reconstructed zigZag vector.
-          for (int j = 0; j < 16; j++) {
-            reconstructedZigZagVector.push_back(0);
-          }
-
-          i++;
-          continue;
-        }
-
-        // Get the zero counter from the first byte.
-        unsigned char zeroCounter = firstByte >> 4;
-
-        // Get the bit size from the first byte.
-        bitSize = firstByte & 0x0F;
-
-        // Add the zero counter number of zeros to the reconstructed zigZag
-        // vector.
-        for (int j = 0; j < zeroCounter; j++) {
-          reconstructedZigZagVector.push_back(0);
-        }
-
-        // Set the first byte flag to false.
-        firstByteFlag = false;
-        continue;
+  // For each byte in the zero counters list...
+  for (size_t i = 0; i < zeroCounters.size(); i++) {
+    // Check if the byte is the end of block marker.
+    if (zeroCounters[i] == 0xFF) {
+      // Keep adding zeros to the reconstructed zigZag vector until the
+      // reconstructed zigZag vector size is 64.
+      while (reconstructedZigZagVector.size() < 64) {
+        reconstructedZigZagVector.push_back(0);
       }
 
-      // If we're reading the second byte of a pair...
-      // Get the second byte.
-      char secondByte = 0;
-      if (bitPosition == 0) {
-        secondByte = this->encoded[i];
-      } else {
-        secondByte = this->encoded[i] << bitPosition;
-        secondByte |= this->encoded[i] >> (8 - bitPosition);
+      // Create a new block.
+      std::vector<int8_t> block(64, 0);
+
+      // For each element in the reconstructed zigZag vector...
+      for (size_t j = 0; j < reconstructedZigZagVector.size(); j++) {
+        // Get the zigZag map coordinates.
+        int x = GrayscaleImage::zigZagMap[j].first;
+        int y = GrayscaleImage::zigZagMap[j].second;
+
+        // Set the block value to the reconstructed zigZag vector value.
+        block[y * 8 + x] = reconstructedZigZagVector[j];
       }
 
-      // Assert that bitSize is between 1 and 8.
-      assert(bitSize >= 1);
-      assert(bitSize <= 8);
+      // Add the block to the blocks vector.
+      blocksSet.push_back(block);
 
-      // Count the "used" bits using bitsize and bitPosition.
-      int usedBits = 0;
-      if (bitPosition == 0) {
-        usedBits = bitSize;
-      } else {
-        usedBits = 8 - bitPosition + bitSize;
-      }
+      // Clear the reconstructed zigZag vector.
+      reconstructedZigZagVector.clear();
 
-      // Keep subtracting 8 from usedBits until it is less than 8.
-      while (usedBits >= 8) {
-        usedBits -= 8;
-        i++;
-      }
-
-      // Use the remaining bits to reconstruct the bitPosition.
-      bitPosition = usedBits;
-
-      // Get the element value.
-      char element = secondByte >> (8 - bitSize);
-
-      // Add the element value to the reconstructed zigZag vector.
-      reconstructedZigZagVector.push_back(element);
-
-      // Set the first byte flag to true.
-      firstByteFlag = true;
+      // Continue to the next byte.
+      continue;
     }
 
-    // We can now turn the zigZag vector into a block.
-    std::vector<char> block(64, 0);
-
-    // For each step in zigzag path...
-    for (int j = 0; j < 64; j++) {
-      // Get the zigZag map coordinates.
-      int x = GrayscaleImage::zigZagMap[j].first;
-      int y = GrayscaleImage::zigZagMap[j].second;
-
-      // Set the block element value to the reconstructed zigZag vector value.
-      block[y * 8 + x] = reconstructedZigZagVector[j];
+    // Add as many zeros to the reconstructed zigZag vector as the zero counter
+    // value.
+    for (int j = 0; j < zeroCounters[i]; j++) {
+      reconstructedZigZagVector.push_back(0);
     }
 
-    // Add the block to the blocks vector.
-    blocks.push_back(block);
+    // Add the element to the reconstructed zigZag vector.
+    reconstructedZigZagVector.push_back(elements[i]);
   }
 
-  // Get the size of the blocks vector.
-  size_t blocksSize = blocks.size();
-
-  // Print the size of the blocks vector.
-  std::cout << "Blocks size: " << blocksSize << std::endl;
-
-  // Add the first half of the blocks to the blocks vector.
-  for (size_t i = 0; i < blocksSize / 2; i++) {
-    this->blocks.push_back(blocks[i]);
+  // Add the first half of the blockSet to the blocks vector.
+  for (size_t i = 0; i < blocksSet.size() / 2; i++) {
+    this->blocks.push_back(blocksSet[i]);
   }
 
-  // Add the second half of the blocks to the imaginary blocks vector.
-  for (size_t i = blocksSize / 2; i < blocksSize; i++) {
-    this->imagBlocks.push_back(blocks[i]);
+  // Add the second half of the blockSet to the imaginary blocks vector.
+  for (size_t i = blocksSet.size() / 2; i < blocksSet.size(); i++) {
+    this->imagBlocks.push_back(blocksSet[i]);
   }
+
+  // Set the block grid size as sqrt of the blocks vector size.
+  this->blockGridWidth = sqrt(this->blocks.size());
+  this->blockGridHeight = sqrt(this->blocks.size());
 }
 
 // Get the bitsize of the last loaded or encoded image.
@@ -595,15 +448,15 @@ unsigned int GrayscaleImage::getCompressedBitsize() const {
   return this->encoded.size() * 8;
 }
 
+// Apply a DWT on an image.
 void GrayscaleImage::waveletTransform(
-    const std::shared_ptr<
-        Transform::WaveletTransform::WaveletTransformAlgorithm>
-        algorithm,
-    bool direct) {
+    std::unique_ptr<Transform::WaveletTransform::WaveletTransformAlgorithm>
+        &algorithm,
+    unsigned int levels) {
   using namespace Transform;
   using namespace WaveletTransform;
 
-  // Convert the decoded image's values from char to real.
+  // Convert the decoded image's values from uint8_t to real.
   std::vector<real> real_input;
   real_input.reserve(this->decoded.size());
   for (size_t i = 0; i < this->decoded.size(); i++) {
@@ -614,30 +467,98 @@ void GrayscaleImage::waveletTransform(
   std::vector<real> real_output(this->decoded.size(), 0);
 
   // Perform the direct wavelet transform.
-  TwoDimensionalWaveletTransformAlgorithm algorithm_2d;
-  if (direct) {
-    algorithm_2d.directTransform(real_input, real_output, algorithm);
-  } else {
-    algorithm_2d.inverseTransform(real_input, real_output, algorithm);
-  }
+  TwoDimensionalWaveletTransformAlgorithm algorithm_2d(algorithm);
+  algorithm_2d.directTransform(real_input, real_output, levels);
 
-  /*
-  // Calculate the maximum and minimum coefficients.
-  real max_value = -std::numeric_limits<real>::max();
-  real min_value = std::numeric_limits<real>::max();
-  for (size_t i = 0; i < this->decoded.size(); i++) {
-    if (real_output[i] > max_value) {
-      max_value = real_output[i];
-    }
-    if (real_output[i] < min_value) {
-      min_value = real_output[i];
-    }
-  }
-  std::cout << min_value << " " << max_value << std::endl;
-  */
+  // Map the values to [0, 256].
+  affineMap(real_output, real(0), real(256));
 
   // Update the decoded image.
   for (size_t i = 0; i < this->decoded.size(); i++) {
-    this->decoded[i] = static_cast<char>(real_output[i]);
+    this->decoded[i] = static_cast<uint8_t>(real_output[i]);
   }
 }
+
+// Denoise an image with a DWT, IWT and thresholding.
+void GrayscaleImage::denoise(
+    std::unique_ptr<Transform::WaveletTransform::WaveletTransformAlgorithm>
+        &algorithm,
+    unsigned int levels, Transform::real threshold,
+    bool use_hard_thresholding) {
+  using namespace Transform;
+  using namespace WaveletTransform;
+
+  // Convert the decoded image's values from uint8_t to real.
+  std::vector<real> real_input;
+  real_input.reserve(this->decoded.size());
+  for (size_t i = 0; i < this->decoded.size(); i++) {
+    real_input.emplace_back(static_cast<real>(this->decoded[i]));
+  }
+
+  // Allocate an output vector.
+  std::vector<real> real_output(this->decoded.size(), 0);
+
+  // Perform the direct wavelet transform.
+  TwoDimensionalWaveletTransformAlgorithm algorithm_2d(algorithm);
+  algorithm_2d.directTransform(real_input, real_output, levels);
+
+  // Use thresholding to denoise the image.
+  for (size_t i = 0; i < real_output.size(); i++) {
+    if (use_hard_thresholding) {
+      if (std::abs(real_output[i]) < threshold) {
+        real_output[i] = 0;
+      }
+    } else {
+      if (std::abs(real_output[i]) < threshold) {
+        real_output[i] = 0;
+      } else if (real_output[i] > 0) {
+        real_output[i] -= threshold;
+      } else {
+        real_output[i] += threshold;
+      }
+    }
+  }
+
+  // Perform the inverse wavelet transform.
+  algorithm_2d.inverseTransform(real_output, real_output, levels);
+
+  // Map the values to [0, 256].
+  affineMap(real_output, real(0), real(256));
+
+  // Update the decoded image.
+  for (size_t i = 0; i < this->decoded.size(); i++) {
+    this->decoded[i] = static_cast<uint8_t>(real_output[i]);
+  }
+}
+
+// Load compressed image from file.
+bool GrayscaleImage::loadCompressed(const std::string &filename) {
+  std::ifstream file(filename);
+  assert(file.is_open());
+
+  if (!file.eof() && !file.fail()) {
+    file.seekg(0, std::ios_base::end);
+    std::streampos fileSize = file.tellg();
+    this->encoded.resize(fileSize);
+
+    file.seekg(0, std::ios_base::beg);
+    file.read((char *)&this->encoded[0], fileSize);
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+// Save compressed image to file.
+bool GrayscaleImage::save(const std::string &filename) {
+  std::ofstream file(filename);
+  assert(file.is_open());
+
+  file.write((char *)&this->encoded[0], this->encoded.size());
+
+  return true;
+}
+
+// Get the encoded image.
+std::vector<uint8_t> GrayscaleImage::getEncoded() { return this->encoded; }

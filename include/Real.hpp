@@ -4,9 +4,15 @@
 #include <complex>
 #include <vector>
 
-// A simple way to make the code generic with respect to the real type.
+/**
+ * @file Real.hpp.
+ * @brief Defines a type for real numbers with a trait and aliases for complex
+ * numbers and vector of complex numbers.
+ */
 
 namespace Transform {
+
+/** @namespace */
 
 #ifdef FLOAT
 using real = float;
@@ -23,6 +29,8 @@ using real = double;
 #endif
 
 namespace FourierTransform {
+
+/** @namespace */
 
 using complex = std::complex<real>;
 using vec = std::vector<complex>;
