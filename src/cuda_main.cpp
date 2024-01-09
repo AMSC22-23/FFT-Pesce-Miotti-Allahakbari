@@ -54,7 +54,7 @@ int cuda_main(int argc, char *argv[]) {
       input_sequence.emplace_back(image.at<uchar>(i, j), 0);
 
   std::unique_ptr<FourierTransformAlgorithm> algorithm =
-      std::make_unique<IterativeFFTGPU2D>();
+      std::make_unique<BlockFFTGPU2D>();
 
   // Set the direct transform.
   algorithm->setBaseAngle(-std::numbers::pi_v<real>);
@@ -63,39 +63,71 @@ int cuda_main(int argc, char *argv[]) {
   std::cout << algorithm->calculateTime(input_sequence, output_sequence) << "μs"
             << std::endl;
 
-  image.convertTo(image, CV_64FC1);
-  cv::Mat planes[] = {image, cv::Mat::zeros(image.size(), CV_64FC1)};
-  cv::Mat complexInput;
-  cv::merge(planes, 2, complexInput);
-  cv::dft(planes[0], planes[1], cv::DFT_COMPLEX_OUTPUT);
-  cv::Mat complex[2];
+  // Ensure the image dimensions are divisible by 8
+  int height = image.rows;
+  int width = image.cols;
 
-  cv::split(planes[1], complex);
+  int new_height = height - (height % 8);
+  int new_width = width - (width % 8);
 
-  double epsilon = 1e-4;
+  cv::Rect roi(0, 0, new_width, new_height);
+  image = image(roi);
 
-  for (int i = 0; i < image.rows; i++)
-    for (int j = 0; j < image.cols; j++) {
-      if (std::fabs(output_sequence[i * image.cols + j].real() -
-                    complex[0].at<double>(i, j)) > epsilon ||
-          std::fabs(output_sequence[i * image.cols + j].imag() -
-                    complex[1].at<double>(i, j)) > epsilon) {
-        std::cout << "Error in GPU calculations at: " << i << ", " << j
-                  << " GPU: " << output_sequence[i * image.cols + j]
-                  << ", CPU: (" << complex[0].at<double>(i, j) << ", "
-                  << complex[1].at<double>(i, j) << ")" << std::endl;
-        // break;
-      }
-      // std::cout << "Calculated by gpu: " << output_sequence[i * image.cols
-      // + j]
-      //           << ", Calculated by opencv: (" << complex[0].at<float>(i,
-      //           j)
-      //           << ", " << complex[1].at<float>(i, j) << ")" << std::endl;
+  // Segment the image into 8x8 blocks and store with row/column indices
+  std::vector<std::pair<int, int>>
+      blockIndices;  // For storing row/column indices
+  std::vector<cv::Mat> blocks;
+
+  for (int y = 0; y < new_height; y += 8) {
+    for (int x = 0; x < new_width; x += 8) {
+      cv::Mat block = image(cv::Rect(x, y, 8, 8));
+      blocks.push_back(block);
+
+      // Store row and column indices as a pair
+      blockIndices.push_back(std::make_pair(y / 8, x / 8));
     }
-  // // Display the image using OpenCV (optional)
-  // cv::imshow("Loaded Image", image);
-  // cv::waitKey(0);
-  // cv::destroyAllWindows();
+  }
+
+  // Perform Complex Double Precision DFT on each block
+  for (size_t bid = 0; bid < blocks.size(); ++bid) {
+    cv::Mat dftInput;
+    blocks[bid].convertTo(dftInput,
+                          CV_64F);  // Convert block to double precision
+
+    cv::Mat dftOutput;
+    cv::dft(dftInput, dftOutput, cv::DFT_COMPLEX_OUTPUT);
+    std::vector<cv::Mat> channels;
+    cv::split(dftOutput, channels);
+
+    cv::Mat realPart = channels[0];  // Real part of the DFT output
+    cv::Mat imagPart = channels[1];
+    // Process the DFT result (you can do further operations here)
+    double epsilon = 1e-4;
+
+    // std::cout << "Calculations at block: (" << blockIndices[bid].first << ",
+    // "
+    //           << blockIndices[bid].second << ")" << std::endl;
+    for (int i = 0; i < 8; i++)
+      for (int j = 0; j < 8; j++) {
+        if (std::fabs(
+                output_sequence[(blockIndices[bid].first * 8 + i) * image.rows +
+                                blockIndices[bid].second * 8 + j]
+                    .real() -
+                realPart.at<double>(i, j)) > epsilon ||
+            std::fabs(
+                output_sequence[(blockIndices[bid].first * 8 + i) * image.rows +
+                                blockIndices[bid].second * 8 + j]
+                    .imag() -
+                imagPart.at<double>(i, j)) > epsilon) {
+          std::cout << "Calculations at: " << i << ", " << j << " GPU: "
+                    << output_sequence[(blockIndices[bid].first * 8 + i) *
+                                           image.rows +
+                                       blockIndices[bid].second * 8 + j]
+                    << ", CPU: (" << realPart.at<double>(i, j) << ", "
+                    << imagPart.at<double>(i, j) << ")" << std::endl;
+        }
+      }
+  }
 
   return EXIT_SUCCESS;
 }
