@@ -261,7 +261,7 @@ void DaubechiesWaveletTransform97::inverseTransform(
 
 // Perform the row transformation step in a 2D wavelet transform.
 void TwoDimensionalWaveletTransformAlgorithm::transformRows(
-    std::vector<real> &matrix, size_t n, bool direct) const {
+    std::vector<real> &matrix, size_t n, bool direct, bool use_openmp) const {
   // Get the length of the input.
   const size_t N_squared = matrix.size();
   const size_t N = static_cast<size_t>(sqrt(N_squared));
@@ -273,7 +273,8 @@ void TwoDimensionalWaveletTransformAlgorithm::transformRows(
   assert(1UL << static_cast<size_t>(log2(N)) == N);
   assert(N * N == N_squared);
 
-  // Perform the transform on all rows.
+// Perform the transform on all rows.
+#pragma omp parallel for if (use_openmp)
   for (size_t i = 0; i < n; i++) {
     // Get a vector with the current row.
     std::vector<real> row;
@@ -301,7 +302,7 @@ void TwoDimensionalWaveletTransformAlgorithm::transformRows(
 
 // Perform the column transformation step in a 2D wavelet transform.
 void TwoDimensionalWaveletTransformAlgorithm::transformColumns(
-    std::vector<real> &matrix, size_t n, bool direct) const {
+    std::vector<real> &matrix, size_t n, bool direct, bool use_openmp) const {
   // Get the length of the input.
   const size_t N_squared = matrix.size();
   const size_t N = static_cast<size_t>(sqrt(N_squared));
@@ -313,7 +314,8 @@ void TwoDimensionalWaveletTransformAlgorithm::transformColumns(
   assert(1UL << static_cast<size_t>(log2(N)) == N);
   assert(N * N == N_squared);
 
-  // Perform the transform on all columns.
+// Perform the transform on all columns.
+#pragma omp parallel for if (use_openmp)
   for (size_t i = 0UL; i < n; i++) {
     // Get a vector with the current columns.
     std::vector<real> column;
@@ -342,11 +344,12 @@ void TwoDimensionalWaveletTransformAlgorithm::transformColumns(
 // Perform a multi level 2D DWT.
 void TwoDimensionalWaveletTransformAlgorithm::directTransform(
     const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
-    unsigned int levels) const {
+    unsigned int levels, bool use_openmp) const {
   // Check that the inputs have the same size.
   assert(input_matrix.size() == output_matrix.size());
 
-  // Copy the input into the output.
+// Copy the input into the output.
+#pragma omp parallel for if (use_openmp)
   for (size_t i = 0UL; i < input_matrix.size(); i++) {
     output_matrix[i] = input_matrix[i];
   }
@@ -361,9 +364,9 @@ void TwoDimensionalWaveletTransformAlgorithm::directTransform(
   // the length of a side each step.
   for (unsigned int level = 0U; level < levels; level++) {
     TwoDimensionalWaveletTransformAlgorithm::transformRows(output_matrix, n,
-                                                           true);
+                                                           true, use_openmp);
     TwoDimensionalWaveletTransformAlgorithm::transformColumns(output_matrix, n,
-                                                              true);
+                                                              true, use_openmp);
     n = n >> 1UL;
   }
 }
@@ -371,11 +374,12 @@ void TwoDimensionalWaveletTransformAlgorithm::directTransform(
 // Perform a multi level 2D IDWT.
 void TwoDimensionalWaveletTransformAlgorithm::inverseTransform(
     const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
-    unsigned int levels) const {
+    unsigned int levels, bool use_openmp) const {
   // Check that the inputs have the same size.
   assert(input_matrix.size() == output_matrix.size());
 
-  // Copy the input into the output.
+// Copy the input into the output.
+#pragma omp parallel for if (use_openmp)
   for (size_t i = 0UL; i < input_matrix.size(); i++) {
     output_matrix[i] = input_matrix[i];
   }
@@ -390,10 +394,10 @@ void TwoDimensionalWaveletTransformAlgorithm::inverseTransform(
   // Apply the algorithm to all rows and columns in the top left corner.
   // Double the length of a side each step.
   for (unsigned int level = 0U; level < levels; level++) {
-    TwoDimensionalWaveletTransformAlgorithm::transformColumns(output_matrix, n,
-                                                              false);
+    TwoDimensionalWaveletTransformAlgorithm::transformColumns(
+        output_matrix, n, false, use_openmp);
     TwoDimensionalWaveletTransformAlgorithm::transformRows(output_matrix, n,
-                                                           false);
+                                                           false, use_openmp);
     n = n << 1UL;
   }
 }

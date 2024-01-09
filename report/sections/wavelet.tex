@@ -23,7 +23,7 @@ As a proof of concept, we used the 2D algorithms for simple image processing app
 
 \textcolor{green}{Insert an image about denoising}
 
-Wavelet code was written with the objectives of readability and expandability, but no in-depth performance analysis was performed.
+Wavelet code was written with the objectives of readability and expandability, but no in-depth performance analysis was performed. Additionally, the 2D algorithms use conditional OpenMP parallelization over the rows and columns of the input. While the DWT and IDWT implementations of \texttt{Daubechies\-Wavelet\-Transform\-97} are parallelizable as well, parallelization was avoided, as consumer-grade architectures have a number of processors that is far lower than the amount that would benefit from this nested parallelization.
 
 \subsection{Code}
 Most wavelet-related functionalities are declared in \texttt{Wavelet\-Transform.hpp} and implemented in \texttt{Wavelet\-Transform.cpp}. An abstract class \texttt{Wavelet\-Transform\-Algorithm} with two virtual methods \texttt{direct\-Transform} and \texttt{inverse\-Transform} is declared. Two classes representing the two 1D DWT algorithms inherit from it, overriding its methods. Moreover, a \texttt{Two\-Dimensional\-Wavelet\-Transform\-Algorithm} class is declared. Said class is passed a unique pointer to a \texttt{Wavelet\-Transform\-Algorithm} as a constructor argument and specifies two public methods for performing a 2D DWT and IDWT using the provided 1D algorithm.

@@ -246,8 +246,8 @@ int wavelet_main(int argc, char *argv[]) {
       std::unique_ptr<WaveletTransformAlgorithm> gp_algorithm =
           std::make_unique<GPWaveletTransform97>();
       TwoDimensionalWaveletTransformAlgorithm gp_algorithm_2d(gp_algorithm);
-      gp_algorithm_2d.directTransform(input_matrix, dwt_matrix, levels);
-      gp_algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, levels);
+      gp_algorithm_2d.directTransform(input_matrix, dwt_matrix, levels, true);
+      gp_algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, levels, true);
       if (!CompareVectors(input_matrix, iwt_matrix, precision, false))
         std::cerr << "Errors detected in 2D GP wavelet transforms with "
                   << levels << " levels." << std::endl;
@@ -256,8 +256,8 @@ int wavelet_main(int argc, char *argv[]) {
       std::unique_ptr<WaveletTransformAlgorithm> db_algorithm =
           std::make_unique<DaubechiesWaveletTransform97>();
       TwoDimensionalWaveletTransformAlgorithm db_algorithm_2d(db_algorithm);
-      db_algorithm_2d.directTransform(input_matrix, dwt_matrix, levels);
-      db_algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, levels);
+      db_algorithm_2d.directTransform(input_matrix, dwt_matrix, levels, true);
+      db_algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, levels, true);
       if (!CompareVectors(input_matrix, iwt_matrix, precision, false))
         std::cerr << "Errors detected in 2D DB wavelet transforms with "
                   << levels << " levels." << std::endl;

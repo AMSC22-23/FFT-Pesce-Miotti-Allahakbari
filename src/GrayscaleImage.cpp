@@ -468,7 +468,7 @@ void GrayscaleImage::waveletTransform(
 
   // Perform the direct wavelet transform.
   TwoDimensionalWaveletTransformAlgorithm algorithm_2d(algorithm);
-  algorithm_2d.directTransform(real_input, real_output, levels);
+  algorithm_2d.directTransform(real_input, real_output, levels, true);
 
   // Map the values to [0, 256].
   affineMap(real_output, real(0), real(256));
@@ -500,7 +500,7 @@ void GrayscaleImage::denoise(
 
   // Perform the direct wavelet transform.
   TwoDimensionalWaveletTransformAlgorithm algorithm_2d(algorithm);
-  algorithm_2d.directTransform(real_input, real_output, levels);
+  algorithm_2d.directTransform(real_input, real_output, levels, true);
 
   // Use thresholding to denoise the image.
   for (size_t i = 0; i < real_output.size(); i++) {
@@ -520,7 +520,7 @@ void GrayscaleImage::denoise(
   }
 
   // Perform the inverse wavelet transform.
-  algorithm_2d.inverseTransform(real_output, real_output, levels);
+  algorithm_2d.inverseTransform(real_output, real_output, levels, true);
 
   // Map the values to [0, 256].
   affineMap(real_output, real(0), real(256));

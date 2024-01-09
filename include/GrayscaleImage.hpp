@@ -141,6 +141,8 @@ class GrayscaleImage {
    *
    * @note The image must be square and the number of pixels in a row must be a
    * power of 2 and greater than 1.
+   * @note Unless omp_set_num_threads() has been called, the algorithm will use
+   * all available OpenMP threads.
    */
   void waveletTransform(
       std::unique_ptr<Transform::WaveletTransform::WaveletTransformAlgorithm>
@@ -161,6 +163,8 @@ class GrayscaleImage {
    * @param use_hard_thresholding If true, hard thresholding is used, otherwise
    * soft thresholding is used instead.
    *
+   * @note Unless omp_set_num_threads() has been called, the algorithm will use
+   * all available OpenMP threads.
    * @note The image must be square and the number of pixels in a row must be a
    * power of 2 and greater than 1.
    */
