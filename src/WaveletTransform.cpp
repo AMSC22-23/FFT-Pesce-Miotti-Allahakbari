@@ -80,7 +80,7 @@ void GPWaveletTransform97::directTransform(
   }
 }
 
-// Perform the IWT with the algorithm by Gregoire Pau.
+// Perform the IDWT with the algorithm by Gregoire Pau.
 void GPWaveletTransform97::inverseTransform(
     const std::vector<real> &input_sequence,
     std::vector<real> &output_sequence) const {
@@ -200,7 +200,7 @@ void DaubechiesWaveletTransform97::directTransform(
   }
 }
 
-// Perform the IWT with the algorithm by Daubechies.
+// Perform the IDWT with the algorithm by Daubechies.
 void DaubechiesWaveletTransform97::inverseTransform(
     const std::vector<real> &input_sequence,
     std::vector<real> &output_sequence) const {
@@ -368,7 +368,7 @@ void TwoDimensionalWaveletTransformAlgorithm::directTransform(
   }
 }
 
-// Perform a multi level 2D IWT.
+// Perform a multi level 2D IDWT.
 void TwoDimensionalWaveletTransformAlgorithm::inverseTransform(
     const std::vector<real> &input_matrix, std::vector<real> &output_matrix,
     unsigned int levels) const {

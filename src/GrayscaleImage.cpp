@@ -479,7 +479,7 @@ void GrayscaleImage::waveletTransform(
   }
 }
 
-// Denoise an image with a DWT, IWT and thresholding.
+// Denoise an image with a DWT, IDWT and thresholding.
 void GrayscaleImage::denoise(
     std::unique_ptr<Transform::WaveletTransform::WaveletTransformAlgorithm>
         &algorithm,

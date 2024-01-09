@@ -1,3 +1,4 @@
+%wavelet
 @article{haar,
 author = {Haar, A.},
 journal = {Mathematische Annalen},
@@ -6,4 +7,113 @@ title = {Zur Theorie der orthogonalen Funktionensysteme. (Erste Mitteilung).},
 url = {http://eudml.org/doc/158469},
 volume = {69},
 year = {1910},
+}
+@Article{wavelet_application_1,
+AUTHOR = {Chervyakov, Nikolay and Lyakhov, Pavel and Nagornov, Nikolay},
+TITLE = {Analysis of the Quantization Noise in Discrete Wavelet Transform Filters for 3D Medical Imaging},
+JOURNAL = {Applied Sciences},
+VOLUME = {10},
+YEAR = {2020},
+NUMBER = {4},
+ARTICLE-NUMBER = {1223},
+URL = {https://www.mdpi.com/2076-3417/10/4/1223},
+ISSN = {2076-3417},
+ABSTRACT = {Denoising and compression of 2D and 3D images are important problems in modern medical imaging systems. Discrete wavelet transform (DWT) is used to solve them in practice. We analyze the quantization noise effect in coefficients of DWT filters for 3D medical imaging in this paper. The method for wavelet filters coefficients quantizing is proposed, which allows minimizing resources in hardware implementation by simplifying rounding operations. We develop the method for estimating the maximum error of 3D grayscale and color images DWT with various bits per color (BPC). The dependence of the peak signal-to-noise ratio (PSNR) of the images processing result on wavelet used, the effective bit-width of filters coefficients and BPC is revealed. We derive formulas for determining the minimum bit-width of wavelet filters coefficients that provide a high (PSNR &ge; 40 dB for images with 8 BPC, for example) and maximum (PSNR = &infin; dB) quality of 3D medical imaging by DWT depending on wavelet used. The experiments of 3D tomographic images processing confirmed the accuracy of theoretical analysis. All data are presented in the fixed-point format in the proposed method of 3D medical images DWT. It is making possible efficient, from the point of view of hardware and time resources, the implementation for image denoising and compression on modern devices such as field-programmable gate arrays and application-specific integrated circuits.},
+DOI = {10.3390/app10041223}
+}
+@Article{wavelet_application_2,
+AUTHOR = {Chervyakov, Nikolay and Lyakhov, Pavel and Kaplun, Dmitry and Butusov, Denis and Nagornov, Nikolay},
+TITLE = {Analysis of the Quantization Noise in Discrete Wavelet Transform Filters for Image Processing},
+JOURNAL = {Electronics},
+VOLUME = {7},
+YEAR = {2018},
+NUMBER = {8},
+ARTICLE-NUMBER = {135},
+URL = {https://www.mdpi.com/2079-9292/7/8/135},
+ISSN = {2079-9292},
+ABSTRACT = {In this paper, we analyze the noise quantization effects in coefficients of discrete wavelet transform (DWT) filter banks for image processing. We propose the implementation of the DWT method, making it possible to determine the effective bit-width of the filter banks coefficients at which the quantization noise does not significantly affect the image processing results according to the peak signal-to-noise ratio (PSNR). The dependence between the PSNR of the DWT image quality on the wavelet and the bit-width of the wavelet filter coefficients is analyzed. The formulas for determining the minimal bit-width of the filter coefficients at which the processed image achieves high quality (PSNR &ge; 40 dB) are given. The obtained theoretical results were confirmed through the simulation of DWT for a test image using the calculated bit-width values. All considered algorithms operate with fixed-point numbers, which simplifies their hardware implementation on modern devices: field-programmable gate array (FPGA), application-specific integrated circuit (ASIC), etc.},
+DOI = {10.3390/electronics7080135}
+}
+@article{wavelet_application_3,
+author = {Su, Yang and Xu, Zhi-Jie},
+year = {2010},
+month = {08},
+pages = {2396-2411},
+title = {Parallel implementation of wavelet-based image denoising on programmable PC-grade graphics hardware},
+volume = {90},
+journal = {Signal Processing},
+doi = {10.1016/j.sigpro.2009.06.019}
+}
+@article{wavelet_application_4,
+title = {Real time multiple objects tracking and identification based on discrete wavelet transform},
+journal = {Pattern Recognition},
+volume = {39},
+number = {6},
+pages = {1126-1139},
+year = {2006},
+issn = {0031-3203},
+doi = {https://doi.org/10.1016/j.patcog.2005.12.010},
+url = {https://www.sciencedirect.com/science/article/pii/S0031320305004863},
+author = {Fang-Hsuan Cheng and Yu-Liang Chen},
+keywords = {Video surveillance, Discrete wavelet transform, Inter-frame image difference, Spatial information, Motion detecting, Object tracking, Object identification},
+abstract = {A new method for detecting and tracking multiple moving objects based on discrete wavelet transform and identifying the moving objects by their color and spatial information is proposed in this paper. Many tracking algorithms have better performance under static background but get worse results under background with fake motions. Therefore, most of the tracking algorithms are used indoors instead of outdoor environment. Since discrete wavelet transform has a nice property that it can divide a frame into four different frequency bands without loss of the spatial information, it is adopted to solve this problem due to the fact that most of the fake motions in the background can be decomposed into the high frequency wavelet sub-band. In tracking multiple moving objects, many applications have problems when objects pass across each other. Color and spatial information are used in this paper to solve this problem. The experimental results prove the feasibility and usefulness of the proposed method.}
+}
+@article{lifting,
+author = {Sweldens, Wim},
+title = {The Lifting Scheme: A Construction of Second Generation Wavelets},
+journal = {SIAM Journal on Mathematical Analysis},
+volume = {29},
+number = {2},
+pages = {511-546},
+year = {1998},
+doi = {10.1137/S0036141095289051},
+URL = {https://doi.org/10.1137/S0036141095289051},
+eprint = {https://doi.org/10.1137/S0036141095289051}
+,
+abstract = { We present the lifting scheme, a simple construction of second generation wavelets; these are wavelets that are not necessarily translates and dilates of one fixed function. Such wavelets can be adapted to intervals, domains, surfaces, weights, and irregular samples. We show how the lifting scheme leads to a faster, in-place calculation of the wavelet transform. Several examples are included. }
+}
+@article{wavelet_fast_1,
+  title={A fast Discrete Wavelet Transform algorithm for visual processing applications},
+  author={Hsia, Chih-Hsien and Guo, Jing-Ming and Chiang, Jen-Shiun},
+  journal={Signal Processing},
+  volume={92},
+  number={1},
+  pages={89--106},
+  year={2012},
+  publisher={Elsevier}
+}
+@article{wavelet_fast_2,
+  title={Fast algorithms for discrete and continuous wavelet transforms},
+  author={Rioul, Olivier and Duhamel, Pierre},
+  journal={IEEE transactions on information theory},
+  volume={38},
+  number={2},
+  pages={569--586},
+  year={1992},
+  publisher={IEEE}
+}
+@inproceedings{wavelet_fast_3,
+  title={Design of high speed lifting based DWT using 9/7 wavelet transform for image compression},
+  author={Rekha, K Bhanu and Ravi, Kumar AV},
+  booktitle={2017 International Conference on Recent Advances in Electronics and Communication Technology (ICRAECT)},
+  pages={132--137},
+  year={2017},
+  organization={IEEE}
+}
+@misc{wavelet_fast_4,
+  title={Fast algorithms for wavelet transform computation},
+  author={Rioul, Olivier and Duhamel, Pierre},
+  year={1997}
+}
+@misc{gregoire_pau,
+    howpublished = {\url{https://github.com/ucb-bar/berkeley-hardfloat}}
+}
+@article{daubechies,
+  title={Factoring wavelet transforms into lifting steps},
+  author={Daubechies, Ingrid and Sweldens, Wim},
+  journal={Journal of Fourier analysis and applications},
+  volume={4},
+  pages={247--269},
+  year={1998},
+  publisher={Springer}
 }

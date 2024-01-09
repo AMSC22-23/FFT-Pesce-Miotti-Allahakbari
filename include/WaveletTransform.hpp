@@ -20,7 +20,8 @@ namespace WaveletTransform {
  *
  * The WaveletTransformAlgorithm abstract class is designed as a common
  * interface for Wavelet Transform algorithms. It allows for execution of a DWT
- * (Direct Wavelet Transform) and IWT (Inverse Wavelet Transform).
+ * (direct Discrete Wavelet Transform) and IDWT (Inverse Discrete Wavelet
+ * Transform).
  *
  * Example usage:
  * @code
@@ -29,11 +30,11 @@ namespace WaveletTransform {
  * ...
  *
  * algorithm->directTransform(original_sequence, dwt);
- * algorithm->inverseTransform(dwt, iwt);
+ * algorithm->inverseTransform(dwt, idwt);
  * @endcode
  *
  * @note Different DWT algorithms are not equivalent, so the same algorithm must
- * be used if an IWT is required.
+ * be used if an IDWT is required.
  */
 class WaveletTransformAlgorithm {
  public:
@@ -49,9 +50,9 @@ class WaveletTransformAlgorithm {
                                std::vector<real> &output_sequence) const = 0;
 
   /**
-   * @brief Perform the IWT of a sequence.
+   * @brief Perform the IDWT of a sequence.
    *
-   * @param input_sequence The sequence to use as an input to the IWT.
+   * @param input_sequence The sequence to use as an input to the IDWT.
    * @param output_sequence An output sequence containing the anti-transformed
    * input.
    *
@@ -119,7 +120,7 @@ class DaubechiesWaveletTransform97 : public WaveletTransformAlgorithm {
  * TwoDimensionalWaveletTransformAlgorithm algorithm_2d(algorithm);
  * unsigned int levels = 1;
  * algorithm_2d.directTransform(original_sequence, dwt, levels);
- * algorithm_2d.inverseTransform(dwt, iwt, levels);
+ * algorithm_2d.inverseTransform(dwt, idwt, levels);
  * @endcode
  */
 class TwoDimensionalWaveletTransformAlgorithm {
@@ -147,15 +148,15 @@ class TwoDimensionalWaveletTransformAlgorithm {
                        unsigned int levels) const;
 
   /**
-   * @brief Perform the 2D IWT of a sequence.
+   * @brief Perform the 2D IDWT of a sequence.
    *
    * The method performs the reverse algorithm of directTransform.
    *
-   * @param input_matrix The sequence to use as an input to the IWT, interpreted
-   * as a square matrix.
+   * @param input_matrix The sequence to use as an input to the IDWT,
+   * interpreted as a square matrix.
    * @param output_sequence An output sequence containing the anti-transformed
    * input, to be interpreted as a matrix.
-   * @param levels The number of levels for the 2D IWT.
+   * @param levels The number of levels for the 2D IWDT.
    *
    * @note The sequences must have the same length n, which must be a power of
    * two, a perfect square and larger than 1 for each recomposition level.
@@ -179,7 +180,7 @@ class TwoDimensionalWaveletTransformAlgorithm {
    * of the matrix.
    * @param matrix The matrix to transform.
    * @param n The number of rows and length of each subrow to transform.
-   * @param direct_algorithm If true, the DWT is applied, otherwise the IWT is
+   * @param direct_algorithm If true, the DWT is applied, otherwise the IDWT is
    * applied instead.
    */
   void transformRows(std::vector<real> &matrix, size_t n,
@@ -190,7 +191,7 @@ class TwoDimensionalWaveletTransformAlgorithm {
    * columns of the matrix.
    * @param matrix The matrix to transform.
    * @param n The number of columns and length of each subcolumn to transform.
-   * @param direct_algorithm If true, the DWT is applied, otherwise the IWT is
+   * @param direct_algorithm If true, the DWT is applied, otherwise the IDWT is
    * applied instead.
    */
   void transformColumns(std::vector<real> &matrix, size_t n,

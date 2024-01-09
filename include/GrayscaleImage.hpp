@@ -142,12 +142,12 @@ class GrayscaleImage {
    * @brief Denoise the last loaded image using thresholding.
    *
    * The method applies the DWT to the image, uses thresholding with the
-   * specified parameter and then applies the IWT on the result and updates the
+   * specified parameter and then applies the IDWT on the result and updates the
    * image.
    *
    * @param algorithm A unique pointer to the algorithm to use for the DWT and
-   * IWT, it will be moved when calling the function.
-   * @param levels The number of levels for the DWT and IWT.
+   * IDWT, it will be moved when calling the function.
+   * @param levels The number of levels for the DWT and IDWT.
    * @param threshold The threshold for the thresholding step.
    * @param use_hard_thresholding If true, hard thresholding is used, otherwise
    * soft thresholding is used instead.
