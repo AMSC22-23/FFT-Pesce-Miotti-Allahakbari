@@ -23,12 +23,37 @@ Where [Flags] are:
 \end{itemize}
 
 \subsection{Running}
-To run the program, run \texttt{./fft [args]} while in the \texttt{build} directory. The first argument in [args] is mandatory and it should be \texttt{fft}, \texttt{compression}, \texttt{cuda} or \texttt{wavelet}. Based on the first argument, a different function is called and the program behaves differently.
+To run the program, run \texttt{./fft [args]} while in the \texttt{build} directory. The first argument in [args] is mandatory and it should be \texttt{fft}, \texttt{compression}, \texttt{cuda} or \texttt{wavelet}. Based on the first argument, a different execution mode is selected. Each execution mode serves as a demonstration of the implemented features in its corresponding area.
 
 \subsubsection{FFT}
+This execution mode generates a random signal with complex coefficients with the number of elements given as the second argument, which must be a power of 2. It has 4 sub-modes, specified via the third argument: \texttt{demo} (default), \texttt{bitReversalTest}, \texttt{scalingTest} and \texttt{timingTest}. All modes use OpenMP, and the maximum number of threads can be specified as the fourth argument.
+\paragraph{demo} All 1D direct and inverse Fourier Transform implementations are executed. Results of direct transforms are compared to those obtained with the classical $O(n^2)$ algorithm, checking that they are the same up to a certain tolerance. Results of inverse transforms are compared to the original sequence. The trivial 2D direct and inverse FFT algorithm is then applied to a random matrix with the same side length as the length of the sequence and the result of the inverse transform is compared to the original matrix.
+\paragraph{bitReversalTest} Two instances of \texttt{Mask\-Bit\-Reversal\-Algorithm} and \texttt{Fast\-Bit\-Reversal\-Algorithm} are tested on the sequence and their execution times are compared for all numbers of threads that are powers of 2 from 1 to the maximum number specified.
+\paragraph{scalingTest} An instance of \texttt{Iterative\-Fourier\-Transform\-Algorithm} is tested on the sequence. For all numbers of threads that are powers of 2 from 1 to the maximum number specified, execution times are speed-ups over the serial code are printed.
+\paragraph{timingTest} An instance of the algorithm specified as the fifth argument is tested on the sequence and its execution time for the maximum number of threads is printed in microseconds.
 
 \subsubsection{Compression}
+\textcolor{red}{To be written by Michele}
 
 \subsubsection{CUDA}
+\textcolor{blue}{To be written by Hossein}
 
 \subsubsection{Wavelet}
+This execution mode has 3 sub-modes, specified via the second argument: \texttt{demo} (default), \texttt{image} and \texttt{denoise}.
+\paragraph{demo} A cubic signal with real coefficients is generated and a DWT and IWT are applied to it for all 1D wavelet transform implementations. The resulting sequences are saved to a file and it verified that after the inverse transform the sequences are equal to the original one, up to a certain tolerance. The same is done for all 2D wavelet transform implementations on a random matrix with the same side length as the length of the sequence. The sequence length can be specified as the third argument and different algorithms might apply different requirements on the lengths.
+\paragraph{image} An image is loaded, converted to grayscale and displayed. All 2D DWT implementations are applied to it and the results are displayed. The image path and number of decomposition levels can be provided as the third and fourth arguments.
+\paragraph{denoise} An image is loaded and denoised using the 2D DWT and IWT implementations using \texttt{GPWaveletTransform97} and soft thresholding. The resulting image is displayed. The image path, number of decomposition levels and threshold can be provided as the third, fourth and fifth arguments.
+
+\subsection{Code structure}
+The root directory of the repository contains the following folders:
+\begin{itemize}
+    \item \texttt{img} contains a set of images used for testing.
+    \item \texttt{include} contains the header files for the C++ code, containing declarations of functions and classes, definitions of template functions and type aliases.
+    \item \texttt{report} contains the source files for this report.
+    \item \texttt{results} contains results of some performance tests.
+    \item \texttt{src} contains the source files for the C++ code.
+    \item \texttt{tools} contains some Python tools for performance evaluation of FFT implementations, a way to check an FFT implementation for errors against the implementation by Numpy and some visualization tools.
+\end{itemize}
+
+\subsection{Documentation}
+The code is documented using Doxygen version 1.9.1 for functions and classes and regular comments inside functions. To generate Doxygen documentation, run \texttt{doxygen Doxyfile} from the root directory of the repository. The documentation will then be available under \texttt{html/index.html}.
