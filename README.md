@@ -2,7 +2,7 @@
 
 ## Overview
 
-Repository for the 2023/24 AMSC project FFT by Francesco Pesce, Michele Miotti and Mohammandhossein Allahakbari.
+Repository for the 2023/24 AMSC project FFT by Francesco Pesce, Michele Miotti and Mohammadhossein Allahakbari.
 This program computes the Fast Fourier Transform (FFT) of a given data sequence of size `n`, where `n` is a power of 2.
 This repository contains many different implementations of the FFT, which can be compared to each other in terms of performance.
 

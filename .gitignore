@@ -5,3 +5,7 @@ tools/*.txt
 html/
 latex/
 lib/
+report/*.log
+report/*.out
+report/*.aux
+report/*.pdf
