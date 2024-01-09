@@ -2,7 +2,7 @@
 #define CUDA_MAIN_HPP
 
 /**
- * @file fft_main.hpp.
+ * @file cuda_main.hpp.
  * @brief Declares the main function for CUDA-related tests.
  */
 

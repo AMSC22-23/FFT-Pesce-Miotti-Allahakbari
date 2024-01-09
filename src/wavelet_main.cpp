@@ -1,7 +1,7 @@
 #include "wavelet_main.hpp"
 
 /**
- * @file cuda_main.cpp.
+ * @file wavelet_main.cpp.
  * @brief Defines the main function for wavelet-related tests.
  */
 

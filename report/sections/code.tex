@@ -1,2 +1,34 @@
-WIP
-% How to run and compile, dependencies, arguments to main
+\subsection{Dependencies}
+The project uses the C++20 standard and has the following dependencies:
+\begin{itemize}
+    \item CMake version 3.0.0 or higher.
+    \item CUDA Toolkit version 12.3 or higher. 
+    \item OpenMP version 4.5 or higher.
+    \item OpenCV version 4.5.4 or higher. In Ubuntu, the library is available via \texttt{sudo apt install libopencv-dev}.
+\end{itemize}
+Note that older versions of the tools might not be supported. In particular, the code does not compile when using CUDA Toolkit version 11.5.
+
+\subsection{Compiling}
+To compile, run:
+\begin{lstlisting}[language=Bash]
+    mkdir build
+    cd build
+    cmake .. [Flags]
+    make
+\end{lstlisting}
+Where [Flags] are:
+\begin{itemize}
+    \item \texttt{-DCMAKE\_CUDA\_ARCHITECTURES=XX}. For Turing architectures \texttt{XX}=75, for Ampere \texttt{XX}=80,86,87, for Lovelace \texttt{XX}=89 and for Hopper \texttt{XX}=90. 
+    \item \texttt{-DCMAKE\_BUILD\_TYPE=YY}, where \texttt{YY} is either \texttt{Debug} or \texttt{Release}, compiling the program in debug and release modes respectively. Both build modes use the flags \texttt{-Wall -Wextra}, but the former includes debug symbols and uses default optimizations, while the latter uses multiple optimization flags, including \texttt{-Ofast}. 
+\end{itemize}
+
+\subsection{Running}
+To run the program, run \texttt{./fft [args]} while in the \texttt{build} directory. The first argument in [args] is mandatory and it should be \texttt{fft}, \texttt{compression}, \texttt{cuda} or \texttt{wavelet}. Based on the first argument, a different function is called and the program behaves differently.
+
+\subsubsection{FFT}
+
+\subsubsection{Compression}
+
+\subsubsection{CUDA}
+
+\subsubsection{Wavelet}

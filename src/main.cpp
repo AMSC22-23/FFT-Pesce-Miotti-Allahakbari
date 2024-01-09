@@ -7,15 +7,17 @@
  * based on the first argument.
  */
 
+#include "compression_main.hpp"
 #include "cuda_main.hpp"
 #include "fft_main.hpp"
-#include "jpeg_main.hpp"
 #include "wavelet_main.hpp"
 
 int main(int argc, char *argv[]) {
   if (argc <= 1) {
     std::cerr << "Incorrect arguments!\n"
-              << "Specify the execution mode!" << std::endl;
+              << "Specify the execution mode: fft (default) / compression / "
+                 "cuda / wavelet"
+              << std::endl;
     return 1;
   }
 
@@ -23,8 +25,8 @@ int main(int argc, char *argv[]) {
   std::string mode = std::string(argv[1]);
 
   // Run a test with images.
-  if (mode == std::string("jpeg")) {
-    return jpeg_main(argc, argv);
+  if (mode == std::string("compression")) {
+    return compression_main(argc, argv);
   }
   // Run a test with CUDA.
   else if (mode == std::string("cuda")) {
@@ -40,10 +42,10 @@ int main(int argc, char *argv[]) {
   }
   // Wrong mode.
   else {
-    std::cerr
-        << "Incorrect arguments!\n"
-        << "Specify the execution mode: fft (default) / jpeg / cuda / wavelet"
-        << std::endl;
+    std::cerr << "Incorrect arguments!\n"
+              << "Specify the execution mode: fft (default) / compression / "
+                 "cuda / wavelet"
+              << std::endl;
     return 1;
   }
 

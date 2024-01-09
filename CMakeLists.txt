@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(fft VERSION 0.1.0)
-enable_language(CUDA)
+
 #Use c++20
 set(CMAKE_CXX_STANDARD 20)
+
+#Use CUDA
+enable_language(CUDA)
 
 #Set compiler flags for Release
 set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wextra -Ofast -march=native -mtune=native -funroll-all-loops -flto -fno-signed-zeros -fno-trapping-math -flto=auto")
@@ -35,3 +38,6 @@ target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -fopenmp -DDOUBLE)
 #Add link options
 find_package(OpenMP)
 target_link_libraries(${CMAKE_PROJECT_NAME} OpenMP::OpenMP_CXX ${OpenCV_LIBS})
+
+#Don't specify CUDA architecture
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES OFF)

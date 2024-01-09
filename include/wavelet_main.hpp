@@ -2,7 +2,7 @@
 #define WAVELET_MAIN_HPP
 
 /**
- * @file fft_main.hpp.
+ * @file wavelet_main.hpp.
  * @brief Declares the main function for wavelet-related tests.
  */
 

@@ -1,8 +1,8 @@
-#include "jpeg_main.hpp"
+#include "compression_main.hpp"
 
 /**
- * @file cuda_main.cpp.
- * @brief Defines the main function for JPEG-related tests.
+ * @file compression_main.cpp.
+ * @brief Defines the main function for compression-related tests.
  */
 
 #include <iostream>
@@ -11,7 +11,7 @@
 
 #include "GrayscaleImage.hpp"
 
-int jpeg_main(int argc, char *argv[]) {
+int compression_main(int argc, char *argv[]) {
   using namespace Transform;
   using namespace FourierTransform;
 
