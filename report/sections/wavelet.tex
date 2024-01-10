@@ -32,7 +32,7 @@ The first test case is aimed at reproducing \cite{castle}, where the image was f
     \label{fig:wavelet_2d}
 \end{figure}
 
-The second test case shows the possible application of wavelet transforms to denoising. We applied a multi-level DWT to an image, performed a thresholding step, and then performed the IDWT. Hard thresholding consists in setting to 0 all values below the given threshold, while soft thresholding does the same and additionally reduces the absolute value of the remaining values by the threshold. While advanced denoising algorithms use more complicated steps, for simple applications like the image in Figure \ref{fig:noise_original}, our algorithm can remove most of the Gaussian noise in the original image, as shown in Figure \ref{fig:wavelet_2d}. Figure \ref{fig:noise_hard} was obtained with a 1-level DWT with hard thresholding with threshold 80, while Figure \ref{fig:noise_soft} was obtained with a 4-level DWT and soft thresholding with threshold 30. Both results use an instance of \texttt{GP\-Wavelet\-Transform\-97}. 
+The second test case shows the possible application of wavelet transforms to denoising. We applied a multi-level DWT to an image, performed a thresholding step, and then performed the IDWT. Hard thresholding consists in setting to 0 all values below the given threshold, while soft thresholding does the same and additionally reduces the absolute value of the remaining values by the threshold. While advanced denoising algorithms use more complicated steps, for simple applications like the image in Figure \ref{fig:noise_original}, our algorithm can remove most of the Gaussian noise in the original image, as shown in Figure \ref{fig:thresholding}. Figure \ref{fig:noise_hard} was obtained with a 1-level DWT with hard thresholding with threshold 80, while Figure \ref{fig:noise_soft} was obtained with a 4-level DWT and soft thresholding with threshold 30. Both results use an instance of \texttt{GP\-Wavelet\-Transform\-97}. 
 
 \begin{figure}[h]
     \centering
@@ -40,5 +40,5 @@ The second test case shows the possible application of wavelet transforms to den
     \subfigure[Hard thresholding]{\label{fig:noise_hard}\includegraphics[width=35mm]{image/noise_hard}}
     \subfigure[Soft thresholding]{\label{fig:noise_soft}\includegraphics[width=35mm]{image/noise_soft}}
     \caption{DWT and thresholding applied to an example image.}
-    \label{fig:wavelet_2d}
+    \label{fig:thresholding}
 \end{figure}
