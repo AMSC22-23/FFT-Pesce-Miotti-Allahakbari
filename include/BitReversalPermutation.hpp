@@ -66,7 +66,7 @@ class BitReversalPermutationAlgorithm {
  * @brief A naive implementation of BitReversalPermutationAlgorithm.
  *
  * @note The algorithm has time complexity O(n log(n)).
- * @note The algorithm is massively parallel.
+ * @note The algorithm is amenable for parallelization and uses OpenMP.
  */
 class NaiveBitReversalPermutationAlgorithm
     : public BitReversalPermutationAlgorithm {
@@ -80,7 +80,7 @@ class NaiveBitReversalPermutationAlgorithm
  * @brief An efficient implementation of BitReversalPermutationAlgorithm.
  *
  * @note The algorithm has time complexity O(n logn), with a small constant.
- * @note The algorithm is massively parallel.
+ * @note The algorithm is amenable for parallelization and uses OpenMP.
  * @note Adapted from @cite
  * https://rosettacode.org/wiki/Fast_Fourier_transform#C.2B.2B.
  */
@@ -97,10 +97,9 @@ class MaskBitReversalPermutationAlgorithm
  * BitReversalPermutationAlgorithm.
  *
  * @note The algorithm has time complexity O(n).
- * @note The algorithm has a parallel time complexity of O(log(n)) with n
- * processors.
+ * @note The algorithm supports OpenMP.
  * @note Adapted from @cite
- * https://rosettacode.org/wiki/Fast_Fourier_transform#C.2B.2B.
+ * https://folk.idi.ntnu.no/elster/pubs/elster-bit-rev-1989.pdf.
  */
 class FastBitReversalPermutationAlgorithm
     : public BitReversalPermutationAlgorithm {
