@@ -103,7 +103,7 @@ int wavelet_main(int argc, char *argv[]) {
       image.display();
 
       // Save the image.
-      success = image.saveImage("gp_transform.jpg");
+      success = image.saveStandard("gp_transform.jpg");
       // Check if the image was saved successfully.
       if (!success) {
         std::cout << "Failed to save image." << std::endl;
@@ -125,7 +125,7 @@ int wavelet_main(int argc, char *argv[]) {
       image2.display();
 
       // Save the image.
-      success = image.saveImage("db_transform.jpg");
+      success = image.saveStandard("db_transform.jpg");
       // Check if the image was saved successfully.
       if (!success) {
         std::cout << "Failed to save image." << std::endl;

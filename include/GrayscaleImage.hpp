@@ -74,7 +74,7 @@ class GrayscaleImage {
    * @return true If the image was saved successfully.
    * @return false If the image could not be saved.
    */
-  bool saveImage(const std::string &filename);
+  bool saveStandard(const std::string &filename);
 
   /**
    * @brief Encode the last loaded image.
