@@ -14,18 +14,10 @@ namespace Transform {
 
 /** @namespace */
 
-#ifdef FLOAT
+#ifdef USE_FLOAT
 using real = float;
 #else
-#ifdef DOUBLE
 using real = double;
-#else
-#ifdef LONG_DOUBLE
-using real = long double;
-#else
-using real = double;
-#endif
-#endif
 #endif
 
 namespace FourierTransform {

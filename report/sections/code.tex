@@ -20,6 +20,7 @@ Where [Flags] are:
 \begin{itemize}
     \item \texttt{-DCMAKE\_CUDA\_ARCHITECTURES=XX}. For Turing architectures \texttt{XX}=75, for Ampere \texttt{XX}=80,86,87, for Lovelace \texttt{XX}=89 and for Hopper \texttt{XX}=90. 
     \item \texttt{-DCMAKE\_BUILD\_TYPE=YY}, where \texttt{YY} is either \texttt{Debug} or \texttt{Release}, compiling the program in debug and release modes respectively. Both build modes use the flags \texttt{-Wall -Wextra}, but the former includes debug symbols and uses default optimizations, while the latter uses multiple optimization flags, including \texttt{-Ofast}. 
+    \item \texttt{-DUSE\_FLOAT=ZZ}, where \texttt{ZZ} is either \texttt{ON} or \texttt{OFF}. If set, this flag uses floats for floating point numbers, otherwise doubles are used. The default is \texttt{OFF} and it is recommended not to change the flag, as for large sequences single floating point precision can be too low, due to the large number of computations performed.
 \end{itemize}
 
 \subsection{Running}

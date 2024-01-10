@@ -36,7 +36,8 @@ int fft_main(int argc, char *argv[]) {
   constexpr size_t default_size = 1UL << 10;
   constexpr unsigned int default_max_num_threads = 8;
   const std::string default_mode = "demo";
-  constexpr real precision = 1e-4;
+  constexpr real precision =
+      std::max(std::numeric_limits<real>::epsilon() * 1e5, 1e-4);
 
   // Check the number of arguments.
   if (argc > 6) {

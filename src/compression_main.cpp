@@ -15,7 +15,7 @@ int compression_main(int argc, char *argv[]) {
   using namespace Transform;
   using namespace FourierTransform;
 
-  std::string image_path = "../img/image.jpg";
+  std::string image_path = "../img/cat.jpg";
 
   // We expect at most 1 extra argument.
   if (argc > 3) {

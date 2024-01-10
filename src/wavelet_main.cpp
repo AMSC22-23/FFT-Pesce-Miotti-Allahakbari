@@ -5,6 +5,7 @@
  * @brief Defines the main function for wavelet-related tests.
  */
 
+#include <numbers>
 #include <string>
 
 #include "GrayscaleImage.hpp"
@@ -32,7 +33,8 @@ int wavelet_main(int argc, char *argv[]) {
   constexpr size_t default_size = 1UL << 10;
   const std::string default_image = "../img/image.jpg";
   const std::string default_mode = "demo";
-  constexpr real precision = 1e-4;
+  constexpr real precision =
+      std::max(std::numeric_limits<real>::epsilon() * 1e5, 1e-4);
   constexpr unsigned int default_levels = 1;
   constexpr real default_threshold = 50;
 

@@ -33,7 +33,13 @@ include_directories(${CUDAToolkit_INCLUDE_DIRS})
 add_executable(${CMAKE_PROJECT_NAME} ${SRC_FILES})
 
 #Add compile options
-target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -fopenmp -DDOUBLE)
+target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -fopenmp)
+
+#Add floating point type option
+OPTION(USE_FLOAT "Whether to use floats instead of doubles" OFF) # Disabled by default
+IF(USE_FLOAT)
+target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC USE_FLOAT)
+ENDIF(USE_FLOAT)
 
 #Add link options
 find_package(OpenMP)

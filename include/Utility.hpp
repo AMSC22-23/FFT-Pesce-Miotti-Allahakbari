@@ -21,7 +21,7 @@
  * @tparam T The type of the elements contained in the sequences.
  * @param sequence_golden The sequence that is assumed to be correct.
  * @param sequence The sequence whose correctness has to be checked.
- * @param tolerance The maximum difference in absolute value between any two
+ * @param tolerance The tolerance on the relative error between any two
  * elements in the sequences.
  * @param print_errors If true, print the indices in which the sequences differ
  * more than the specified tolerance.
@@ -43,7 +43,15 @@ bool CompareVectors(const std::vector<T> &sequence_golden,
 
   // Check that the difference between the two sequences is small enough.
   for (size_t i = 0; i < sequence_golden.size(); i++) {
-    if (std::abs(sequence[i] - sequence_golden[i]) > tolerance) {
+    // Consider the case where one element is zero separately.
+    if (std::abs(sequence_golden[i]) == 0) {
+      if (std::abs(sequence[i]) > tolerance) {
+        if (!print_errors) return false;
+        errors.emplace_back(i);
+      }
+      // Otherwise, consider the relative tolerance.
+    } else if (std::abs(sequence[i] - sequence_golden[i]) >
+               tolerance * std::abs(sequence_golden[i])) {
       if (!print_errors) return false;
       errors.emplace_back(i);
     }

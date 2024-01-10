@@ -8,6 +8,7 @@
 // TODO: Remove commented code and improve comments.
 
 #include <iostream>
+#include <numbers>
 #include <opencv2/opencv.hpp>
 #include <string>
 
@@ -25,7 +26,8 @@ int cuda_main(int argc, char *argv[]) {
     return 1;
   }
 
-  std::string image_path = "../img/image.jpg";
+  std::cout << sizeof(real) << std::endl;
+  std::string image_path = "../img/cat.jpg";
 
   // Get which algorithm to choose.
   if (argc >= 3) image_path = std::string(argv[2]);
@@ -102,7 +104,8 @@ int cuda_main(int argc, char *argv[]) {
     cv::Mat realPart = channels[0];  // Real part of the DFT output
     cv::Mat imagPart = channels[1];
     // Process the DFT result (you can do further operations here)
-    double epsilon = 1e-4;
+    constexpr real epsilon =
+        std::max(std::numeric_limits<real>::epsilon() * 1e5, 1e-4);
 
     // std::cout << "Calculations at block: (" << blockIndices[bid].first << ",
     // "
