@@ -8,8 +8,8 @@
 #include "FFTGPU.hpp"
 
 // The algorithm only works if n >= TILE_SIZE
+// TODO: State it somewhere
 #define TILE_SIZE 8
-
 
 #define BLOCK_SIZE 8
 

@@ -206,6 +206,9 @@ class IterativeFFTGPU2D : public FourierTransformAlgorithm {
   ~IterativeFFTGPU2D() = default;
 };
 
+/**
+ * @todo Document this class.
+ */
 class BlockFFTGPU2D : public FourierTransformAlgorithm {
  public:
   void operator()(const vec &input_sequence,

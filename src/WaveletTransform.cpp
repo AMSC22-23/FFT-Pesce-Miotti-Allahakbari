@@ -356,7 +356,7 @@ void TwoDimensionalWaveletTransformAlgorithm::directTransform(
 
   // Get the initial size and assert that the input has a length that is a
   // perfect square.
-  size_t n_squared = input_matrix.size();
+  const size_t n_squared = input_matrix.size();
   size_t n = static_cast<size_t>(sqrt(n_squared));
   assert(n * n == n_squared);
 
@@ -386,7 +386,7 @@ void TwoDimensionalWaveletTransformAlgorithm::inverseTransform(
 
   // Get the initial size and assert that the input has a length that is a
   // perfect square.
-  size_t n_squared = input_matrix.size();
+  const size_t n_squared = input_matrix.size();
   size_t n = static_cast<size_t>(sqrt(n_squared));
   assert(n * n == n_squared);
   n = n >> (levels - 1U);
