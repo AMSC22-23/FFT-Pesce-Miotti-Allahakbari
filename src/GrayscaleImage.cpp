@@ -75,7 +75,7 @@ void GrayscaleImage::splitBlocks() {
   for (int i = 0; i < this->blockGridHeight; i++) {
     for (int j = 0; j < this->blockGridWidth; j++) {
       // Create a new block.
-      std::vector<int8_t> block;
+      std::array<int8_t, 64> block;
 
       // For each row in the block...
       for (int k = 0; k < 8; k++) {
@@ -94,7 +94,7 @@ void GrayscaleImage::splitBlocks() {
               this->decoded[pixelY * this->blockGridWidth * 8 + pixelX];
 
           // Add the pixel value to the block.
-          block.push_back(pixel);
+          block[8 * k + l] = pixel;
         }
       }
 
@@ -121,7 +121,7 @@ void GrayscaleImage::mergeBlocks() {
   for (int i = 0; i < this->blockGridHeight; i++) {
     for (int j = 0; j < this->blockGridWidth; j++) {
       // Get the block.
-      std::vector<int8_t> block = this->blocks[i * this->blockGridWidth + j];
+      std::array<int8_t, 64> block = this->blocks[i * this->blockGridWidth + j];
 
       // For each row in the block...
       for (int k = 0; k < 8; k++) {
@@ -155,25 +155,26 @@ std::array<int, 64> GrayscaleImage::quantizationTable{
     100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
 };
 
-// Quantize the given vec into two blocks using the quantization table.
-void GrayscaleImage::quantize(const Transform::FourierTransform::vec &vec,
-                              std::vector<int8_t> &realBlock,
-                              std::vector<int8_t> &imagBlock) {
+// Quantize the given complex block into two blocks using the quantization
+// table.
+void GrayscaleImage::quantize(
+    const std::array<Transform::FourierTransform::complex, 64> &complexBlock,
+    std::array<int8_t, 64> &realBlock, std::array<int8_t, 64> &imagBlock) {
   // For element in the block...
   for (int i = 0; i < 64; i++) {
     // Get the quantization table value.
     int quantizationTableValue = GrayscaleImage::quantizationTable[i];
 
     // Set the element value to the quantized value.
-    realBlock[i] = vec[i].real() / quantizationTableValue;
-    imagBlock[i] = vec[i].imag() / quantizationTableValue;
+    realBlock[i] = complexBlock[i].real() / quantizationTableValue;
+    imagBlock[i] = complexBlock[i].imag() / quantizationTableValue;
   }
 }
 
 // Unquantize the given block using the quantization table.
-void GrayscaleImage::unquantize(Transform::FourierTransform::vec &vec,
-                                std::vector<int8_t> &realBlock,
-                                std::vector<int8_t> &imagBlock) {
+void GrayscaleImage::unquantize(
+    std::array<Transform::FourierTransform::complex, 64> &complexBlock,
+    std::array<int8_t, 64> &realBlock, std::array<int8_t, 64> &imagBlock) {
   for (int i = 0; i < 64; i++) {
     // Get the quantization table value.
     int quantizationTableValue = GrayscaleImage::quantizationTable[i];
@@ -185,8 +186,8 @@ void GrayscaleImage::unquantize(Transform::FourierTransform::vec &vec,
         imagBlock[i] * quantizationTableValue;
 
     // Set the element value to the unquantized value.
-    vec[i] = Transform::FourierTransform::complex(unquantizedRealValue,
-                                                  unquantizedImagValue);
+    complexBlock[i] = Transform::FourierTransform::complex(
+        unquantizedRealValue, unquantizedImagValue);
   }
 }
 
@@ -203,7 +204,7 @@ void GrayscaleImage::encode() {
   this->imagBlocks.clear();
   for (size_t i = 0; i < this->blocks.size(); i++) {
     // Get the block.
-    std::vector<int8_t> block = this->blocks[i];
+    std::array<int8_t, 64> block = this->blocks[i];
 
     // Turn the block into a vec object.
     Transform::FourierTransform::vec vecBlock(64, 0.0);
@@ -217,10 +218,15 @@ void GrayscaleImage::encode() {
     fft(vecBlock, outputVecBlock);
 
     // Quantize the block.
-    std::vector<int8_t> realBlock(64, 0);
-    std::vector<int8_t> imagBlock(64, 0);
+    std::array<int8_t, 64> realBlock;
+    std::array<int8_t, 64> imagBlock;
+    std::array<Transform::FourierTransform::complex, 64> complexBlock;
 
-    this->quantize(outputVecBlock, realBlock, imagBlock);
+    for (size_t i = 0; i < 64; i++) {
+      complexBlock[i] = outputVecBlock[i];
+    }
+
+    this->quantize(complexBlock, realBlock, imagBlock);
 
     // Add the quantized block to the blocks vector.
     this->blocks[i] = realBlock;
@@ -241,19 +247,26 @@ void GrayscaleImage::decode() {
   // For each block...
   for (size_t i = 0; i < this->blocks.size(); i++) {
     // Get the block.
-    std::vector<int8_t> realBlock = this->blocks[i];
-    std::vector<int8_t> imagBlock = this->imagBlocks[i];
+    std::array<int8_t, 64> realBlock = this->blocks[i];
+    std::array<int8_t, 64> imagBlock = this->imagBlocks[i];
 
     // Unquantize the block.
-    Transform::FourierTransform::vec vecBlock(64, 0);
-    Transform::FourierTransform::vec outputVecBlock(64, 0);
-    this->unquantize(vecBlock, realBlock, imagBlock);
+    std::array<Transform::FourierTransform::complex, 64> complexBlock;
+    this->unquantize(complexBlock, realBlock, imagBlock);
 
     // Apply the Inverse Fourier transform to the block.
+    Transform::FourierTransform::vec vecBlock;
+    Transform::FourierTransform::vec outputVecBlock(64, 0);
+
+    vecBlock.reserve(64);
+    for (size_t i = 0; i < 64; i++) {
+      vecBlock.emplace_back(complexBlock[i]);
+    }
+
     fft(vecBlock, outputVecBlock);
 
     // Turn the output vec object into a block.
-    std::vector<int8_t> block(64, 0);
+    std::array<int8_t, 64> block;
     for (size_t j = 0; j < outputVecBlock.size(); j++) {
       block[j] = outputVecBlock[j].real();
       block[j] += 128;
@@ -267,15 +280,15 @@ void GrayscaleImage::decode() {
 }
 
 // Static member variable to store the zigZag map.
-std::array<std::pair<int, int>, 64> GrayscaleImage::zigZagMap{{
-    {0, 0}, {0, 1}, {1, 0}, {2, 0}, {1, 1}, {0, 2}, {0, 3}, {1, 2},
-    {2, 1}, {3, 0}, {4, 0}, {3, 1}, {2, 2}, {1, 3}, {0, 4}, {0, 5},
-    {1, 4}, {2, 3}, {3, 2}, {4, 1}, {5, 0}, {6, 0}, {5, 1}, {4, 2},
-    {3, 3}, {2, 4}, {1, 5}, {0, 6}, {0, 7}, {1, 6}, {2, 5}, {3, 4},
-    {4, 3}, {5, 2}, {6, 1}, {7, 0}, {7, 1}, {6, 2}, {5, 3}, {4, 4},
-    {3, 5}, {2, 6}, {1, 7}, {2, 7}, {3, 6}, {4, 5}, {5, 4}, {6, 3},
-    {7, 2}, {7, 3}, {6, 4}, {5, 5}, {4, 6}, {3, 7}, {4, 7}, {5, 6},
-    {6, 5}, {7, 4}, {7, 5}, {6, 6}, {5, 7}, {6, 7}, {7, 6}, {7, 7}}};
+std::array<std::pair<int, int>, 64> GrayscaleImage::zigZagMap{
+    {{0, 0}, {0, 1}, {1, 0}, {2, 0}, {1, 1}, {0, 2}, {0, 3}, {1, 2},
+     {2, 1}, {3, 0}, {4, 0}, {3, 1}, {2, 2}, {1, 3}, {0, 4}, {0, 5},
+     {1, 4}, {2, 3}, {3, 2}, {4, 1}, {5, 0}, {6, 0}, {5, 1}, {4, 2},
+     {3, 3}, {2, 4}, {1, 5}, {0, 6}, {0, 7}, {1, 6}, {2, 5}, {3, 4},
+     {4, 3}, {5, 2}, {6, 1}, {7, 0}, {7, 1}, {6, 2}, {5, 3}, {4, 4},
+     {3, 5}, {2, 6}, {1, 7}, {2, 7}, {3, 6}, {4, 5}, {5, 4}, {6, 3},
+     {7, 2}, {7, 3}, {6, 4}, {5, 5}, {4, 6}, {3, 7}, {4, 7}, {5, 6},
+     {6, 5}, {7, 4}, {7, 5}, {6, 6}, {5, 7}, {6, 7}, {7, 6}, {7, 7}}};
 
 // Use entropy coding to encode all blocks.
 void GrayscaleImage::entropyEncode() {
@@ -283,7 +296,7 @@ void GrayscaleImage::entropyEncode() {
   this->encoded.clear();
 
   // Initialize a new blocks vector.
-  std::vector<std::vector<int8_t>> blockSet;
+  std::vector<std::array<int8_t, 64>> blockSet;
 
   // Add all blocks to the blocks vector.
   for (size_t i = 0; i < this->blocks.size(); i++) {
@@ -303,10 +316,10 @@ void GrayscaleImage::entropyEncode() {
 
   // For each block...
   for (size_t i = 0; i < blockSet.size(); i++) {
-    std::vector<int8_t> block = blockSet[i];
+    std::array<int8_t, 64> block = blockSet[i];
 
     // Initialize a zigZag vector.
-    std::vector<int8_t> zigZagVector(64, 0);
+    std::array<int8_t, 64> zigZagVector;
 
     // For each step in zigzag path...
     for (int j = 0; j < 64; j++) {
@@ -360,7 +373,7 @@ void GrayscaleImage::entropyDecode() {
   this->imagBlocks.clear();
 
   // Create a new blocks vector.
-  std::vector<std::vector<int8_t>> blocksSet;
+  std::vector<std::array<int8_t, 64>> blocksSet;
 
   // Create a new reconstrcuted zigZag vector.
   std::vector<int8_t> reconstructedZigZagVector;
@@ -396,7 +409,7 @@ void GrayscaleImage::entropyDecode() {
       }
 
       // Create a new block.
-      std::vector<int8_t> block(64, 0);
+      std::array<int8_t, 64> block;
 
       // For each element in the reconstructed zigZag vector...
       for (size_t j = 0; j < reconstructedZigZagVector.size(); j++) {

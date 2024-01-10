@@ -195,35 +195,36 @@ class GrayscaleImage {
   void mergeBlocks();
 
   /**
-   * @brief Use a quantization table to quantize the given vec.
+   * @brief Use a quantization table to quantize the given block.
    *
-   * This function quantizes the given vec using the quantization table. Each
-   * element of the vec is divided by the corresponding element of the
+   * This function quantizes the given block using the quantization table. Each
+   * element of the block is divided by the corresponding element of the
    * quantization table. Then, the result is split into a real and imaginary
    * part, and each part is stored in a separate block.
    *
-   * @param vec The vec to be quantized.
-   * @param realBlock The resulting real part of the quantized vec.
-   * @param imagBlock The resulting imaginary part of the quantized vec.
+   * @param complexBlock The block to be quantized.
+   * @param realBlock The resulting real part of the quantized block.
+   * @param imagBlock The resulting imaginary part of the quantized block.
    */
-  void quantize(const Transform::FourierTransform::vec &vec,
-                std::vector<int8_t> &realBlock, std::vector<int8_t> &imagBlock);
+  void quantize(
+      const std::array<Transform::FourierTransform::complex, 64> &complexBlock,
+      std::array<int8_t, 64> &realBlock, std::array<int8_t, 64> &imagBlock);
 
   /**
-   * @brief Use a quantization table to unquantize the given vec.
+   * @brief Use a quantization table to unquantize the given block.
    *
    * This function unquantizes the given real and imaginary parts using the
    * quantization table. The real and imaginary parts are combined into a single
-   * vec, which is multiplied by the corresponding element of the quantization
-   * table, and stored in variable 'vec'.
+   * block, which is multiplied by the corresponding element of the quantization
+   * table, and stored in variable 'complexBlock'.
    *
-   * @param vec The resulting vec.
-   * @param realBlock The real part of the quantized vec.
-   * @param imagBlock The imaginary part of the quantized vec.
+   * @param complexBlock The resulting block.
+   * @param realBlock The real part of the quantized block.
+   * @param imagBlock The imaginary part of the quantized block.
    */
-  void unquantize(Transform::FourierTransform::vec &vec,
-                  std::vector<int8_t> &realBlock,
-                  std::vector<int8_t> &imagBlock);
+  void unquantize(
+      std::array<Transform::FourierTransform::complex, 64> &complexBlock,
+      std::array<int8_t, 64> &realBlock, std::array<int8_t, 64> &imagBlock);
 
   /**
    * @brief Use a simplified version of entropy coding to encode all blocks.
@@ -339,7 +340,7 @@ class GrayscaleImage {
    * as this variable is used to store the image in different stages of the
    * encoding/decoding process.
    */
-  std::vector<std::vector<int8_t>> blocks;
+  std::vector<std::array<int8_t, 64>> blocks;
 
   /**
    * @brief An array of blocks, containing imaginary parts.
@@ -349,7 +350,7 @@ class GrayscaleImage {
    *
    * @see blocks
    */
-  std::vector<std::vector<int8_t>> imagBlocks;
+  std::vector<std::array<int8_t, 64>> imagBlocks;
 
   /**
    * @brief The image width, expressed in blocks.
