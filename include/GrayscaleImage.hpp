@@ -85,6 +85,9 @@ class GrayscaleImage {
    * 3. Perform the 2D FFT on each block.
    * 4. Quantize the real and imaginary parts of each block.
    * 5. Store the quantized values in a sequence of bytes using entropy coding.
+   *
+   * @note Unless omp_set_num_threads() has been called, the algorithm will use
+   * all available OpenMP threads.
    */
   void encode();
 
@@ -97,6 +100,9 @@ class GrayscaleImage {
    * 3. Perform the 2D inverse FFT on each block.
    * 4. Shift the block values back to the range [0, 255].
    * 5. Merge the blocks into a single image.
+   *
+   * @note Unless omp_set_num_threads() has been called, the algorithm will use
+   * all available OpenMP threads.
    */
   void decode();
 
