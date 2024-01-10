@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Get which mode to execute the program in.
-  std::string mode = std::string(argv[1]);
+  const std::string mode = std::string(argv[1]);
 
   // Run a test with images.
   if (mode == std::string("compression")) {

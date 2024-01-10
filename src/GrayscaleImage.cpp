@@ -13,14 +13,14 @@
 
 // Load regular image from file.
 bool GrayscaleImage::loadStandard(const std::string &filename) {
-  cv::Mat image = cv::imread(filename, cv::IMREAD_GRAYSCALE);
+  const cv::Mat image = cv::imread(filename, cv::IMREAD_GRAYSCALE);
   if (image.empty()) {
     return false;
   }
 
   // Get the image size.
-  int width = image.cols;
-  int height = image.rows;
+  const int width = image.cols;
+  const int height = image.rows;
 
   // Assert that the image size is a multiple of 8.
   assert(width % 8 == 0);
@@ -31,10 +31,11 @@ bool GrayscaleImage::loadStandard(const std::string &filename) {
   this->blockGridHeight = height / 8;
 
   // For each row and column...
+  this->decoded.reserve(width * height);
   for (int i = 0; i < image.rows; i++) {
     for (int j = 0; j < image.cols; j++) {
       // Add the pixel value to the decoded image.
-      uint8_t pixel = image.at<uint8_t>(i, j);
+      const uint8_t pixel = image.at<uint8_t>(i, j);
       this->decoded.push_back(pixel);
     }
   }
@@ -56,7 +57,7 @@ void GrayscaleImage::display() {
   for (int i = 0; i < image.rows; i++) {
     for (int j = 0; j < image.cols; j++) {
       // Set the pixel value.
-      uint8_t pixel = this->decoded[i * image.cols + j];
+      const uint8_t pixel = this->decoded[i * image.cols + j];
       image.at<uint8_t>(i, j) = pixel;
     }
   }
@@ -72,6 +73,7 @@ void GrayscaleImage::splitBlocks() {
   this->blocks.clear();
 
   // For each block row and column...
+  blocks.reserve(this->blockGridHeight * this->blockGridWidth);
   for (int i = 0; i < this->blockGridHeight; i++) {
     for (int j = 0; j < this->blockGridWidth; j++) {
       // Create a new block.
@@ -82,15 +84,15 @@ void GrayscaleImage::splitBlocks() {
         // For each column in the block...
         for (int l = 0; l < 8; l++) {
           // Get the top-left pixel coordinates of the block.
-          int x = j * 8;
-          int y = i * 8;
+          const int x = j * 8;
+          const int y = i * 8;
 
           // Get the pixel coordinates.
           int pixelX = x + l;
-          int pixelY = y + k;
+          const int pixelY = y + k;
 
           // Get the pixel value.
-          uint8_t pixel =
+          const uint8_t pixel =
               this->decoded[pixelY * this->blockGridWidth * 8 + pixelX];
 
           // Add the pixel value to the block.
@@ -111,6 +113,7 @@ void GrayscaleImage::mergeBlocks() {
   this->decoded.clear();
 
   // Fill the decoded vector with zeros.
+  this->decoded.reserve(this->blockGridHeight * this->blockGridWidth * 64);
   for (int i = 0; i < this->blockGridHeight * 8; i++) {
     for (int j = 0; j < this->blockGridWidth * 8; j++) {
       this->decoded.push_back(0);
@@ -121,22 +124,23 @@ void GrayscaleImage::mergeBlocks() {
   for (int i = 0; i < this->blockGridHeight; i++) {
     for (int j = 0; j < this->blockGridWidth; j++) {
       // Get the block.
-      std::array<int8_t, 64> block = this->blocks[i * this->blockGridWidth + j];
+      const std::array<int8_t, 64> block =
+          this->blocks[i * this->blockGridWidth + j];
 
       // For each row in the block...
       for (int k = 0; k < 8; k++) {
         // For each column in the block...
         for (int l = 0; l < 8; l++) {
           // Get the top-left pixel coordinates of the block.
-          int x = j * 8;
-          int y = i * 8;
+          const int x = j * 8;
+          const int y = i * 8;
 
           // Get the pixel coordinates.
           int pixelX = x + l;
-          int pixelY = y + k;
+          const int pixelY = y + k;
 
           // Get the pixel value.
-          uint8_t pixel = block[k * 8 + l];
+          const uint8_t pixel = block[k * 8 + l];
 
           // Add the pixel value to the decoded vector, at the right position.
           this->decoded[pixelY * this->blockGridWidth * 8 + pixelX] = pixel;
@@ -163,7 +167,7 @@ void GrayscaleImage::quantize(
   // For element in the block...
   for (int i = 0; i < 64; i++) {
     // Get the quantization table value.
-    int quantizationTableValue = GrayscaleImage::quantizationTable[i];
+    const int quantizationTableValue = GrayscaleImage::quantizationTable[i];
 
     // Set the element value to the quantized value.
     realBlock[i] = complexBlock[i].real() / quantizationTableValue;
@@ -174,15 +178,16 @@ void GrayscaleImage::quantize(
 // Unquantize the given block using the quantization table.
 void GrayscaleImage::unquantize(
     std::array<Transform::FourierTransform::complex, 64> &complexBlock,
-    std::array<int8_t, 64> &realBlock, std::array<int8_t, 64> &imagBlock) {
+    const std::array<int8_t, 64> &realBlock,
+    const std::array<int8_t, 64> &imagBlock) {
   for (int i = 0; i < 64; i++) {
     // Get the quantization table value.
-    int quantizationTableValue = GrayscaleImage::quantizationTable[i];
+    const int quantizationTableValue = GrayscaleImage::quantizationTable[i];
 
     // Unquantize the element value.
-    Transform::real unquantizedRealValue =
+    const Transform::real unquantizedRealValue =
         realBlock[i] * quantizationTableValue;
-    Transform::real unquantizedImagValue =
+    const Transform::real unquantizedImagValue =
         imagBlock[i] * quantizationTableValue;
 
     // Set the element value to the unquantized value.
@@ -197,14 +202,15 @@ void GrayscaleImage::encode() {
   this->splitBlocks();
 
   // Initialize a TrivialTwoDimensionalDiscreteFourierTransform object.
-  Transform::FourierTransform::TrivialTwoDimensionalFourierTransformAlgorithm
-      fft;
+  const Transform::FourierTransform::
+      TrivialTwoDimensionalFourierTransformAlgorithm fft;
 
   // For each block...
   this->imagBlocks.clear();
+  this->imagBlocks.reserve(this->blocks.size());
   for (size_t i = 0; i < this->blocks.size(); i++) {
     // Get the block.
-    std::array<int8_t, 64> block = this->blocks[i];
+    const std::array<int8_t, 64> block = this->blocks[i];
 
     // Turn the block into a vec object.
     Transform::FourierTransform::vec vecBlock(64, 0.0);
@@ -239,7 +245,7 @@ void GrayscaleImage::encode() {
 // Decode the last loaded or encoded image.
 void GrayscaleImage::decode() {
   // Initialize a TrivialTwoDimensionalDiscreteFourierTransform object.
-  Transform::FourierTransform::
+  const Transform::FourierTransform::
       TrivialTwoDimensionalInverseFourierTransformAlgorithm fft;
 
   this->entropyDecode();
@@ -247,8 +253,8 @@ void GrayscaleImage::decode() {
   // For each block...
   for (size_t i = 0; i < this->blocks.size(); i++) {
     // Get the block.
-    std::array<int8_t, 64> realBlock = this->blocks[i];
-    std::array<int8_t, 64> imagBlock = this->imagBlocks[i];
+    const std::array<int8_t, 64> realBlock = this->blocks[i];
+    const std::array<int8_t, 64> imagBlock = this->imagBlocks[i];
 
     // Unquantize the block.
     std::array<Transform::FourierTransform::complex, 64> complexBlock;
@@ -297,6 +303,7 @@ void GrayscaleImage::entropyEncode() {
 
   // Initialize a new blocks vector.
   std::vector<std::array<int8_t, 64>> blockSet;
+  blockSet.reserve(this->blocks.size() + this->imagBlocks.size());
 
   // Add all blocks to the blocks vector.
   for (size_t i = 0; i < this->blocks.size(); i++) {
@@ -309,14 +316,20 @@ void GrayscaleImage::entropyEncode() {
   }
 
   // Initialize a unsigned int list for zero counters.
+  // While we do not know the length of the sequence, we know it will have at
+  // least an element of each block.
   std::vector<uint8_t> zeroCounters;
+  zeroCounters.reserve(blockSet.size());
 
   // Initialize an int list for elements.
+  // While we do not know the length of the sequence, we know it will have at
+  // least an element of each block.
   std::vector<int8_t> elements;
+  elements.reserve(blockSet.size());
 
   // For each block...
   for (size_t i = 0; i < blockSet.size(); i++) {
-    std::array<int8_t, 64> block = blockSet[i];
+    const std::array<int8_t, 64> block = blockSet[i];
 
     // Initialize a zigZag vector.
     std::array<int8_t, 64> zigZagVector;
@@ -324,8 +337,8 @@ void GrayscaleImage::entropyEncode() {
     // For each step in zigzag path...
     for (int j = 0; j < 64; j++) {
       // Get the zigZag map coordinates.
-      int x = GrayscaleImage::zigZagMap[j].first;
-      int y = GrayscaleImage::zigZagMap[j].second;
+      const int x = GrayscaleImage::zigZagMap[j].first;
+      const int y = GrayscaleImage::zigZagMap[j].second;
 
       // Set the zigZag vector value to the block value.
       zigZagVector[j] = block[y * 8 + x];
@@ -337,7 +350,7 @@ void GrayscaleImage::entropyEncode() {
     // For each element in the zigZag vector...
     for (int j = 0; j < 64; j++) {
       // Get the element value.
-      int8_t element = zigZagVector[j];
+      const int8_t element = zigZagVector[j];
 
       // If the element value is zero...
       if (element == 0) {
@@ -360,6 +373,7 @@ void GrayscaleImage::entropyEncode() {
   }
 
   // Concatenate the zero counters and the elements.
+  this->encoded.reserve(zeroCounters.size() * 2);
   for (size_t i = 0; i < zeroCounters.size(); i++) {
     this->encoded.push_back(zeroCounters[i]);
     this->encoded.push_back(elements[i]);
@@ -377,12 +391,15 @@ void GrayscaleImage::entropyDecode() {
 
   // Create a new reconstrcuted zigZag vector.
   std::vector<int8_t> reconstructedZigZagVector;
+  reconstructedZigZagVector.reserve(64);
 
   // Initialize an unsigned int list of zero counters.
   std::vector<uint8_t> zeroCounters;
+  zeroCounters.reserve(this->encoded.size());
 
   // Initialize a int list of elements.
   std::vector<int8_t> elements;
+  elements.reserve(this->encoded.size());
 
   // Fill the zero counters with even elements of the encoded vector.
   for (size_t i = 0; i < this->encoded.size(); i++) {
@@ -414,8 +431,8 @@ void GrayscaleImage::entropyDecode() {
       // For each element in the reconstructed zigZag vector...
       for (size_t j = 0; j < reconstructedZigZagVector.size(); j++) {
         // Get the zigZag map coordinates.
-        int x = GrayscaleImage::zigZagMap[j].first;
-        int y = GrayscaleImage::zigZagMap[j].second;
+        const int x = GrayscaleImage::zigZagMap[j].first;
+        const int y = GrayscaleImage::zigZagMap[j].second;
 
         // Set the block value to the reconstructed zigZag vector value.
         block[y * 8 + x] = reconstructedZigZagVector[j];
@@ -442,6 +459,7 @@ void GrayscaleImage::entropyDecode() {
   }
 
   // Add the first half of the blockSet to the blocks vector.
+  this->blocks.reserve(blocksSet.size());
   for (size_t i = 0; i < blocksSet.size() / 2; i++) {
     this->blocks.push_back(blocksSet[i]);
   }
@@ -480,7 +498,7 @@ void GrayscaleImage::waveletTransform(
   std::vector<real> real_output(this->decoded.size(), 0);
 
   // Perform the direct wavelet transform.
-  TwoDimensionalWaveletTransformAlgorithm algorithm_2d(algorithm);
+  const TwoDimensionalWaveletTransformAlgorithm algorithm_2d(algorithm);
   algorithm_2d.directTransform(real_input, real_output, levels, true);
 
   // Map the values to [0, 256].
@@ -512,15 +530,17 @@ void GrayscaleImage::denoise(
   std::vector<real> real_output(this->decoded.size(), 0);
 
   // Perform the direct wavelet transform.
-  TwoDimensionalWaveletTransformAlgorithm algorithm_2d(algorithm);
+  const TwoDimensionalWaveletTransformAlgorithm algorithm_2d(algorithm);
   algorithm_2d.directTransform(real_input, real_output, levels, true);
 
   // Use thresholding to denoise the image.
   for (size_t i = 0; i < real_output.size(); i++) {
+    // Hard thresholding.
     if (use_hard_thresholding) {
       if (std::abs(real_output[i]) < threshold) {
         real_output[i] = 0;
       }
+      // Soft thresholding.
     } else {
       if (std::abs(real_output[i]) < threshold) {
         real_output[i] = 0;
@@ -535,8 +555,8 @@ void GrayscaleImage::denoise(
   // Perform the inverse wavelet transform.
   algorithm_2d.inverseTransform(real_output, real_output, levels, true);
 
-  // Map the values to [0, 256].
-  affineMap(real_output, real(0), real(256));
+  // Map the values to [0, 255].
+  affineMap(real_output, real(0), real(255));
 
   // Update the decoded image.
   for (size_t i = 0; i < this->decoded.size(); i++) {
@@ -551,11 +571,11 @@ bool GrayscaleImage::loadCompressed(const std::string &filename) {
 
   if (!file.eof() && !file.fail()) {
     file.seekg(0, std::ios_base::end);
-    std::streampos fileSize = file.tellg();
+    const std::streampos fileSize = file.tellg();
     this->encoded.resize(fileSize);
 
     file.seekg(0, std::ios_base::beg);
-    file.read((char *)&this->encoded[0], fileSize);
+    file.read(reinterpret_cast<char *>(&this->encoded[0]), fileSize);
   } else {
     return false;
   }
@@ -572,7 +592,7 @@ bool GrayscaleImage::saveCompressed(const std::string &filename) {
   }
 
   // Write the image.
-  file.write((char *)&this->encoded[0], this->encoded.size());
+  file.write(reinterpret_cast<char *>(&this->encoded[0]), this->encoded.size());
 
   return !file.fail();
 }

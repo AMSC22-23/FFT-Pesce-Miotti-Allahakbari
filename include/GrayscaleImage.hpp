@@ -224,7 +224,8 @@ class GrayscaleImage {
    */
   void unquantize(
       std::array<Transform::FourierTransform::complex, 64> &complexBlock,
-      std::array<int8_t, 64> &realBlock, std::array<int8_t, 64> &imagBlock);
+      const std::array<int8_t, 64> &realBlock,
+      const std::array<int8_t, 64> &imagBlock);
 
   /**
    * @brief Use a simplified version of entropy coding to encode all blocks.

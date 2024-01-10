@@ -189,10 +189,10 @@ int fft_main(int argc, char *argv[]) {
     }
 
     // Run the algorithms.
-    TrivialTwoDimensionalFourierTransformAlgorithm two_d_fft;
+    const TrivialTwoDimensionalFourierTransformAlgorithm two_d_fft;
     vec two_d_fft_result(size * size, 0);
     two_d_fft(input_matrix, two_d_fft_result);
-    TrivialTwoDimensionalInverseFourierTransformAlgorithm two_d_ift;
+    const TrivialTwoDimensionalInverseFourierTransformAlgorithm two_d_ift;
     vec two_d_ift_result(size * size, 0);
     two_d_ift(two_d_fft_result, two_d_ift_result);
 

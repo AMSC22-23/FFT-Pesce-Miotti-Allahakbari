@@ -204,7 +204,7 @@ int wavelet_main(int argc, char *argv[]) {
 
     // Do the forward 9/7 transform with the algorithm by Gregoire Pau.
     std::vector<real> fwt_result(input_sequence);
-    GPWaveletTransform97 gp_algorithm;
+    const GPWaveletTransform97 gp_algorithm;
     gp_algorithm.directTransform(input_sequence, fwt_result);
 
     // Save the sequence to a file.
@@ -219,7 +219,7 @@ int wavelet_main(int argc, char *argv[]) {
       std::cerr << "Errors detected in GP wavelet transforms." << std::endl;
 
     // Do the forward 9/7 transform with the algorithm by Daubechies.
-    DaubechiesWaveletTransform97 db_algorithm;
+    const DaubechiesWaveletTransform97 db_algorithm;
     db_algorithm.directTransform(input_sequence, fwt_result);
 
     // Save the sequences to a file.
@@ -233,7 +233,7 @@ int wavelet_main(int argc, char *argv[]) {
       std::cerr << "Errors detected in DB wavelet transforms." << std::endl;
 
     // Test the 2D algorithms.
-    unsigned int max_levels =
+    const unsigned int max_levels =
         std::min(8U, static_cast<unsigned int>(log2(size)));
     for (unsigned int levels = 1; levels < max_levels; levels++) {
       // Create a 2D example.
@@ -247,7 +247,8 @@ int wavelet_main(int argc, char *argv[]) {
       // Test the algorithm by Gregoire Pau.
       std::unique_ptr<WaveletTransformAlgorithm> gp_algorithm =
           std::make_unique<GPWaveletTransform97>();
-      TwoDimensionalWaveletTransformAlgorithm gp_algorithm_2d(gp_algorithm);
+      const TwoDimensionalWaveletTransformAlgorithm gp_algorithm_2d(
+          gp_algorithm);
       gp_algorithm_2d.directTransform(input_matrix, dwt_matrix, levels, true);
       gp_algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, levels, true);
       if (!CompareVectors(input_matrix, iwt_matrix, precision, false))
@@ -257,7 +258,8 @@ int wavelet_main(int argc, char *argv[]) {
       // Test the algorithm by Daubechies.
       std::unique_ptr<WaveletTransformAlgorithm> db_algorithm =
           std::make_unique<DaubechiesWaveletTransform97>();
-      TwoDimensionalWaveletTransformAlgorithm db_algorithm_2d(db_algorithm);
+      const TwoDimensionalWaveletTransformAlgorithm db_algorithm_2d(
+          db_algorithm);
       db_algorithm_2d.directTransform(input_matrix, dwt_matrix, levels, true);
       db_algorithm_2d.inverseTransform(dwt_matrix, iwt_matrix, levels, true);
       if (!CompareVectors(input_matrix, iwt_matrix, precision, false))

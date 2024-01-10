@@ -147,14 +147,16 @@ inline void WriteToFile(const Transform::FourierTransform::vec &sequence,
  */
 template <typename T>
 void affineMap(std::vector<T> &values, T min_value, T max_value) {
-  T range_start = *std::min_element(values.begin(), values.end());
-  T range_end = *std::max_element(values.begin(), values.end());
-  T range = range_end - range_start;
+  const T range_start = *std::min_element(values.begin(), values.end());
+  const T range_end = *std::max_element(values.begin(), values.end());
+  const T range = range_end - range_start;
 
   for (size_t i = 0; i < values.size(); i++) {
+    // Default case.
     if (range != 0) {
       values[i] = (values[i] - range_start) / range * (max_value - min_value) +
                   min_value;
+      // Case where all values are the same.
     } else {
       values[i] = (min_value + max_value) / 2;
     }

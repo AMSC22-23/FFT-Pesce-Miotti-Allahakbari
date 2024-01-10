@@ -72,8 +72,9 @@ int compression_main(int argc, char *argv[]) {
   }
 
   // Get the encoded bytes of grayscaleImages with getEncoded().
-  std::vector<unsigned char> encoded_bytes = grayscaleImage.getEncoded();
-  std::vector<unsigned char> encoded_bytes2 = grayscaleImage2.getEncoded();
+  const std::vector<unsigned char> encoded_bytes = grayscaleImage.getEncoded();
+  const std::vector<unsigned char> encoded_bytes2 =
+      grayscaleImage2.getEncoded();
 
   // Decode the image.
   std::cout << "Decoding image..." << std::endl;
