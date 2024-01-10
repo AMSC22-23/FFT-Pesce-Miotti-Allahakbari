@@ -147,7 +147,7 @@ void GrayscaleImage::mergeBlocks() {
 }
 
 // Static member variable to store the quantization table.
-std::vector<int> GrayscaleImage::quantizationTable = {
+std::array<int, 64> GrayscaleImage::quantizationTable{
     200, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
     100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
     100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
@@ -267,7 +267,7 @@ void GrayscaleImage::decode() {
 }
 
 // Static member variable to store the zigZag map.
-std::vector<std::pair<int, int>> GrayscaleImage::zigZagMap = {
+std::array<std::pair<int, int>, 64> GrayscaleImage::zigZagMap{{
     {0, 0}, {0, 1}, {1, 0}, {2, 0}, {1, 1}, {0, 2}, {0, 3}, {1, 2},
     {2, 1}, {3, 0}, {4, 0}, {3, 1}, {2, 2}, {1, 3}, {0, 4}, {0, 5},
     {1, 4}, {2, 3}, {3, 2}, {4, 1}, {5, 0}, {6, 0}, {5, 1}, {4, 2},
@@ -275,7 +275,7 @@ std::vector<std::pair<int, int>> GrayscaleImage::zigZagMap = {
     {4, 3}, {5, 2}, {6, 1}, {7, 0}, {7, 1}, {6, 2}, {5, 3}, {4, 4},
     {3, 5}, {2, 6}, {1, 7}, {2, 7}, {3, 6}, {4, 5}, {5, 4}, {6, 3},
     {7, 2}, {7, 3}, {6, 4}, {5, 5}, {4, 6}, {3, 7}, {4, 7}, {5, 6},
-    {6, 5}, {7, 4}, {7, 5}, {6, 6}, {5, 7}, {6, 7}, {7, 6}, {7, 7}};
+    {6, 5}, {7, 4}, {7, 5}, {6, 6}, {5, 7}, {6, 7}, {7, 6}, {7, 7}}};
 
 // Use entropy coding to encode all blocks.
 void GrayscaleImage::entropyEncode() {

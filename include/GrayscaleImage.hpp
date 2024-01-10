@@ -6,6 +6,7 @@
  * @brief Declares a class for handling Grayscale images.
  */
 
+#include <array>
 #include <cstdint>
 
 #include "WaveletTransform.hpp"
@@ -278,7 +279,7 @@ class GrayscaleImage {
    * 100 100 100 100 100 100 100 100
    * 100 100 100 100 100 100 100 100
    */
-  static std::vector<int> quantizationTable;
+  static std::array<int, 64> quantizationTable;
 
   /**
    * @brief The zig-zag map.
@@ -309,7 +310,7 @@ class GrayscaleImage {
    * {6, 7}, {7, 6},
    * {7, 7}
    */
-  static std::vector<std::pair<int, int>> zigZagMap;
+  static std::array<std::pair<int, int>, 64> zigZagMap;
 
   /**
    * @brief The image in uncompressed form (expressed as a sequence of bytes).
