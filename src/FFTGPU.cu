@@ -117,7 +117,6 @@ __global__ void block_fft(cuda::std::complex<real>* data, int n, int log_n_blk,
     size_t j = threadIdx.x % half_m;
     const size_t k_plus_j = k + j;
 
-    // printf("k + j+ half_m: %d\n", k_plus_j + half_m);
     if ((k_plus_j + half_m) < TILE_SIZE) {
       const cuda::std::complex<real> omega =
           cuda::std::exp(cuda::std::complex<real>{0, base / half_m * j});
@@ -136,6 +135,45 @@ __global__ void block_fft(cuda::std::complex<real>* data, int n, int log_n_blk,
   data[y * n + x] = tile[blockX][blockY];
 }
 
+__global__ void block_inverse_fft(cuda::std::complex<real>* data, int n,
+                                  int log_n_blk, real base) {
+  int x = blockIdx.x * blockDim.x + threadIdx.x;
+  int y = blockIdx.y * blockDim.y + threadIdx.y;
+  __shared__ cuda::std::complex<real> tile[TILE_SIZE][TILE_SIZE];
+
+  int blockX = threadIdx.x;
+  int blockY = threadIdx.y;
+
+  tile[__brev(blockX) >> (32 - log_n_blk)][blockY] = data[y * n + x];
+
+  __syncthreads();
+
+  for (size_t s = 1; s <= log_n_blk; s++) {
+    const size_t m = 1UL << s;
+    int half_m = m >> 1;
+    size_t k = (threadIdx.x / half_m) * m;
+    size_t j = threadIdx.x % half_m;
+    const size_t k_plus_j = k + j;
+
+    if ((k_plus_j + half_m) < TILE_SIZE) {
+      const cuda::std::complex<real> omega =
+          cuda::std::exp(cuda::std::complex<real>{0, base / half_m * j});
+      const cuda::std::complex<real> t =
+          omega * tile[blockY][k_plus_j + half_m];
+      const cuda::std::complex<real> u = tile[blockY][k_plus_j];
+      const cuda::std::complex<real> even = u + t;
+      const cuda::std::complex<real> odd = u - t;
+
+      tile[blockY][k_plus_j] = even;
+      tile[blockY][k_plus_j + half_m] = odd;
+    }
+    __syncthreads();
+  }
+
+  data[y * n + x] =
+      tile[blockY][blockX] / cuda::std::complex<real>(TILE_SIZE, TILE_SIZE);
+}
+
 void run_fft_gpu(cuda::std::complex<real>* data, int n, int m, real base,
                  cudaStream_t stream_id) {
   int block_dim = TILE_SIZE;
@@ -150,6 +188,22 @@ void run_block_fft_gpu(cuda::std::complex<real>* data, int n, real base,
                 (n / num_streams + TILE_SIZE - 1) / (TILE_SIZE));
   block_fft<<<grid_dim, block_dim, 0, stream_id>>>(data, n, log2(TILE_SIZE),
                                                    base);
+
+  cudaError_t kernelError = cudaGetLastError();
+  if (kernelError != cudaSuccess) {
+    printf("Kernel launch failed with error: %s\n",
+           cudaGetErrorString(kernelError));
+    // Handle the error accordingly
+  }
+}
+
+void run_block_inverse_fft_gpu(cuda::std::complex<real>* data, int n, real base,
+                               int num_streams, cudaStream_t stream_id) {
+  dim3 block_dim(TILE_SIZE, TILE_SIZE);
+  dim3 grid_dim((n + TILE_SIZE - 1) / (TILE_SIZE),
+                (n / num_streams + TILE_SIZE - 1) / (TILE_SIZE));
+  block_inverse_fft<<<grid_dim, block_dim, 0, stream_id>>>(
+      data, n, log2(TILE_SIZE), base);
 
   cudaError_t kernelError = cudaGetLastError();
   if (kernelError != cudaSuccess) {
