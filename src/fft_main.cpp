@@ -189,16 +189,26 @@ int fft_main(int argc, char *argv[]) {
     }
 
     // Run the algorithms.
-    const TrivialTwoDimensionalFourierTransformAlgorithm fft_2d;
+    const TwoDimensionalDirectFFTCPU fft_2d;
     vec fft_2d_result(size * size, 0);
     fft_2d(input_matrix, fft_2d_result);
-    const TrivialTwoDimensionalInverseFourierTransformAlgorithm ift_2d;
+    const TwoDimensionalInverseFFTCPU ift_2d;
     vec ift_2d_result(size * size, 0);
     ift_2d(fft_2d_result, ift_2d_result);
 
     // Check the result.
     if (!CompareVectors(input_matrix, ift_2d_result, precision, false))
       std::cerr << "Errors detected in 2D FFT." << std::endl;
+
+    // Run the direct GPU algorithm.
+    TwoDimensionalDirectFFTGPU fft_2d_gpu;
+    fft_2d_gpu.setBaseAngle(-std::numbers::pi);
+    vec fft_2d_gpu_result(size * size, 0);
+    fft_2d_gpu(input_matrix, fft_2d_gpu_result);
+
+    // Check the result.
+    if (!CompareVectors(fft_2d_result, fft_2d_gpu_result, precision, false))
+      std::cerr << "Errors detected in 2D GPU FFT." << std::endl;
   }
 
   // Run a performance comparison of different bit reversal permutation

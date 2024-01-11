@@ -70,8 +70,8 @@ int cuda_main(int argc, char *argv[]) {
       input_sequence.emplace_back(image.at<uint8_t>(i, j), 0);
 
   // Create the algorithms.
-  BlockFFTGPU2D fft2d;
-  BlockInverseFFTGPU2D ifft2d;
+  TwoDimensionalDirectBlockFFTGPU fft2d;
+  TwoDimensionalInverseBlockFFTGPU ifft2d;
 
   // Execute the direct algorithm and calculate the time.
   auto start = std::chrono::high_resolution_clock::now();

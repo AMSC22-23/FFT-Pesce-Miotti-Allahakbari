@@ -6,8 +6,6 @@
  * FourierTransform.hpp.
  */
 
-// TODO: Remove commented code in the GPU implementations.
-
 #include <cuda_runtime.h>
 #include <omp.h>
 #include <tgmath.h>
@@ -128,8 +126,8 @@ void IterativeFourierTransformAlgorithm::operator()(
 }
 
 // A trivial implementation of the 2D Direct Fourier Transform.
-void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
-    const vec &input_sequence, vec &output_sequence) const {
+void TwoDimensionalDirectFFTCPU::operator()(const vec &input_sequence,
+                                            vec &output_sequence) const {
   // Getting the input size.
   const size_t n = input_sequence.size();
 
@@ -187,8 +185,8 @@ void TrivialTwoDimensionalFourierTransformAlgorithm::operator()(
 }
 
 // A trivial implementation of the 2D Inverse Fourier Transform.
-void TrivialTwoDimensionalInverseFourierTransformAlgorithm::operator()(
-    const vec &input_sequence, vec &output_sequence) const {
+void TwoDimensionalInverseFFTCPU::operator()(const vec &input_sequence,
+                                             vec &output_sequence) const {
   // Getting the input size.
   const size_t n = input_sequence.size();
 
@@ -288,8 +286,8 @@ void IterativeFFTGPU::operator()(const vec &input_sequence,
 
 // A GPU implementation of the 2D iterative FFT, handling memory transfer and
 // calling CUDA kernels.
-void IterativeFFTGPU2D::operator()(const vec &input_sequence,
-                                   vec &output_sequence) const {
+void TwoDimensionalDirectFFTGPU::operator()(const vec &input_sequence,
+                                            vec &output_sequence) const {
   // Getting the input size.
   const size_t size = input_sequence.size();
   const size_t n = sqrt(size);
@@ -319,8 +317,8 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
                     cudaMemcpyHostToDevice, stream);
 
     // Perform the bit reversal permutation.
-    run_bitreverse_gpu(&input_sequence_dev[i * n], &output_sequence_dev[i * n], n,
-                  log_n, stream);
+    run_bitreverse_gpu(&input_sequence_dev[i * n], &output_sequence_dev[i * n],
+                       n, log_n, stream);
 
     // Perform the FFT, layer by layer.
     for (size_t s = 1; s <= log_n; s++) {
@@ -330,7 +328,7 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
 
     // Transpose the matrix.
     run_swap_row_col_gpu(output_sequence_dev, transposed_sequence_dev, i, i, n,
-                     stream);
+                         stream);
 
     // Destroy the stream.
     cudaStreamDestroy(stream);
@@ -345,8 +343,8 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
     cudaStreamCreate(&stream);
 
     // Perform the bit reversal permutation.
-    run_bitreverse_gpu(&transposed_sequence_dev[i * n], &output_sequence_dev[i * n],
-                  n, log_n, stream);
+    run_bitreverse_gpu(&transposed_sequence_dev[i * n],
+                       &output_sequence_dev[i * n], n, log_n, stream);
 
     // Perform the FFT, layer by layer.
     for (size_t s = 1; s <= log_n; s++) {
@@ -355,7 +353,8 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
     }
 
     // Transpose the matrix.
-    run_swap_row_col_gpu(output_sequence_dev, input_sequence_dev, i, i, n, stream);
+    run_swap_row_col_gpu(output_sequence_dev, input_sequence_dev, i, i, n,
+                         stream);
 
     // Destroy the stream.
     cudaStreamDestroy(stream);
@@ -374,8 +373,9 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
 }
 
 // A GPU implementation of the 2D iterative FFT on each 8x8 block of the input.
-void BlockFFTGPU2D::operator()(const vec &input_sequence, vec &output_sequence,
-                               unsigned int num_streams) const {
+void TwoDimensionalDirectBlockFFTGPU::operator()(
+    const vec &input_sequence, vec &output_sequence,
+    unsigned int num_streams) const {
   // Getting the input size.
   const size_t size = input_sequence.size();
   const size_t n = sqrt(size);
@@ -421,10 +421,11 @@ void BlockFFTGPU2D::operator()(const vec &input_sequence, vec &output_sequence,
   cudaFree(block_input_dev);
 }
 
-// A GPU implementation of the 2D inverse iterative FFT on each 8x8 block of the input.
-void BlockInverseFFTGPU2D::operator()(const vec &input_sequence,
-                                      vec &output_sequence,
-                                      unsigned int num_streams) const {
+// A GPU implementation of the 2D inverse iterative FFT on each 8x8 block of the
+// input.
+void TwoDimensionalInverseBlockFFTGPU::operator()(
+    const vec &input_sequence, vec &output_sequence,
+    unsigned int num_streams) const {
   // Getting the input size.
   const size_t size = input_sequence.size();
   const size_t n = sqrt(size);

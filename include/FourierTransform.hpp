@@ -125,6 +125,19 @@ class IterativeFourierTransformAlgorithm : public FourierTransformAlgorithm {
 };
 
 /**
+ * @brief An iterative implementation of the FFT using CUDA.
+ *
+ * @note The sequences' length must be a power of 2.
+ */
+class IterativeFFTGPU : public FourierTransformAlgorithm {
+ public:
+  void operator()(const vec &input_sequence,
+                  vec &output_sequence) const override;
+
+  ~IterativeFFTGPU() = default;
+};
+
+/**
  * @brief A 2D FFT algorithm, for non-NVIDIA devices.
  *
  * The algorithm is based on the 1D FFT algorithm. This algorithm is not fully
@@ -134,9 +147,9 @@ class IterativeFourierTransformAlgorithm : public FourierTransformAlgorithm {
  * algorithm applies a 1D FFT to all rows and then to all columns of the
  * temporary results.
  *
- * @see TrivialTwoDimensionalInverseFourierTransformAlgorithm
+ * @see TwoDimensionalInverseFFTCPU
  */
-class TrivialTwoDimensionalFourierTransformAlgorithm {
+class TwoDimensionalDirectFFTCPU {
  public:
   /**
    * @brief Apply the 2D FFT to a sequence.
@@ -151,7 +164,7 @@ class TrivialTwoDimensionalFourierTransformAlgorithm {
    * all available OpenMP threads.
    */
   void operator()(const vec &input_sequence, vec &output_sequence) const;
-  ~TrivialTwoDimensionalFourierTransformAlgorithm() = default;
+  ~TwoDimensionalDirectFFTCPU() = default;
 };
 
 /**
@@ -160,11 +173,11 @@ class TrivialTwoDimensionalFourierTransformAlgorithm {
  * The algorithm is based on the 1D IFFT algorithm. This algorithm is not fully
  * optimized and is only used to test the correctness of other algorithms, in a
  * machine without CUDA support. The algorithm is the inverse of
- * TrivialTwoDimensionalFourierTransformAlgorithm.
+ * TwoDimensionalDirectFFTCPU.
  *
- * @see TrivialTwoDimensionalFourierTransformAlgorithm
+ * @see TwoDimensionalDirectFFTCPU
  */
-class TrivialTwoDimensionalInverseFourierTransformAlgorithm {
+class TwoDimensionalInverseFFTCPU {
  public:
   /**
    * @brief Apply the 2D IFFT to a sequence.
@@ -183,42 +196,48 @@ class TrivialTwoDimensionalInverseFourierTransformAlgorithm {
    * all available OpenMP threads.
    */
   void operator()(const vec &input_sequence, vec &output_sequence) const;
-  ~TrivialTwoDimensionalInverseFourierTransformAlgorithm() = default;
+  ~TwoDimensionalInverseFFTCPU() = default;
 };
 
 /**
- * @todo Document this class.
+ * @brief A 2D FFT algorithm using CUDA.
+ *
+ * The algorithm performs a 2D FFT of the full input, treated as a matrix. Its
+ * inverse is not implemented, but the CPU algorithm can be used instead.
+ *
+ * @see TwoDimensionalDirectFFTCPU
  */
-class IterativeFFTGPU : public FourierTransformAlgorithm {
+class TwoDimensionalDirectFFTGPU : public FourierTransformAlgorithm {
  public:
+  /**
+   * @brief Apply the 2D FFT to a sequence.
+   *
+   * @param input_matrix The sequence to use as an input to the 2D FFT,
+   * interpreted as a square matrix.
+   * @param output_sequence An output sequence containing the transformed
+   * input, to be interpreted as a matrix.
+   * @note input_sequence and output_sequence must have the same length n,
+   * which must be a power of 2 and a perfect square.
+   */
   void operator()(const vec &input_sequence,
                   vec &output_sequence) const override;
 
-  ~IterativeFFTGPU() = default;
-};
-
-/**
- * @todo Document this class.
- */
-class IterativeFFTGPU2D : public FourierTransformAlgorithm {
- public:
-  void operator()(const vec &input_sequence,
-                  vec &output_sequence) const override;
-
-  ~IterativeFFTGPU2D() = default;
+  ~TwoDimensionalDirectFFTGPU() = default;
 };
 
 /**
  * @brief A 2D FFT algorithm on 8x8 blocks, using CUDA.
  *
  * The algorithm performs a 2D FFT on all 8x8 blocks of the input and uses CUDA.
+ * This class does not inherit from FourierTransformAlgorithm since it does not
+ * implement its inverse.
  *
  * @note input_sequence and output_sequence must have the same length n, which
  * has to be a power of 2, a perfect square and a multiple of 64.
  *
- * @see BlockInverseFFTGPU2D
+ * @see TwoDimensionalInverseBlockFFTGPU
  */
-class BlockFFTGPU2D {
+class TwoDimensionalDirectBlockFFTGPU {
  public:
   /**
    * @brief Apply the 2D FFT to 8x8 blocks of an image.
@@ -241,14 +260,14 @@ class BlockFFTGPU2D {
  * @brief A 2D IFFT algorithm on 8x8 blocks, using CUDA.
  *
  * The algorithm performs a 2D inverse FFT on all 8x8 blocks of the input and
- * uses CUDA. This algorithm is the inverse of BlockFFTGPU2D.
+ * uses CUDA. This algorithm is the inverse of TwoDimensionalDirectBlockFFTGPU.
  *
  * @note input_sequence and output_sequence must have the same length n, which
  * has to be a power of 2, a perfect square and a multiple of 64.
  *
- * @see BlockInverseFFTGPU2D
+ * @see TwoDimensionalDirectBlockFFTGPU
  */
-class BlockInverseFFTGPU2D {
+class TwoDimensionalInverseBlockFFTGPU {
  public:
   /**
    * @brief Apply the 2D IFFT to 8x8 blocks of an image.
@@ -262,6 +281,9 @@ class BlockInverseFFTGPU2D {
    * @note input_sequence and output_sequence must have the same length n,
    * which must be a power of 2, a perfect square and a multiple of 64.
    * @note n must be divisible by num_streams * 64.
+   * @note Notice that using this operator performs the full 2D IFFT of the
+   * input, while the operator in FourierTransformAlgorithm does not scale the
+   * result by n.
    */
   void operator()(const vec &input_sequence, vec &output_sequence,
                   unsigned int num_streams) const;

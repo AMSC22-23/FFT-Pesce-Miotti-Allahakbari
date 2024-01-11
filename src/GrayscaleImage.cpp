@@ -205,7 +205,7 @@ void GrayscaleImage::encode() {
 
   // Initialize a TrivialTwoDimensionalDiscreteFourierTransform object.
   const Transform::FourierTransform::
-      TrivialTwoDimensionalFourierTransformAlgorithm fft;
+      TwoDimensionalDirectFFTCPU fft;
 
   // Disable nested parallelization (not efficient for consumer-grade
   // architectures).
@@ -260,7 +260,7 @@ void GrayscaleImage::encode() {
 void GrayscaleImage::decode() {
   // Initialize a TrivialTwoDimensionalDiscreteFourierTransform object.
   const Transform::FourierTransform::
-      TrivialTwoDimensionalInverseFourierTransformAlgorithm fft;
+      TwoDimensionalInverseFFTCPU fft;
 
   // Decode the run-length encoding.
   this->entropyDecode();
