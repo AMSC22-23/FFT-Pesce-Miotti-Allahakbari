@@ -7,6 +7,7 @@
 
 // TODO: Remove commented code and improve comments.
 
+#include <chrono>
 #include <iostream>
 #include <numbers>
 #include <opencv2/opencv.hpp>
@@ -47,24 +48,58 @@ int cuda_main(int argc, char *argv[]) {
   // Convert the image to a vector of complex numbers.
   vec input_sequence;
   vec output_sequence;
+  vec ifft2d_output_sequence;
 
   input_sequence.reserve(image.rows * image.cols);
   output_sequence.reserve(image.rows * image.cols);
+  ifft2d_output_sequence.reserve(image.rows * image.cols);
+
+  output_sequence.resize(image.rows * image.cols);
+  ifft2d_output_sequence.resize(image.rows * image.cols);
 
   for (int i = 0; i < image.rows; i++)
     for (int j = 0; j < image.cols; j++)
       input_sequence.emplace_back(image.at<uchar>(i, j), 0);
 
-  std::unique_ptr<FourierTransformAlgorithm> algorithm =
-      std::make_unique<BlockFFTGPU2D>();
-
-  // Set the direct transform.
-  algorithm->setBaseAngle(-std::numbers::pi_v<real>);
+  BlockFFTGPU2D fft2d;
+  BlockInverseFFTGPU2D ifft2d;
 
   // Execute the algorithm and calculate the time.
-  std::cout << algorithm->calculateTime(input_sequence, output_sequence) << "μs"
-            << std::endl;
 
+  auto start = std::chrono::high_resolution_clock::now();  // Start the timer
+
+  fft2d(input_sequence, output_sequence);
+
+  auto end = std::chrono::high_resolution_clock::now();  // Stop the timer
+
+  auto duration =
+      std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+          .count();  // Calculate the duration in microseconds
+
+  std::cout << "Execution time for GPU FFT: " << duration << " us"
+            << std::endl;  // Print the execution time
+
+  start = std::chrono::high_resolution_clock::now();  // Start the timer
+
+  ifft2d(output_sequence, ifft2d_output_sequence);
+
+  end = std::chrono::high_resolution_clock::now();  // Stop the timer
+
+  duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+                 .count();  // Calculate the duration in microseconds
+
+  std::cout << "Execution time for GPU IFFT: " << duration << " us"
+            << std::endl;  // Print the execution time
+
+  // Check if ifft_output_sequence and input_sequence elements are equal
+  for (int i = 0; i < ifft2d_output_sequence.size(); i++) {
+    if (ifft2d_output_sequence[i].real() - input_sequence[i].real() > 1e-4 ||
+        ifft2d_output_sequence[i].imag() - input_sequence[i].imag() > 1e-4) {
+      std::cerr << "Erorr in inverse: Origianl: " << input_sequence[i]
+                << ", IFFT: " << ifft2d_output_sequence[i] << std::endl;
+      break;
+    }
+  }
   // Ensure the image dimensions are divisible by 8
   int height = image.rows;
   int width = image.cols;
