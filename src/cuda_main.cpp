@@ -46,24 +46,35 @@ int cuda_main(int argc, char *argv[]) {
 
   // Convert the image to a vector of complex numbers.
   vec input_sequence;
-  vec output_sequence;
+  vec output_sequence_base;
+  vec output_sequence_block;
 
   input_sequence.reserve(image.rows * image.cols);
-  output_sequence.reserve(image.rows * image.cols);
+  output_sequence_base.reserve(image.rows * image.cols);
+  output_sequence_block.reserve(image.rows * image.cols);
 
   for (int i = 0; i < image.rows; i++)
     for (int j = 0; j < image.cols; j++)
       input_sequence.emplace_back(image.at<uchar>(i, j), 0);
 
-  std::unique_ptr<FourierTransformAlgorithm> algorithm =
+  std::unique_ptr<FourierTransformAlgorithm> base_algorithm =
+      std::make_unique<IterativeFFTGPU2D>();
+  std::unique_ptr<FourierTransformAlgorithm> block_algorithm =
       std::make_unique<BlockFFTGPU2D>();
 
   // Set the direct transform.
-  algorithm->setBaseAngle(-std::numbers::pi_v<real>);
+  base_algorithm->setBaseAngle(-std::numbers::pi_v<real>);
+  block_algorithm->setBaseAngle(-std::numbers::pi_v<real>);
 
-  // Execute the algorithm and calculate the time.
-  std::cout << algorithm->calculateTime(input_sequence, output_sequence) << "μs"
-            << std::endl;
+  // Execute the algorithms and calculate the time.
+  std::cout << "Block version: "
+            << block_algorithm->calculateTime(input_sequence,
+                                              output_sequence_block)
+            << "μs" << std::endl;
+  std::cout << "Base version: "
+            << base_algorithm->calculateTime(input_sequence,
+                                             output_sequence_base)
+            << "μs" << std::endl;
 
   // Ensure the image dimensions are divisible by 8
   int height = image.rows;
@@ -112,20 +123,20 @@ int cuda_main(int argc, char *argv[]) {
     //           << blockIndices[bid].second << ")" << std::endl;
     for (int i = 0; i < 8; i++)
       for (int j = 0; j < 8; j++) {
-        if (std::fabs(
-                output_sequence[(blockIndices[bid].first * 8 + i) * image.rows +
-                                blockIndices[bid].second * 8 + j]
-                    .real() -
-                realPart.at<double>(i, j)) > epsilon ||
-            std::fabs(
-                output_sequence[(blockIndices[bid].first * 8 + i) * image.rows +
-                                blockIndices[bid].second * 8 + j]
-                    .imag() -
-                imagPart.at<double>(i, j)) > epsilon) {
+        if (std::fabs(output_sequence_block[(blockIndices[bid].first * 8 + i) *
+                                                image.rows +
+                                            blockIndices[bid].second * 8 + j]
+                          .real() -
+                      realPart.at<double>(i, j)) > epsilon ||
+            std::fabs(output_sequence_block[(blockIndices[bid].first * 8 + i) *
+                                                image.rows +
+                                            blockIndices[bid].second * 8 + j]
+                          .imag() -
+                      imagPart.at<double>(i, j)) > epsilon) {
           std::cout << "Calculations at: " << i << ", " << j << " GPU: "
-                    << output_sequence[(blockIndices[bid].first * 8 + i) *
-                                           image.rows +
-                                       blockIndices[bid].second * 8 + j]
+                    << output_sequence_block[(blockIndices[bid].first * 8 + i) *
+                                                 image.rows +
+                                             blockIndices[bid].second * 8 + j]
                     << ", CPU: (" << realPart.at<double>(i, j) << ", "
                     << imagPart.at<double>(i, j) << ")" << std::endl;
         }

@@ -258,9 +258,7 @@ void IterativeFFTGPU::operator()(const vec &input_sequence,
   const size_t log_n = static_cast<size_t>(log2(n));
   assert(1UL << log_n == n);
 
-  // Perform bit reversal of the input sequence and store it into the output
-  // sequence.
-
+  // Allocate space on the device and copy data from host to device.
   cuda::std::complex<real> *input_sequence_dev;
   cuda::std::complex<real> *output_sequence_dev;
 
@@ -269,17 +267,21 @@ void IterativeFFTGPU::operator()(const vec &input_sequence,
   cudaMemcpy(input_sequence_dev, input_sequence.data(),
              n * sizeof(cuda::std::complex<real>), cudaMemcpyHostToDevice);
 
+  // Perform bit reversal of the input sequence and store it into the output
+  // sequence.
   bitreverse_gpu(input_sequence_dev, output_sequence_dev, n, log_n);
 
+  // Perform the FFT, layer by layer (kernel launches are blocking).
   for (size_t s = 1; s <= log_n; s++) {
     const size_t m = 1UL << s;
     run_fft_gpu(output_sequence_dev, n, m, base_angle);
   }
 
-  cudaDeviceSynchronize();
+  // Copy data from the device to the host.
   cudaMemcpy(output_sequence.data(), output_sequence_dev,
              n * sizeof(cuda::std::complex<real>), cudaMemcpyDeviceToHost);
 
+  // Free memory on the device.
   cudaFree(input_sequence_dev);
   cudaFree(output_sequence_dev);
 }
@@ -296,9 +298,7 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
   const size_t log_n = static_cast<size_t>(log2(n));
   assert(1UL << log_n == n);
 
-  // Perform bit reversal of the input sequence and store it into the output
-  // sequence.
-
+  // Allocate space on the device and copy data from host to device.
   cuda::std::complex<real> *input_sequence_dev;
   cuda::std::complex<real> *output_sequence_dev;
   cuda::std::complex<real> *transposed_sequence_dev;
@@ -307,58 +307,67 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
   cudaMalloc(&output_sequence_dev, size * sizeof(cuda::std::complex<real>));
   cudaMalloc(&transposed_sequence_dev, size * sizeof(cuda::std::complex<real>));
 
-  // Loop over all the rows
+  // Loop over all the rows.
   for (size_t i = 0; i < n; i++) {
+    // Create a new stream.
     cudaStream_t stream;
     cudaStreamCreate(&stream);
 
+    // Copy data from the device to the host, asynchronously.
     cudaMemcpyAsync(&input_sequence_dev[i * n], &input_sequence.data()[i * n],
                     n * sizeof(cuda::std::complex<real>),
                     cudaMemcpyHostToDevice, stream);
 
+    // Perform the bit reversal permutation.
     bitreverse_gpu(&input_sequence_dev[i * n], &output_sequence_dev[i * n], n,
                    log_n, stream);
 
+    // Perform the FFT, layer by layer.
     for (size_t s = 1; s <= log_n; s++) {
       const size_t m = 1UL << s;
       run_fft_gpu(&output_sequence_dev[i * n], n, m, base_angle, stream);
     }
+
+    // Transpose the matrix.
     swap_row_col_gpu(output_sequence_dev, transposed_sequence_dev, i, i, n,
                      stream);
+
+    // Destroy the stream.
     cudaStreamDestroy(stream);
   }
 
-  // transpose_gpu(output_sequence_dev, transposed_sequence_dev, n);
   cudaDeviceSynchronize();
-  /// Loop over all the columns
+
+  /// Loop over all the columns.
   for (size_t i = 0; i < n; i++) {
+    // Create a new stream.
     cudaStream_t stream;
     cudaStreamCreate(&stream);
 
+    // Perform the bit reversal permutation.
     bitreverse_gpu(&transposed_sequence_dev[i * n], &output_sequence_dev[i * n],
                    n, log_n, stream);
 
+    // Perform the FFT, layer by layer.
     for (size_t s = 1; s <= log_n; s++) {
       const size_t m = 1UL << s;
       run_fft_gpu(&output_sequence_dev[i * n], n, m, base_angle, stream);
     }
+
+    // Transpose the matrix.
     swap_row_col_gpu(output_sequence_dev, input_sequence_dev, i, i, n, stream);
 
-    // cudaMemcpyAsync(&output_sequence.data()[i * n], &input_sequence_dev[i *
-    // n],
-    //                 n * sizeof(cuda::std::complex<real>),
-    //                 cudaMemcpyDeviceToHost, stream);
-
+    // Destroy the stream.
     cudaStreamDestroy(stream);
   }
 
-  // transpose_gpu(output_sequence_dev, transposed_sequence_dev, n);
-
   cudaDeviceSynchronize();
 
+  // Copy data back to the host.
   cudaMemcpy(output_sequence.data(), input_sequence_dev,
              size * sizeof(cuda::std::complex<real>), cudaMemcpyDeviceToHost);
 
+  // Free data structures on the device.
   cudaFree(&input_sequence_dev);
   cudaFree(&output_sequence_dev);
   cudaFree(&transposed_sequence_dev);
@@ -369,13 +378,10 @@ void BlockFFTGPU2D::operator()(const vec &input_sequence,
   // Getting the input size.
   const size_t size = input_sequence.size();
   const size_t n = sqrt(size);
-  const size_t n_blk = _block_size;
 
   // Check that the size of the sequence is a power of 2.
   const size_t log_n = static_cast<size_t>(log2(n));
   assert(1UL << log_n == n);
-
-  const size_t log_n_blk = static_cast<size_t>(log2(n_blk));
 
   // Perform bit reversal of the input sequence and store it into the output
   // sequence.
