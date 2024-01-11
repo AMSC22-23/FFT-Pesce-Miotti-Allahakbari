@@ -142,7 +142,7 @@ __global__ void block_inverse_fft(cuda::std::complex<real>* data, int n,
   int blockX = threadIdx.x;
   int blockY = threadIdx.y;
 
-  tile[__brev(blockX) >> (32 - log_n_blk)][blockY] = data[y * n + x];
+  tile[blockY][__brev(blockX) >> (32 - log_n_blk)] = data[y * n + x];
 
   __syncthreads();
 
@@ -169,7 +169,7 @@ __global__ void block_inverse_fft(cuda::std::complex<real>* data, int n,
   }
 
   data[y * n + x] =
-      tile[blockY][blockX] / cuda::std::complex<real>(BLOCK_SIZE, BLOCK_SIZE);
+      tile[blockX][blockY] / cuda::std::complex<real>(BLOCK_SIZE, 0);
 }
 
 void run_fft_gpu(cuda::std::complex<real>* data, int n, int m, real base,

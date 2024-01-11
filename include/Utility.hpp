@@ -21,17 +21,19 @@
  * @tparam T The type of the elements contained in the sequences.
  * @param sequence_golden The sequence that is assumed to be correct.
  * @param sequence The sequence whose correctness has to be checked.
- * @param tolerance The tolerance on the relative error between any two
+ * @param tolerance The tolerance on the error between any two
  * elements in the sequences.
  * @param print_errors If true, print the indices in which the sequences differ
  * more than the specified tolerance.
+ * @param use_relative_error If true, errors are checked using the relative
+ * error, otherwise the absolute error is used.
  * @return true If the sequences are equal up to the specified tolerance.
  * @return false If the sequences are not equal up to the specified tolerance.
  */
 template <typename T>
 bool CompareVectors(const std::vector<T> &sequence_golden,
                     const std::vector<T> &sequence, Transform::real tolerance,
-                    bool print_errors) {
+                    bool print_errors, bool use_relative_error = true) {
   // Assert that the two sequences have the same length.
   if (sequence_golden.size() != sequence.size()) {
     if (print_errors)
@@ -43,15 +45,18 @@ bool CompareVectors(const std::vector<T> &sequence_golden,
 
   // Check that the difference between the two sequences is small enough.
   for (size_t i = 0; i < sequence_golden.size(); i++) {
-    // Consider the case where one element is zero separately.
-    if (std::abs(sequence_golden[i]) == 0) {
-      if (std::abs(sequence[i]) > tolerance) {
+    // Consider the case where absolute tolerance is used, or when one of the
+    // elements is zero.
+    if (!use_relative_error || std::abs(sequence_golden[i]) == 0 ||
+        std::abs(sequence[i]) == 0) {
+      if (std::abs(sequence[i] - sequence_golden[i]) > tolerance) {
         if (!print_errors) return false;
         errors.emplace_back(i);
       }
       // Otherwise, consider the relative tolerance.
     } else if (std::abs(sequence[i] - sequence_golden[i]) >
                tolerance * std::abs(sequence_golden[i])) {
+      std::cout << sequence[i] << " " << sequence_golden[i] << std::endl;
       if (!print_errors) return false;
       errors.emplace_back(i);
     }

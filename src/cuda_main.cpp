@@ -8,12 +8,14 @@
 // TODO: Remove commented code and improve comments.
 
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <numbers>
 #include <opencv2/opencv.hpp>
 #include <string>
 
 #include "FourierTransformCalculator.hpp"
+#include "Utility.hpp"
 
 int cuda_main(int argc, char *argv[]) {
   using namespace Transform;
@@ -27,145 +29,140 @@ int cuda_main(int argc, char *argv[]) {
     return 1;
   }
 
-  std::cout << sizeof(real) << std::endl;
-  std::string image_path = "../img/cat.jpg";
+  const std::string default_path = "../img/cat.jpg";
+  constexpr real precision =
+      std::max(std::numeric_limits<real>::epsilon() * 1e5, 1e-4);
 
-  // Get which algorithm to choose.
+  // Get the image path.
+  std::string image_path = default_path;
   if (argc >= 3) image_path = std::string(argv[2]);
 
-  // Load the image (grayscale)
+  // Load the image (grayscale).
   cv::Mat image = cv::imread(image_path, cv::IMREAD_GRAYSCALE);
 
+  // Check for errors.
   if (image.empty()) {
     std::cerr << "Error: Unable to load the image." << std::endl;
-    return EXIT_FAILURE;
+    return 1;
   }
 
-  // Check image properties.
+  // Print image properties.
   std::cout << "Image size: " << image.size() << std::endl;
   std::cout << "Image type: " << image.type() << std::endl;
 
-  // Convert the image to a vector of complex numbers.
+  // Ensure the image dimensions are divisible by 8
+  const size_t height = image.rows;
+  const size_t width = image.cols;
+  const size_t total_size = height * width;
+  if (height % 8 != 0 || width % 8 != 0) {
+    std::cerr << "Error: The image sizes are not divisible by 8." << std::endl;
+    return 1;
+  }
+
+  // Allocate space for the needed sequences.
   vec input_sequence;
-  vec output_sequence;
-  vec ifft2d_output_sequence;
+  input_sequence.reserve(total_size);
+  vec fft_output_sequence(total_size, 0);
+  vec ifft_output_sequence(total_size, 0);
 
-  input_sequence.reserve(image.rows * image.cols);
-  output_sequence.reserve(image.rows * image.cols);
-  ifft2d_output_sequence.reserve(image.rows * image.cols);
+  // Convert the image to a vector of complex numbers.
+  for (size_t i = 0; i < height; i++)
+    for (size_t j = 0; j < width; j++)
+      input_sequence.emplace_back(image.at<uint8_t>(i, j), 0);
 
-  output_sequence.resize(image.rows * image.cols);
-  ifft2d_output_sequence.resize(image.rows * image.cols);
-
-  for (int i = 0; i < image.rows; i++)
-    for (int j = 0; j < image.cols; j++)
-      input_sequence.emplace_back(image.at<uchar>(i, j), 0);
-
+  // Create the algorithms.
   BlockFFTGPU2D fft2d;
   BlockInverseFFTGPU2D ifft2d;
 
-  // Execute the algorithm and calculate the time.
-
-  auto start = std::chrono::high_resolution_clock::now();  // Start the timer
-
-  fft2d(input_sequence, output_sequence);
-
-  auto end = std::chrono::high_resolution_clock::now();  // Stop the timer
-
+  // Execute the direct algorithm and calculate the time.
+  auto start = std::chrono::high_resolution_clock::now();
+  fft2d(input_sequence, fft_output_sequence);
+  auto end = std::chrono::high_resolution_clock::now();
   auto duration =
       std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-          .count();  // Calculate the duration in microseconds
+          .count();
 
-  std::cout << "Execution time for GPU FFT: " << duration << " us"
-            << std::endl;  // Print the execution time
+  std::cout << "Execution time for GPU FFT: " << duration << " μs" << std::endl;
 
-  start = std::chrono::high_resolution_clock::now();  // Start the timer
-
-  ifft2d(output_sequence, ifft2d_output_sequence);
-
-  end = std::chrono::high_resolution_clock::now();  // Stop the timer
-
+  // Execute the inverse algorithm and calculate the time.
+  start = std::chrono::high_resolution_clock::now();
+  ifft2d(fft_output_sequence, ifft_output_sequence);
+  end = std::chrono::high_resolution_clock::now();
   duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-                 .count();  // Calculate the duration in microseconds
+                 .count();
 
-  std::cout << "Execution time for GPU IFFT: " << duration << " us"
-            << std::endl;  // Print the execution time
+  std::cout << "Execution time for GPU IFFT: " << duration << " μs"
+            << std::endl;
 
-  // Check if ifft_output_sequence and input_sequence elements are equal
-  for (size_t i = 0; i < ifft2d_output_sequence.size(); i++) {
-    if (ifft2d_output_sequence[i].real() - input_sequence[i].real() > 1e-4 ||
-        ifft2d_output_sequence[i].imag() - input_sequence[i].imag() > 1e-4) {
-      std::cerr << "Erorr in inverse: Origianl: " << input_sequence[i]
-                << ", IFFT: " << ifft2d_output_sequence[i] << std::endl;
-      break;
-    }
-  }
-  // Ensure the image dimensions are divisible by 8
-  int height = image.rows;
-  int width = image.cols;
+  // Check if the inverse result is the same as the input sequence.
+  if (!CompareVectors(input_sequence, ifft_output_sequence, precision, false,
+                      false))
+    std::cerr << "Errors detected in GPU inverse Fourier transform."
+              << std::endl;
 
-  int new_height = height - (height % 8);
-  int new_width = width - (width % 8);
-
-  cv::Rect roi(0, 0, new_width, new_height);
+  // Check the direct results with OpenCV.
+  // Create an OpenCV image.
+  cv::Rect roi(0, 0, width, height);
   image = image(roi);
 
-  // Segment the image into 8x8 blocks and store with row/column indices
-  std::vector<std::pair<int, int>>
-      blockIndices;  // For storing row/column indices
+  // Segment the image into 8x8 blocks and store row/column indices
+  std::vector<std::pair<size_t, size_t>> blockIndices;
   std::vector<cv::Mat> blocks;
 
-  for (int y = 0; y < new_height; y += 8) {
-    for (int x = 0; x < new_width; x += 8) {
+  for (size_t y = 0; y < height; y += 8) {
+    for (size_t x = 0; x < width; x += 8) {
       cv::Mat block = image(cv::Rect(x, y, 8, 8));
       blocks.push_back(block);
 
-      // Store row and column indices as a pair
+      // Store row and column indices as a pair.
       blockIndices.push_back(std::make_pair(y / 8, x / 8));
     }
   }
 
-  // Perform Complex Double Precision DFT on each block
+  // Perform a direct FFT on each block.
   for (size_t bid = 0; bid < blocks.size(); ++bid) {
+    // Convert the block to the correct precision.
     cv::Mat dftInput;
-    blocks[bid].convertTo(dftInput,
-                          CV_64F);  // Convert block to double precision
+    if constexpr (sizeof(real) == sizeof(double)) {
+      blocks[bid].convertTo(dftInput, CV_64F);
+    } else {
+      blocks[bid].convertTo(dftInput, CV_32F);
+    }
 
+    // Perform the FFTs with OpenCV.
     cv::Mat dftOutput;
     cv::dft(dftInput, dftOutput, cv::DFT_COMPLEX_OUTPUT);
+
+    // Split the data into real and immaginary channels.
     std::vector<cv::Mat> channels;
     cv::split(dftOutput, channels);
 
-    cv::Mat realPart = channels[0];  // Real part of the DFT output
+    cv::Mat realPart = channels[0];
     cv::Mat imagPart = channels[1];
-    // Process the DFT result (you can do further operations here)
-    constexpr real epsilon =
-        std::max(std::numeric_limits<real>::epsilon() * 1e5, 1e-4);
 
-    // std::cout << "Calculations at block: (" << blockIndices[bid].first << ",
-    // "
-    //           << blockIndices[bid].second << ")" << std::endl;
-    for (int i = 0; i < 8; i++)
-      for (int j = 0; j < 8; j++) {
-        if (std::fabs(
-                output_sequence[(blockIndices[bid].first * 8 + i) * image.rows +
-                                blockIndices[bid].second * 8 + j]
-                    .real() -
-                realPart.at<double>(i, j)) > epsilon ||
-            std::fabs(
-                output_sequence[(blockIndices[bid].first * 8 + i) * image.rows +
-                                blockIndices[bid].second * 8 + j]
-                    .imag() -
-                imagPart.at<double>(i, j)) > epsilon) {
-          std::cout << "Calculations at: " << i << ", " << j << " GPU: "
-                    << output_sequence[(blockIndices[bid].first * 8 + i) *
-                                           image.rows +
-                                       blockIndices[bid].second * 8 + j]
-                    << ", CPU: (" << realPart.at<double>(i, j) << ", "
-                    << imagPart.at<double>(i, j) << ")" << std::endl;
-        }
+    // Convert OpenCV and GPU results for this block into vecs.
+    vec cv_result;
+    cv_result.reserve(64);
+    vec gpu_result;
+    gpu_result.reserve(64);
+
+    for (size_t i = 0; i < 8; i++) {
+      for (size_t j = 0; j < 8; j++) {
+        cv_result.emplace_back(realPart.at<real>(i, j),
+                               imagPart.at<real>(i, j));
+        gpu_result.emplace_back(
+            fft_output_sequence[(blockIndices[bid].first * 8 + i) * height +
+                                blockIndices[bid].second * 8 + j]);
       }
+    }
+
+    // Check the result.
+    if (!CompareVectors(cv_result, gpu_result, precision, false, false)) {
+      std::cerr << "The GPU result is different from the one by OpenCV"
+                << std::endl;
+      break;
+    }
   }
 
-  return EXIT_SUCCESS;
+  return 0;
 }
