@@ -127,7 +127,7 @@ class IterativeFourierTransformAlgorithm : public FourierTransformAlgorithm {
 /**
  * @brief A 2D FFT algorithm, for non-NVIDIA devices.
  *
- * The algorithm is based on the 1D FFT algorithm. This algorithm is not
+ * The algorithm is based on the 1D FFT algorithm. This algorithm is not fully
  * optimized and is only used to test the correctness of other algorithms, in a
  * machine without CUDA support. This class does not inherit from
  * FourierTransformAlgorithm since it does not implement its inverse. The
@@ -147,6 +147,8 @@ class TrivialTwoDimensionalFourierTransformAlgorithm {
    * input, to be interpreted as a matrix.
    * @note input_sequence and output_sequence must have the same length n,
    * which must be a power of 2 and a perfect square.
+   * @note Unless omp_set_num_threads() has been called, the algorithm will use
+   * all available OpenMP threads.
    */
   void operator()(const vec &input_sequence, vec &output_sequence) const;
   ~TrivialTwoDimensionalFourierTransformAlgorithm() = default;
@@ -155,13 +157,10 @@ class TrivialTwoDimensionalFourierTransformAlgorithm {
 /**
  * @brief A 2D IFFT algorithm, for non-NVIDIA devices.
  *
- * The algorithm is based on the 1D IFFT algorithm. This algorithm is not
+ * The algorithm is based on the 1D IFFT algorithm. This algorithm is not fully
  * optimized and is only used to test the correctness of other algorithms, in a
  * machine without CUDA support. The algorithm is the inverse of
  * TrivialTwoDimensionalFourierTransformAlgorithm.
- *
- * @note input_sequence and output_sequence must have the same length n, which
- * has to be a power of 2 and a perfect square.
  *
  * @see TrivialTwoDimensionalFourierTransformAlgorithm
  */
@@ -174,11 +173,14 @@ class TrivialTwoDimensionalInverseFourierTransformAlgorithm {
    * interpreted as a square matrix.
    * @param output_sequence An output sequence containing the anti-transformed
    * input, to be interpreted as a matrix.
+   *
    * @note input_sequence and output_sequence must have the same length n,
    * which must be a power of 2 and a perfect square.
    * @note Notice that using this operator performs the full 2D IFFT of the
    * input, while the operator in FourierTransformAlgorithm does not scale the
    * result by n.
+   * @note Unless omp_set_num_threads() has been called, the algorithm will use
+   * all available OpenMP threads.
    */
   void operator()(const vec &input_sequence, vec &output_sequence) const;
   ~TrivialTwoDimensionalInverseFourierTransformAlgorithm() = default;
@@ -207,31 +209,64 @@ class IterativeFFTGPU2D : public FourierTransformAlgorithm {
 };
 
 /**
- * @todo Document this class.
+ * @brief A 2D FFT algorithm on 8x8 blocks, using CUDA.
+ *
+ * The algorithm performs a 2D FFT on all 8x8 blocks of the input and uses CUDA.
+ *
+ * @note input_sequence and output_sequence must have the same length n, which
+ * has to be a power of 2, a perfect square and a multiple of 64.
+ *
+ * @see BlockInverseFFTGPU2D
  */
 class BlockFFTGPU2D {
  public:
-  void operator()(const vec &input_sequence, vec &output_sequence) const;
-
-  BlockFFTGPU2D(unsigned int block_size = 8) { _block_size = block_size; }
-  ~BlockFFTGPU2D() = default;
-
- private:
-  unsigned int _block_size;
+  /**
+   * @brief Apply the 2D FFT to 8x8 blocks of an image.
+   *
+   * @param input_matrix The sequence to use as an input to the 2D blockwise
+   * FFT, interpreted as a square matrix.
+   * @param output_sequence An output sequence containing the transformed
+   * input, to be interpreted as a matrix.
+   * @param num_streams The number of CUDA streams to use.
+   *
+   * @note input_sequence and output_sequence must have the same length n,
+   * which must be a power of 2, a perfect square and a multiple of 64.
+   * @note n must be divisible by num_streams * 64.
+   */
+  void operator()(const vec &input_sequence, vec &output_sequence,
+                  unsigned int num_streams) const;
 };
 
+/**
+ * @brief A 2D IFFT algorithm on 8x8 blocks, using CUDA.
+ *
+ * The algorithm performs a 2D inverse FFT on all 8x8 blocks of the input and
+ * uses CUDA. This algorithm is the inverse of BlockFFTGPU2D.
+ *
+ * @note input_sequence and output_sequence must have the same length n, which
+ * has to be a power of 2, a perfect square and a multiple of 64.
+ *
+ * @see BlockInverseFFTGPU2D
+ */
 class BlockInverseFFTGPU2D {
  public:
-  void operator()(const vec &input_sequence, vec &output_sequence) const;
-
-  BlockInverseFFTGPU2D(unsigned int block_size = 8) {
-    _block_size = block_size;
-  }
-  ~BlockInverseFFTGPU2D() = default;
-
- private:
-  unsigned int _block_size;
+  /**
+   * @brief Apply the 2D IFFT to 8x8 blocks of an image.
+   *
+   * @param input_matrix The sequence to use as an input to the 2D blockwise
+   * IFFT, interpreted as a square matrix.
+   * @param output_sequence An output sequence containing the anti-transformed
+   * input, to be interpreted as a matrix.
+   * @param num_streams The number of CUDA streams to use.
+   *
+   * @note input_sequence and output_sequence must have the same length n,
+   * which must be a power of 2, a perfect square and a multiple of 64.
+   * @note n must be divisible by num_streams * 64.
+   */
+  void operator()(const vec &input_sequence, vec &output_sequence,
+                  unsigned int num_streams) const;
 };
+
 /**
  * @brief Get a time estimate for the execution of a Fourier transform
  * algorithm in microseconds.

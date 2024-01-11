@@ -5,8 +5,6 @@
  * @brief Defines the main function for CUDA-related tests.
  */
 
-// TODO: Remove commented code and improve comments.
-
 #include <chrono>
 #include <cstdint>
 #include <iostream>
@@ -32,6 +30,7 @@ int cuda_main(int argc, char *argv[]) {
   const std::string default_path = "../img/cat.jpg";
   constexpr real precision =
       std::max(std::numeric_limits<real>::epsilon() * 1e5, 1e-4);
+  constexpr unsigned int num_cuda_streams = 8;
 
   // Get the image path.
   std::string image_path = default_path;
@@ -76,7 +75,7 @@ int cuda_main(int argc, char *argv[]) {
 
   // Execute the direct algorithm and calculate the time.
   auto start = std::chrono::high_resolution_clock::now();
-  fft2d(input_sequence, fft_output_sequence);
+  fft2d(input_sequence, fft_output_sequence, num_cuda_streams);
   auto end = std::chrono::high_resolution_clock::now();
   auto duration =
       std::chrono::duration_cast<std::chrono::microseconds>(end - start)
@@ -86,7 +85,7 @@ int cuda_main(int argc, char *argv[]) {
 
   // Execute the inverse algorithm and calculate the time.
   start = std::chrono::high_resolution_clock::now();
-  ifft2d(fft_output_sequence, ifft_output_sequence);
+  ifft2d(fft_output_sequence, ifft_output_sequence, num_cuda_streams);
   end = std::chrono::high_resolution_clock::now();
   duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start)
                  .count();

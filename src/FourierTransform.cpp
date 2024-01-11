@@ -269,12 +269,12 @@ void IterativeFFTGPU::operator()(const vec &input_sequence,
 
   // Perform bit reversal of the input sequence and store it into the output
   // sequence.
-  bitreverse_gpu(input_sequence_dev, output_sequence_dev, n, log_n);
+  run_bitreverse_gpu(input_sequence_dev, output_sequence_dev, n, log_n);
 
   // Perform the FFT, layer by layer (kernel launches are blocking).
   for (size_t s = 1; s <= log_n; s++) {
     const size_t m = 1UL << s;
-    run_fft_gpu(output_sequence_dev, n, m, base_angle);
+    run_fft1d_gpu(output_sequence_dev, n, m, base_angle);
   }
 
   // Copy data from the device to the host.
@@ -319,17 +319,17 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
                     cudaMemcpyHostToDevice, stream);
 
     // Perform the bit reversal permutation.
-    bitreverse_gpu(&input_sequence_dev[i * n], &output_sequence_dev[i * n], n,
-                   log_n, stream);
+    run_bitreverse_gpu(&input_sequence_dev[i * n], &output_sequence_dev[i * n], n,
+                  log_n, stream);
 
     // Perform the FFT, layer by layer.
     for (size_t s = 1; s <= log_n; s++) {
       const size_t m = 1UL << s;
-      run_fft_gpu(&output_sequence_dev[i * n], n, m, base_angle, stream);
+      run_fft1d_gpu(&output_sequence_dev[i * n], n, m, base_angle, stream);
     }
 
     // Transpose the matrix.
-    swap_row_col_gpu(output_sequence_dev, transposed_sequence_dev, i, i, n,
+    run_swap_row_col_gpu(output_sequence_dev, transposed_sequence_dev, i, i, n,
                      stream);
 
     // Destroy the stream.
@@ -345,17 +345,17 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
     cudaStreamCreate(&stream);
 
     // Perform the bit reversal permutation.
-    bitreverse_gpu(&transposed_sequence_dev[i * n], &output_sequence_dev[i * n],
-                   n, log_n, stream);
+    run_bitreverse_gpu(&transposed_sequence_dev[i * n], &output_sequence_dev[i * n],
+                  n, log_n, stream);
 
     // Perform the FFT, layer by layer.
     for (size_t s = 1; s <= log_n; s++) {
       const size_t m = 1UL << s;
-      run_fft_gpu(&output_sequence_dev[i * n], n, m, base_angle, stream);
+      run_fft1d_gpu(&output_sequence_dev[i * n], n, m, base_angle, stream);
     }
 
     // Transpose the matrix.
-    swap_row_col_gpu(output_sequence_dev, input_sequence_dev, i, i, n, stream);
+    run_swap_row_col_gpu(output_sequence_dev, input_sequence_dev, i, i, n, stream);
 
     // Destroy the stream.
     cudaStreamDestroy(stream);
@@ -367,13 +367,15 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
   cudaMemcpy(output_sequence.data(), input_sequence_dev,
              size * sizeof(cuda::std::complex<real>), cudaMemcpyDeviceToHost);
 
+  // Free memory on the device.
   cudaFree(input_sequence_dev);
   cudaFree(output_sequence_dev);
   cudaFree(transposed_sequence_dev);
 }
 
-void BlockFFTGPU2D::operator()(const vec &input_sequence,
-                               vec &output_sequence) const {
+// A GPU implementation of the 2D iterative FFT on each 8x8 block of the input.
+void BlockFFTGPU2D::operator()(const vec &input_sequence, vec &output_sequence,
+                               unsigned int num_streams) const {
   // Getting the input size.
   const size_t size = input_sequence.size();
   const size_t n = sqrt(size);
@@ -382,42 +384,47 @@ void BlockFFTGPU2D::operator()(const vec &input_sequence,
   const size_t log_n = static_cast<size_t>(log2(n));
   assert(1UL << log_n == n);
 
-  constexpr real base_angle = -pi;
-
-  // Perform bit reversal of the input sequence and store it into the output
-  // sequence.
+  // Allocate space on the device.
   cuda::std::complex<real> *block_input_dev;
-
   cudaMalloc(&block_input_dev, size * sizeof(cuda::std::complex<real>));
 
-  int num_streams = 8;
+  // Create the set number of streams.
   cudaStream_t stream[num_streams];
-  for (int i = 0; i < num_streams; i++) cudaStreamCreate(&stream[i]);
+  for (size_t i = 0; i < num_streams; i++) cudaStreamCreate(&stream[i]);
 
-  for (int i = 0; i < num_streams; i++) {
-    cudaMemcpyAsync(&block_input_dev[i * n / num_streams * n],
-                    &input_sequence.data()[i * n / num_streams * n],
-                    n / num_streams * n * sizeof(cuda::std::complex<real>),
+  // For each stream, copy the needed data from host to device and run the fft +
+  // transposition kernel twice.
+  const size_t num_stream_elements = size / num_streams;
+  for (size_t i = 0; i < num_streams; i++) {
+    const size_t index = i * num_stream_elements;
+
+    cudaMemcpyAsync(&block_input_dev[index], &input_sequence.data()[index],
+                    num_stream_elements * sizeof(cuda::std::complex<real>),
                     cudaMemcpyHostToDevice, stream[i]);
-    run_block_fft_gpu(&block_input_dev[i * n / num_streams * n], n, base_angle,
-                      num_streams, stream[i]);
-    run_block_fft_gpu(&block_input_dev[i * n / num_streams * n], n, base_angle,
-                      num_streams, stream[i]);
+    run_block_fft_gpu(&block_input_dev[index], n, num_streams, stream[i]);
+    run_block_fft_gpu(&block_input_dev[index], n, num_streams, stream[i]);
   }
-  for (int i = 0; i < num_streams; i++) {
-    cudaMemcpyAsync(&output_sequence.data()[i * n / num_streams * n],
-                    &block_input_dev[i * n / num_streams * n],
-                    n / num_streams * n * sizeof(cuda::std::complex<real>),
+
+  // For each stream, copy the data back to the host.
+  for (size_t i = 0; i < num_streams; i++) {
+    const size_t index = i * num_stream_elements;
+
+    cudaMemcpyAsync(&output_sequence.data()[index], &block_input_dev[index],
+                    num_stream_elements * sizeof(cuda::std::complex<real>),
                     cudaMemcpyDeviceToHost, stream[i]);
   }
 
   cudaDeviceSynchronize();
-  for (int i = 0; i < num_streams; i++) cudaStreamDestroy(stream[i]);
+
+  // Destroy the streams and free device memory.
+  for (size_t i = 0; i < num_streams; i++) cudaStreamDestroy(stream[i]);
   cudaFree(block_input_dev);
 }
 
+// A GPU implementation of the 2D inverse iterative FFT on each 8x8 block of the input.
 void BlockInverseFFTGPU2D::operator()(const vec &input_sequence,
-                                      vec &output_sequence) const {
+                                      vec &output_sequence,
+                                      unsigned int num_streams) const {
   // Getting the input size.
   const size_t size = input_sequence.size();
   const size_t n = sqrt(size);
@@ -426,37 +433,39 @@ void BlockInverseFFTGPU2D::operator()(const vec &input_sequence,
   const size_t log_n = static_cast<size_t>(log2(n));
   assert(1UL << log_n == n);
 
-  constexpr real base_angle = pi;
-
-  // Perform bit reversal of the input sequence and store it into the output
-  // sequence.
+  // Allocate space on the device.
   cuda::std::complex<real> *block_input_dev;
-
   cudaMalloc(&block_input_dev, size * sizeof(cuda::std::complex<real>));
 
-  int num_streams = 8;
+  // Create the set number of streams.
   cudaStream_t stream[num_streams];
-  for (int i = 0; i < num_streams; i++) cudaStreamCreate(&stream[i]);
+  for (size_t i = 0; i < num_streams; i++) cudaStreamCreate(&stream[i]);
 
-  for (int i = 0; i < num_streams; i++) {
-    cudaMemcpyAsync(&block_input_dev[i * n / num_streams * n],
-                    &input_sequence.data()[i * n / num_streams * n],
-                    n / num_streams * n * sizeof(cuda::std::complex<real>),
+  // For each stream, copy the needed data from host to device and run the
+  // transposition + ifft kernel twice.
+  const size_t num_stream_elements = size / num_streams;
+  for (size_t i = 0; i < num_streams; i++) {
+    const size_t index = i * num_stream_elements;
+    cudaMemcpyAsync(&block_input_dev[index], &input_sequence.data()[index],
+                    num_stream_elements * sizeof(cuda::std::complex<real>),
                     cudaMemcpyHostToDevice, stream[i]);
-    run_block_inverse_fft_gpu(&block_input_dev[i * n / num_streams * n], n,
-                              base_angle, num_streams, stream[i]);
-    run_block_inverse_fft_gpu(&block_input_dev[i * n / num_streams * n], n,
-                              base_angle, num_streams, stream[i]);
+    run_block_inverse_fft_gpu(&block_input_dev[index], n, num_streams,
+                              stream[i]);
+    run_block_inverse_fft_gpu(&block_input_dev[index], n, num_streams,
+                              stream[i]);
   }
-  for (int i = 0; i < num_streams; i++) {
-    cudaMemcpyAsync(&output_sequence.data()[i * n / num_streams * n],
-                    &block_input_dev[i * n / num_streams * n],
-                    n / num_streams * n * sizeof(cuda::std::complex<real>),
+
+  // For each stream, copy the data back to the host.
+  for (size_t i = 0; i < num_streams; i++) {
+    const size_t index = i * num_stream_elements;
+    cudaMemcpyAsync(&output_sequence.data()[index], &block_input_dev[index],
+                    num_stream_elements * sizeof(cuda::std::complex<real>),
                     cudaMemcpyDeviceToHost, stream[i]);
   }
 
+  // Destroy the streams and free device memory.
   cudaDeviceSynchronize();
-  for (int i = 0; i < num_streams; i++) cudaStreamDestroy(stream[i]);
+  for (size_t i = 0; i < num_streams; i++) cudaStreamDestroy(stream[i]);
   cudaFree(block_input_dev);
 }
 
