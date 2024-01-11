@@ -359,9 +359,9 @@ void IterativeFFTGPU2D::operator()(const vec &input_sequence,
   cudaMemcpy(output_sequence.data(), input_sequence_dev,
              size * sizeof(cuda::std::complex<real>), cudaMemcpyDeviceToHost);
 
-  cudaFree(&input_sequence_dev);
-  cudaFree(&output_sequence_dev);
-  cudaFree(&transposed_sequence_dev);
+  cudaFree(input_sequence_dev);
+  cudaFree(output_sequence_dev);
+  cudaFree(transposed_sequence_dev);
 }
 
 void BlockFFTGPU2D::operator()(const vec &input_sequence,
