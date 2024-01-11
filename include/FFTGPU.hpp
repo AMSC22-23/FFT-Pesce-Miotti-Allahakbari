@@ -7,8 +7,6 @@
  * @todo Document the functions.
  */
 
-#include <cuda_runtime.h>
-
 #include <cuda/std/complex>
 
 #include "Real.hpp"

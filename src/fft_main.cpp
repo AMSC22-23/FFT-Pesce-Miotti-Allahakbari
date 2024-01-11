@@ -189,15 +189,15 @@ int fft_main(int argc, char *argv[]) {
     }
 
     // Run the algorithms.
-    const TrivialTwoDimensionalFourierTransformAlgorithm two_d_fft;
-    vec two_d_fft_result(size * size, 0);
-    two_d_fft(input_matrix, two_d_fft_result);
-    const TrivialTwoDimensionalInverseFourierTransformAlgorithm two_d_ift;
-    vec two_d_ift_result(size * size, 0);
-    two_d_ift(two_d_fft_result, two_d_ift_result);
+    const TrivialTwoDimensionalFourierTransformAlgorithm fft_2d;
+    vec fft_2d_result(size * size, 0);
+    fft_2d(input_matrix, fft_2d_result);
+    const TrivialTwoDimensionalInverseFourierTransformAlgorithm ift_2d;
+    vec ift_2d_result(size * size, 0);
+    ift_2d(fft_2d_result, ift_2d_result);
 
     // Check the result.
-    if (!CompareVectors(input_matrix, two_d_ift_result, precision, false))
+    if (!CompareVectors(input_matrix, ift_2d_result, precision, false))
       std::cerr << "Errors detected in 2D FFT." << std::endl;
   }
 

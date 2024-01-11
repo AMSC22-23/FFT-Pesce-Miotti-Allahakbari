@@ -107,7 +107,9 @@ void FastBitReversalPermutationAlgorithm::operator()(
 
   // Base case: the sequence is 0 or 1 elements long.
   if (num_elements < 2) {
-    output_sequence = vec(input_sequence);
+    for (size_t i = 0; i < num_elements; i++) {
+      output_sequence[i] = input_sequence[i];
+    }
   }
 
   // Initialize a temporary vector.
@@ -167,8 +169,8 @@ void CompareBitReversalPermutationTimes(const vec &sequence,
   vec fast_result(size, 0);
 
   // Create an instance of the needed algorithms.
-  MaskBitReversalPermutationAlgorithm mask_algorithm;
-  FastBitReversalPermutationAlgorithm fast_algorithm;
+  const MaskBitReversalPermutationAlgorithm mask_algorithm;
+  const FastBitReversalPermutationAlgorithm fast_algorithm;
 
   // For each number of threads.
   for (unsigned int num_threads = 1; num_threads <= max_num_threads;
