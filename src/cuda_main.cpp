@@ -92,7 +92,7 @@ int cuda_main(int argc, char *argv[]) {
             << std::endl;  // Print the execution time
 
   // Check if ifft_output_sequence and input_sequence elements are equal
-  for (int i = 0; i < ifft2d_output_sequence.size(); i++) {
+  for (size_t i = 0; i < ifft2d_output_sequence.size(); i++) {
     if (ifft2d_output_sequence[i].real() - input_sequence[i].real() > 1e-4 ||
         ifft2d_output_sequence[i].imag() - input_sequence[i].imag() > 1e-4) {
       std::cerr << "Erorr in inverse: Origianl: " << input_sequence[i]

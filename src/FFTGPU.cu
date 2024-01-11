@@ -18,21 +18,21 @@ namespace FourierTransform {
 __global__ void swap_row_col(cuda::std::complex<real>* input,
                              cuda::std::complex<real>* output, const int row,
                              const int col, const int n) {
-  // Use shared memory to reduce global memory transactions
+  // Use shared memory to reduce global memory transactions.
   __shared__ cuda::std::complex<real> tile[TILE_SIZE];
-  int x = blockIdx.x * blockDim.x + threadIdx.x;
+  const int x = blockIdx.x * blockDim.x + threadIdx.x;
 
   if (x < n) {
-    int in_index = row * n + x;
+    const int in_index = row * n + x;
 
-    // Load data from global memory to shared memory
+    // Load data from global memory to shared memory.
     tile[threadIdx.x] = input[in_index];
 
+    // Synchronize threads in the block.
     __syncthreads();
 
-    // Write transposed data to the output
-
-    int out_index = x * n + col;
+    // Write transposed data to the output.
+    const int out_index = x * n + col;
     output[out_index] = tile[threadIdx.x];
   }
 }
