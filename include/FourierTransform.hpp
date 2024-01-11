@@ -209,10 +209,9 @@ class IterativeFFTGPU2D : public FourierTransformAlgorithm {
 /**
  * @todo Document this class.
  */
-class BlockFFTGPU2D : public FourierTransformAlgorithm {
+class BlockFFTGPU2D {
  public:
-  void operator()(const vec &input_sequence,
-                  vec &output_sequence) const override;
+  void operator()(const vec &input_sequence, vec &output_sequence) const;
 
   BlockFFTGPU2D(unsigned int block_size = 8) { _block_size = block_size; }
   ~BlockFFTGPU2D() = default;
@@ -221,6 +220,18 @@ class BlockFFTGPU2D : public FourierTransformAlgorithm {
   unsigned int _block_size;
 };
 
+class BlockInverseFFTGPU2D {
+ public:
+  void operator()(const vec &input_sequence, vec &output_sequence) const;
+
+  BlockInverseFFTGPU2D(unsigned int block_size = 8) {
+    _block_size = block_size;
+  }
+  ~BlockInverseFFTGPU2D() = default;
+
+ private:
+  unsigned int _block_size;
+};
 /**
  * @brief Get a time estimate for the execution of a Fourier transform
  * algorithm in microseconds.
