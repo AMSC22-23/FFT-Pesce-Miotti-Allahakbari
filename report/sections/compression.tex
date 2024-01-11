@@ -1,7 +1,7 @@
 \subsection{Background}
-Image compression consists in encoding an image into a format that requires lower storage space. If information stored in this format can then be used to obtain the original image, compression is denoted as lossless, otherwise it is called lossy. 
+Image compression consists in encoding an image into a format that requires a lower storage space. If information stored in this format can then be used to obtain the original image, compression is denoted as lossless, otherwise it is called lossy. 
 
-The need for image compression becomes self-evident when considering that storing an image with 1080 by 1920 pixels, with 3 color bands and 256 possible values for each color, in an uncompressed format would require about 6 MB and storing a video with 30 frames per second and a duration of just 10 minutes would require 3.55 GB. 
+The need for image compression becomes self-evident when considering the following examples. Storing an image with 1080 by 1920 pixels, 3 color bands and 256 possible values for each color in an uncompressed format would require about 6. Even worse, storing a video with 30 frames per second and a duration of just 10 minutes would require 3.55 GB. 
 
 For said reason, a large number of image compression techniques have been proposed\cite{compression_list_1}\cite{compression_list_2}\cite{compression_wavelet}, differing in compression rate, quality of the decoded image and execution time for compression and decompression. The interest for efficient image compression algorithms is high, and multiple works focus on improving the run time of existing algorithms or developing new ones\cite{compression_optimize_1}\cite{compression_optimize_2}.
 
@@ -30,7 +30,7 @@ Clearly, the \texttt{decode} method does the same steps backward, reconstructing
 \subsubsection{Applying the DFT}
 Just like in JPEG, all pixel values are subtracted 128 to be mapped to the range [-128,127]. Then, a 2D direct FFT is applied to each block.
 
-The implementation of the 2D FFT used in this method is the one provided in the class \texttt{Trivial\-Two\-Dimensional\-Fourier\-Transform\-Algorithm}, which is not optimized for efficiency. The reason for this choice is that most of the code for image compression had to be developed and tested on a machine without CUDA support. Nevertheless, the loop over the blocks is parallelized using OpenMP, with parallelization inside the FFT disabled, as consumer-grade architectures would not benifit from this level of nested parallelism.
+The implementation of the 2D FFT used in this method is the one provided in the class \texttt{Two\-Dimensional\-Direct\-FFT\-CPU}. The loop over the 8x8 blocks is parallelized using OpenMP, and each block is transformed using the algorithm provided in \texttt{Iterative\-Fourier\-Transform\-Algorithm} on each row and column. While the function could easily be changed to use the CUDA implementation, the reason for this choice is that most of the code for image compression had to be developed and tested on a machine without CUDA support. 
 
 \subsubsection{Quantization}
 JPEG uses a quantization table, which consists in a matrix of coefficients. Each pixel in a block is divided by the respective coefficient of the quantization table, resulting in a reduction in the range of the possible values of the coefficients. The values are then stored as an integer, causing values that are below 1 to be stored as 0. Clearly, this step is irreversible and is the main reason behind the lossy nature of the compression. Our implementation uses a custom version of the quantization table, as the original one was developed for the DCT and is inadequate for our algorithm. Moreover, since the result of the DCT is a sequence of real coefficients, while the result of the DFT is a sequence of complex coefficients, the quantization is performed for both the real and immaginary coefficients separately. Not knowing what the optimal values of the quantization table are for our algorithm, we set most values to 100, with the value in the top left set to 200, since it is the largest coefficient of the transformed sequence by far.
@@ -43,16 +43,16 @@ Figures \ref{fig:compression_road} and \ref{fig:compression_cat} show the result
 
 \begin{figure}[ht]
     \centering
-    \subfigure[Original image]{\label{fig:fft_floats}\includegraphics[width=55mm]{image/road_original.jpg}}
-    \subfigure[Decompressed image]{\label{fig:fft_doubles}\includegraphics[width=55mm]{image/road_decompressed.jpg}}
+    \subfigure[Original image]{\label{fig:road_original}\includegraphics[width=55mm]{image/road_original.jpg}}
+    \subfigure[Decompressed image]{\label{fig:road_decompressed}\includegraphics[width=55mm]{image/road_decompressed.jpg}}
     \caption{Our compression algorithm applied to an example image, with a compression rate of 0.82814.}
     \label{fig:compression_road}
 \end{figure}
 
 \begin{figure}[ht]
     \centering
-    \subfigure[Original image]{\label{fig:fft_floats}\includegraphics[width=55mm]{image/cat_original.jpg}}
-    \subfigure[Decompressed image]{\label{fig:fft_doubles}\includegraphics[width=55mm]{image/cat_decompressed.jpg}}
+    \subfigure[Original image]{\label{fig:cat_original}\includegraphics[width=55mm]{image/cat_original.jpg}}
+    \subfigure[Decompressed image]{\label{fig:cat_decompressed}\includegraphics[width=55mm]{image/cat_decompressed.jpg}}
     \caption{Our compression algorithm applied to an example image, with a compression rate of 0.845459.}
     \label{fig:compression_cat}
 \end{figure}

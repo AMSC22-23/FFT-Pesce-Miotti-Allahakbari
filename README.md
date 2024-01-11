@@ -41,15 +41,15 @@ One instance each of `MaskBitReversalAlgorithm` and `FastBitReversalAlgorithm` a
 An instance of the algorithm specified as the fifth argument is tested on the sequence and its execution time for the maximum number of threads is printed in microseconds.
 
 ### Compression
-This execution mode loads the image specified as the second argument as grayscale image, compresses it and stores the compressed data in the `img` folder. Said data is then read from the same file, decoded and displayed. 
+This execution mode loads the image specified as the second argument as a grayscale image, compresses it and stores the compressed data in the \texttt{img} folder. Said data is then read from the same file, decoded and displayed. The image must be square and its number of pixels in a row must be a power of 2 and a multiple of 8.
 
 ### CUDA
-This section is used for CUDA-related tests, but its interface is still work in progress.
+This execution mode loads the image specified as the second argument as a grayscale image, then performs a block-wise direct and inverse FFT on 8x8 blocks using an instance of `TwoDimensionalDirectBlockFFTGPU`. The inverse transform is checked againts the original sequence and the direct one against the implementation by OpenCV. A block-wise direct FFT using the CPU is performed on the same image and the times and speed-up are printed. The image must be square and its number of pixels in a row must be a power of 2 and a multiple of 64.
 
 ### Wavelet
 This execution mode has 3 sub-modes, specified via the second argument: `demo` (default),`image` and `denoise`.
 #### demo
-A cubic signal with real coefficients is generated and a DWT and IDWT are applied to it for all 1D wavelet transform implementations. The resulting sequences are saved to a file and it is verified that after the inverse transform the sequences are equal to the original one, up to a certain tolerance. The same is done for all 2D wavelet transform implementations on a random matrix with the same side length as the length of the sequence. The sequence length can be specified as the third argument and different algorithms might apply different requirements on the lengths.
+A cubic signal with real coefficients is generated and a DWT and IDWT are applied to it for all 1D wavelet transform implementations. The resulting sequences are saved to a file and it is verified that after the inverse transform the sequences are equal to the original one, up to a certain tolerance. The same is done for all 2D wavelet transform implementations, excluding blockwise implementations, on a random matrix with the same side length as the length of the sequence. The sequence length can be specified as the third argument and different algorithms might apply different requirements on the lengths.
 #### image
 An image is loaded, converted to grayscale and displayed. All 2D DWT implementations are applied to it and the results are displayed and saved as an image. The image path and number of decomposition levels can be provided as the third and fourth arguments.
 #### denoise
