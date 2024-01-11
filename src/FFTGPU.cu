@@ -7,7 +7,7 @@
 
 #include <cuda_runtime.h>
 
-#define TILE_SIZE 8
+#define TILE_SIZE 32
 
 #define BLOCK_SIZE 8
 
@@ -41,8 +41,8 @@ __global__ void swap_row_col(cuda::std::complex<real>* input,
 __global__ void transpose(cuda::std::complex<real>* input,
                           cuda::std::complex<real>* output, const int n) {
   // Use shared memory to reduce global memory transactions
-  __shared__ cuda::std::complex<real> tile[BLOCK_SIZE]
-                                          [BLOCK_SIZE + 1];  // +1 for padding
+  __shared__ cuda::std::complex<real> tile[TILE_SIZE]
+                                          [TILE_SIZE + 1];  // +1 for padding
   int x = blockIdx.x * blockDim.x + threadIdx.x;
   int y = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -99,7 +99,7 @@ __global__ void block_fft(cuda::std::complex<real>* data, int n, int log_n_blk,
                           real base) {
   int x = blockIdx.x * blockDim.x + threadIdx.x;
   int y = blockIdx.y * blockDim.y + threadIdx.y;
-  __shared__ cuda::std::complex<real> tile[TILE_SIZE][TILE_SIZE];
+  __shared__ cuda::std::complex<real> tile[BLOCK_SIZE][BLOCK_SIZE];
 
   int blockX = threadIdx.x;
   int blockY = threadIdx.y;
@@ -115,7 +115,7 @@ __global__ void block_fft(cuda::std::complex<real>* data, int n, int log_n_blk,
     size_t j = threadIdx.x % half_m;
     const size_t k_plus_j = k + j;
 
-    if ((k_plus_j + half_m) < TILE_SIZE) {
+    if ((k_plus_j + half_m) < BLOCK_SIZE) {
       const cuda::std::complex<real> omega =
           cuda::std::exp(cuda::std::complex<real>{0, base / half_m * j});
       const cuda::std::complex<real> t =
@@ -137,7 +137,7 @@ __global__ void block_inverse_fft(cuda::std::complex<real>* data, int n,
                                   int log_n_blk, real base) {
   int x = blockIdx.x * blockDim.x + threadIdx.x;
   int y = blockIdx.y * blockDim.y + threadIdx.y;
-  __shared__ cuda::std::complex<real> tile[TILE_SIZE][TILE_SIZE];
+  __shared__ cuda::std::complex<real> tile[BLOCK_SIZE][BLOCK_SIZE];
 
   int blockX = threadIdx.x;
   int blockY = threadIdx.y;
@@ -153,7 +153,7 @@ __global__ void block_inverse_fft(cuda::std::complex<real>* data, int n,
     size_t j = threadIdx.x % half_m;
     const size_t k_plus_j = k + j;
 
-    if ((k_plus_j + half_m) < TILE_SIZE) {
+    if ((k_plus_j + half_m) < BLOCK_SIZE) {
       const cuda::std::complex<real> omega =
           cuda::std::exp(cuda::std::complex<real>{0, base / half_m * j});
       const cuda::std::complex<real> t =
@@ -169,7 +169,7 @@ __global__ void block_inverse_fft(cuda::std::complex<real>* data, int n,
   }
 
   data[y * n + x] =
-      tile[blockY][blockX] / cuda::std::complex<real>(TILE_SIZE, TILE_SIZE);
+      tile[blockY][blockX] / cuda::std::complex<real>(BLOCK_SIZE, BLOCK_SIZE);
 }
 
 void run_fft_gpu(cuda::std::complex<real>* data, int n, int m, real base,
@@ -177,36 +177,42 @@ void run_fft_gpu(cuda::std::complex<real>* data, int n, int m, real base,
   int block_dim = TILE_SIZE;
   int grid_dim = (n + TILE_SIZE - 1) / (TILE_SIZE);
   fft1d<<<grid_dim, block_dim, 0, stream_id>>>(data, n, m, base);
+  cudaError_t kernelError = cudaGetLastError();
+  if (kernelError != cudaSuccess) {
+    printf("Kernel launch failed with error: %s on line: %d\n",
+           cudaGetErrorString(kernelError), __LINE__);
+    // Handle the error accordingly
+  }
 }
 
 void run_block_fft_gpu(cuda::std::complex<real>* data, int n, real base,
                        int num_streams, cudaStream_t stream_id) {
-  dim3 block_dim(TILE_SIZE, TILE_SIZE);
-  dim3 grid_dim((n + TILE_SIZE - 1) / (TILE_SIZE),
-                (n / num_streams + TILE_SIZE - 1) / (TILE_SIZE));
-  block_fft<<<grid_dim, block_dim, 0, stream_id>>>(data, n, log2(TILE_SIZE),
+  dim3 block_dim(BLOCK_SIZE, BLOCK_SIZE);
+  dim3 grid_dim((n + BLOCK_SIZE - 1) / (BLOCK_SIZE),
+                (n / num_streams + BLOCK_SIZE - 1) / (BLOCK_SIZE));
+  block_fft<<<grid_dim, block_dim, 0, stream_id>>>(data, n, log2(BLOCK_SIZE),
                                                    base);
 
   cudaError_t kernelError = cudaGetLastError();
   if (kernelError != cudaSuccess) {
-    printf("Kernel launch failed with error: %s\n",
-           cudaGetErrorString(kernelError));
+    printf("Kernel launch failed with error: %s on line: %d\n",
+           cudaGetErrorString(kernelError), __LINE__);
     // Handle the error accordingly
   }
 }
 
 void run_block_inverse_fft_gpu(cuda::std::complex<real>* data, int n, real base,
                                int num_streams, cudaStream_t stream_id) {
-  dim3 block_dim(TILE_SIZE, TILE_SIZE);
-  dim3 grid_dim((n + TILE_SIZE - 1) / (TILE_SIZE),
-                (n / num_streams + TILE_SIZE - 1) / (TILE_SIZE));
+  dim3 block_dim(BLOCK_SIZE, BLOCK_SIZE);
+  dim3 grid_dim((n + BLOCK_SIZE - 1) / (BLOCK_SIZE),
+                (n / num_streams + BLOCK_SIZE - 1) / (BLOCK_SIZE));
   block_inverse_fft<<<grid_dim, block_dim, 0, stream_id>>>(
-      data, n, log2(TILE_SIZE), base);
+      data, n, log2(BLOCK_SIZE), base);
 
   cudaError_t kernelError = cudaGetLastError();
   if (kernelError != cudaSuccess) {
-    printf("Kernel launch failed with error: %s\n",
-           cudaGetErrorString(kernelError));
+    printf("Kernel launch failed with error: %s on line: %d\n",
+           cudaGetErrorString(kernelError), __LINE__);
     // Handle the error accordingly
   }
 }
@@ -217,15 +223,27 @@ void bitreverse_gpu(cuda::std::complex<real>* in, cuda::std::complex<real>* out,
   int grid_dim = (n + TILE_SIZE - 1) / (TILE_SIZE);
 
   bitrev_reorder<<<grid_dim, block_dim, 0, stream_id>>>(in, out, s);
+  cudaError_t kernelError = cudaGetLastError();
+  if (kernelError != cudaSuccess) {
+    printf("Kernel launch failed with error: %s on line: %d\n",
+           cudaGetErrorString(kernelError), __LINE__);
+    // Handle the error accordingly
+  }
 }
 
 void transpose_gpu(cuda::std::complex<real>* in, cuda::std::complex<real>* out,
                    int n, cudaStream_t stream_id) {
-  dim3 block_dim(BLOCK_SIZE, BLOCK_SIZE);
-  dim3 grid_dim((n + BLOCK_SIZE - 1) / BLOCK_SIZE,
-                (n + BLOCK_SIZE - 1) / BLOCK_SIZE);
+  dim3 block_dim(TILE_SIZE, TILE_SIZE);
+  dim3 grid_dim((n + TILE_SIZE - 1) / TILE_SIZE,
+                (n + TILE_SIZE - 1) / TILE_SIZE);
 
   transpose<<<grid_dim, block_dim, 0, stream_id>>>(in, out, n);
+  cudaError_t kernelError = cudaGetLastError();
+  if (kernelError != cudaSuccess) {
+    printf("Kernel launch failed with error: %s\n",
+           cudaGetErrorString(kernelError));
+    // Handle the error accordingly
+  }
 }
 
 void swap_row_col_gpu(cuda::std::complex<real>* in,
@@ -235,6 +253,12 @@ void swap_row_col_gpu(cuda::std::complex<real>* in,
   int grid_dim = (n + TILE_SIZE - 1) / TILE_SIZE;
 
   swap_row_col<<<grid_dim, block_dim, 0, stream_id>>>(in, out, row, col, n);
+  cudaError_t kernelError = cudaGetLastError();
+  if (kernelError != cudaSuccess) {
+    printf("Kernel launch failed with error: %s\n",
+           cudaGetErrorString(kernelError));
+    // Handle the error accordingly
+  }
 }
 }  // namespace FourierTransform
 }  // namespace Transform
