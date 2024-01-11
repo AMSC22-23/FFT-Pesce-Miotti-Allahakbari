@@ -8,6 +8,7 @@
 
 #include <omp.h>
 
+#include <chrono>
 #include <opencv2/opencv.hpp>
 
 #include "FourierTransform.hpp"
@@ -198,14 +199,18 @@ void GrayscaleImage::unquantize(
   }
 }
 
-// Encode the last loaded or decoded image.
-void GrayscaleImage::encode() {
+// Encode the last loaded or decoded image. This is a wrapper around
+// calculateEncodingTime.
+void GrayscaleImage::encode() { calculateEncodingTime(); }
+
+// Encode the last loaded or decoded image and return the FFT time in
+// microseconds.
+unsigned long GrayscaleImage::calculateEncodingTime() {
   // Split the image in blocks of size 8x8.
   this->splitBlocks();
 
   // Initialize a TrivialTwoDimensionalDiscreteFourierTransform object.
-  const Transform::FourierTransform::
-      TwoDimensionalDirectFFTCPU fft;
+  const Transform::FourierTransform::TwoDimensionalDirectFFTCPU fft;
 
   // Disable nested parallelization (not efficient for consumer-grade
   // architectures).
@@ -219,6 +224,7 @@ void GrayscaleImage::encode() {
     this->imagBlocks.emplace_back();
   }
 
+  auto t0 = std::chrono::high_resolution_clock::now();
   // For each block...
 #pragma omp parallel for
   for (size_t i = 0; i < this->blocks.size(); i++) {
@@ -251,16 +257,20 @@ void GrayscaleImage::encode() {
     this->blocks[i] = realBlock;
     this->imagBlocks[i] = imagBlock;
   }
+  auto t1 = std::chrono::high_resolution_clock::now();
+  const auto time =
+      std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
 
   // Perform run-length encoding.
   this->entropyEncode();
+
+  return time;
 }
 
 // Decode the last loaded or encoded image.
 void GrayscaleImage::decode() {
   // Initialize a TrivialTwoDimensionalDiscreteFourierTransform object.
-  const Transform::FourierTransform::
-      TwoDimensionalInverseFFTCPU fft;
+  const Transform::FourierTransform::TwoDimensionalInverseFFTCPU fft;
 
   // Decode the run-length encoding.
   this->entropyDecode();

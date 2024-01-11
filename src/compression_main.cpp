@@ -5,6 +5,7 @@
  * @brief Defines the main function for compression-related tests.
  */
 
+#include <cstdint>
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <string>
@@ -51,7 +52,8 @@ int compression_main(int argc, char *argv[]) {
   unsigned int compressed_bitsize = grayscaleImage.getCompressedBitsize();
 
   // Get the compression ratio.
-  double compression_ratio = (double)compressed_bitsize / (double)bitsize;
+  double compression_ratio =
+      static_cast<double>(compressed_bitsize) / static_cast<double>(bitsize);
   std::cout << "Compression ratio: " << compression_ratio << std::endl;
 
   // Save the compressed image.
@@ -72,9 +74,8 @@ int compression_main(int argc, char *argv[]) {
   }
 
   // Get the encoded bytes of grayscaleImages with getEncoded().
-  const std::vector<unsigned char> encoded_bytes = grayscaleImage.getEncoded();
-  const std::vector<unsigned char> encoded_bytes2 =
-      grayscaleImage2.getEncoded();
+  const std::vector<uint8_t> encoded_bytes = grayscaleImage.getEncoded();
+  const std::vector<uint8_t> encoded_bytes2 = grayscaleImage2.getEncoded();
 
   // Decode the image.
   std::cout << "Decoding image..." << std::endl;

@@ -13,6 +13,7 @@
 #include <string>
 
 #include "FourierTransformCalculator.hpp"
+#include "GrayscaleImage.hpp"
 #include "Utility.hpp"
 
 int cuda_main(int argc, char *argv[]) {
@@ -73,24 +74,29 @@ int cuda_main(int argc, char *argv[]) {
   TwoDimensionalDirectBlockFFTGPU fft2d;
   TwoDimensionalInverseBlockFFTGPU ifft2d;
 
+  // Perform a warm-up run.
+  fft2d(input_sequence, fft_output_sequence, num_cuda_streams);
+
   // Execute the direct algorithm and calculate the time.
   auto start = std::chrono::high_resolution_clock::now();
   fft2d(input_sequence, fft_output_sequence, num_cuda_streams);
   auto end = std::chrono::high_resolution_clock::now();
-  auto duration =
+  auto fft_duration =
       std::chrono::duration_cast<std::chrono::microseconds>(end - start)
           .count();
 
-  std::cout << "Execution time for GPU FFT: " << duration << " μs" << std::endl;
+  std::cout << "Execution time for GPU FFT: " << fft_duration << " μs"
+            << std::endl;
 
   // Execute the inverse algorithm and calculate the time.
   start = std::chrono::high_resolution_clock::now();
   ifft2d(fft_output_sequence, ifft_output_sequence, num_cuda_streams);
   end = std::chrono::high_resolution_clock::now();
-  duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-                 .count();
+  auto ifft_duration =
+      std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+          .count();
 
-  std::cout << "Execution time for GPU IFFT: " << duration << " μs"
+  std::cout << "Execution time for GPU IFFT: " << ifft_duration << " μs"
             << std::endl;
 
   // Check if the inverse result is the same as the input sequence.
@@ -162,6 +168,26 @@ int cuda_main(int argc, char *argv[]) {
       break;
     }
   }
+
+  // Compare the time to CPU times.
+  // Reload the image.
+  GrayscaleImage grayscaleImage;
+  bool success = grayscaleImage.loadStandard(image_path);
+
+  // Check if the image was loaded successfully.
+  if (!success) {
+    std::cout << "Failed to load image." << std::endl;
+    return 1;
+  }
+
+  // Get the CPU time (only FFT time included).
+  unsigned long cpu_duration = grayscaleImage.calculateEncodingTime();
+
+  // Print the result.
+  std::cout << "Execution time for CPU FFT: " << cpu_duration << " μs"
+            << std::endl;
+  std::cout << "Speedup: " << static_cast<double>(cpu_duration) / fft_duration
+            << "x" << std::endl;
 
   return 0;
 }

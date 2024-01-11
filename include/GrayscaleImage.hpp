@@ -92,6 +92,17 @@ class GrayscaleImage {
   void encode();
 
   /**
+   * @brief Encode the last loaded image and returns the time elapsed.
+   *
+   * The method encodes the last loaded image and returns the total time elapsed
+   * for the FFT of the 8x8 blocks, in microseconds.
+   *
+   * @note Unless omp_set_num_threads() has been called, the algorithm will use
+   * all available OpenMP threads.
+   */
+  unsigned long calculateEncodingTime();
+
+  /**
    * @brief Decode the last loaded image.
    *
    * Image decoding is done in 5 steps:
