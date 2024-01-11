@@ -1,14 +1,12 @@
-#include <cuda_runtime.h>
+#include "FFTGPU.hpp"
 
 /**
  * @file FFTGPU.cu.
  * @brief Defines the functions declared in FFTGPU.hpp.
  */
 
-#include "FFTGPU.hpp"
+#include <cuda_runtime.h>
 
-// The algorithm only works if n >= TILE_SIZE
-// TODO: State it somewhere
 #define TILE_SIZE 8
 
 #define BLOCK_SIZE 8
